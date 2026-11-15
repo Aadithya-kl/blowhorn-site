@@ -126,12 +126,14 @@ these decisions:
 when `copilot-swe-agent[bot]` opens, updates or reopens a pull request against
 `master`. It marks a draft ready for review, then approves any workflow runs
 waiting for approval at that pull request's exact head SHA. A maintainer can
-also run it manually with a pull request number. Approval is deliberately
-workflow-agnostic: every run waiting for approval at that exact head SHA is
-approved, including runs from workflows added later. The pending-run search
-reads at most 100 pages of 100 runs. If all 100 pages are full, it fails before
-approving anything rather than assume the result set is complete; that bound
-is an intentional fail-closed trade-off.
+also run it manually with a pull request number. This `workflow_dispatch` path
+is maintainer-only and intentionally bypasses the Copilot-author check; it is a
+recovery or testing path, not equivalent to automatic handling. Approval is
+deliberately workflow-agnostic: every run waiting for approval at that exact
+head SHA is approved, including runs from workflows added later. The
+pending-run search reads at most 100 pages of 100 runs. If all 100 pages are
+full, it fails before approving anything rather than assume the result set is
+complete; that bound is an intentional fail-closed trade-off.
 
 The handler needs `actions: write` to approve runs, `pull-requests: write` to
 mark a draft ready and `contents: read` to check out its helper. It uses the

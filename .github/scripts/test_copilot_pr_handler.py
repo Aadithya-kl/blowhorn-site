@@ -11,6 +11,24 @@ import copilot_pr_handler as handler  # noqa: E402
 
 
 class HandlerTest(unittest.TestCase):
+    def test_api_request_rejects_non_object_json(self):
+        response = mock.MagicMock()
+        response.__enter__.return_value.read.return_value = b"[]"
+
+        with mock.patch.dict(os.environ, {"GH_TOKEN": "secret-token"}):
+            with mock.patch.object(
+                handler.urllib.request,
+                "urlopen",
+                return_value=response,
+            ):
+                with self.assertRaisesRegex(
+                    RuntimeError,
+                    r"GitHub API GET /repos/example returned non-object JSON",
+                ) as raised:
+                    handler.api_request("GET", "/repos/example")
+
+        self.assertNotIn("secret-token", str(raised.exception))
+
     def test_api_request_wraps_invalid_json(self):
         response = mock.MagicMock()
         response.__enter__.return_value.read.return_value = b"not JSON"

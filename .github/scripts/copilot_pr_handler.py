@@ -52,6 +52,10 @@ def api_request(method: str, path: str, body: dict | None = None) -> dict:
         raise RuntimeError(
             f"GitHub API {method} {path} returned invalid JSON"
         ) from error
+    if not isinstance(result, dict):
+        raise RuntimeError(
+            f"GitHub API {method} {path} returned non-object JSON"
+        )
     if result.get("errors"):
         raise RuntimeError(f"GitHub API {method} {path} returned errors: {result['errors']}")
     return result

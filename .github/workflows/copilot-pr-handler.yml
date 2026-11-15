@@ -3,6 +3,10 @@ name: Copilot PR Handler
 # Copilot coding agent opens draft pull requests whose workflows can wait for
 # approval. This privileged workflow runs only trusted code from master: it
 # never checks out or executes the pull request head.
+# Approval is deliberately workflow-agnostic: every pending run at the exact
+# pull request head SHA is approved, including runs from workflows added later.
+# Manual dispatch is a maintainer-only recovery path and intentionally bypasses
+# the automatic Copilot-author check.
 
 on:
   pull_request_target:
