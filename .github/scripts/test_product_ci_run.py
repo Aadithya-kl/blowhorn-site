@@ -83,6 +83,30 @@ class RunStepsTest(unittest.TestCase):
         self.assertIn("[5 passed]", out)
         self.assertNotIn("3 errors", out)
 
+    def test_a_failing_pytest_run_names_its_failing_tests_and_nothing_else(self):
+        code = ("import sys;"
+                "print('FAILED tests/test_private_module.py::Case::test_secret_branch - assert token == \\'hunter2\\'');"
+                "print('ERROR tests/sub/test_other.py::test_param[hunter2-x] - boom');"
+                "print('FAILED tests/../etc/passwd.py::x - hunter2');"
+                "print('FAILED /abs/hunter2.py::t');"
+                "print('== 2 failed, 5 passed in 1.00s ==');"
+                "sys.exit(1)")
+        _status, out = self._run([run.Step("test suite", _py(code), counts="pytest")])
+        self.assertIn("  failed tests/test_private_module.py::Case::test_secret_branch\n", out)
+        self.assertIn("  error tests/sub/test_other.py::test_param\n", out)
+        self.assertNotIn("hunter2", out)
+        self.assertNotIn("passwd", out)
+        self.assertIn("withheld", out)
+
+    def test_a_passing_pytest_run_names_no_tests(self):
+        code = "print('FAILED tests/test_a.py::test_b - flaky rerun'); print('== 5 passed in 1.00s ==')"
+        _status, out = self._run([run.Step("test suite", _py(code), counts="pytest")])
+        self.assertNotIn("tests/test_a.py", out)
+
+    def test_failing_test_names_are_capped(self):
+        lines = [f"FAILED tests/test_m.py::test_{i}" for i in range(run.MAX_FAILED_IDS + 5)]
+        self.assertEqual(len(run.pytest_failed_ids("\n".join(lines))), run.MAX_FAILED_IDS)
+
     def test_no_pytest_summary_prints_no_counts(self):
         code = "import sys; print('found 3 errors'); print('2 failed checks'); sys.exit(134)"
         _status, out = self._run([run.Step("test suite", _py(code), counts="pytest")])
@@ -174,7 +198,7 @@ class RunStepsTest(unittest.TestCase):
         self.assertEqual(steps[2].argv[:8], (
             "timeout", "-s", "ABRT", "900", "make", "cli-tests",
             "PYTHON=/opt/python/bin/python -u",
-            "PYTEST_ARGS=tests/ -q -o faulthandler_timeout=300",
+            "PYTEST_ARGS=tests/ -q -rfE -o faulthandler_timeout=300",
         ))
         self.assertTrue(steps[2].argv[8].startswith("PYTEST_WORKERS="))
         self.assertGreaterEqual(int(steps[2].argv[8].split("=", 1)[1]), 2)
