@@ -380,6 +380,44 @@ a.tag-chip {
   background: #000;
 }
 
+.video-dialog-youtube {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+
+.video-dialog-youtube iframe,
+.youtube-embed iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  aspect-ratio: 16 / 9;
+}
+
+.versus-film .vs-frame,
+.youtube-embed {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+}
+
+.youtube-embed-pending {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 16 / 9;
+  padding: 24px;
+  background: var(--surface-tint);
+  text-align: center;
+}
+
+.youtube-embed-pending p {
+  margin: 0;
+  max-width: 32em;
+}
+
 .video-dialog-bar {
   display: flex;
   align-items: center;

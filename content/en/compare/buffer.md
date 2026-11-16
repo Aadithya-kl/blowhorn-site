@@ -5,7 +5,7 @@
   "description": "Blowhorn isn't a bot. It's you. Buffer is the friendliest way to keep a steady, approved calendar on many networks, with every computer switched off. Blowhorn is for the moment you need many real voices on the networks developers use.",
   "layout": "versus",
   "weight": 10,
-  "lastmod": "2026-11-02",
+  "lastmod": "2026-11-16",
   "competitor": "Buffer",
   "mark": "Bu",
   "site_url": "https://buffer.com/",
@@ -139,5 +139,11 @@
   "aliases": [
     "/versus/buffer/"
   ],
-  "featured": true
+  "featured": true,
+  "video": {
+    "youtube_id": "TODO_YOUTUBE_ID",
+    "title": "Blowhorn vs Buffer",
+    "duration": "0:36",
+    "page": "resources/videos/comparisons/blowhorn-vs-buffer/"
+  }
 }
