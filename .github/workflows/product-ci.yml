@@ -65,6 +65,11 @@ jobs:
         with:
           python-version: "3.14"
 
+      # The product's asset-manifest test measures videos with ffprobe, and the
+      # runner image does not ship ffmpeg.
+      - name: Install ffmpeg (ffprobe)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends ffmpeg >/dev/null
+
       - name: Python suite (output withheld)
         run: make product-ci SUITE=python PRODUCT_DIR=product PRODUCT_CI_LOG="$RUNNER_TEMP/product-ci/python.log"
 
