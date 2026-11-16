@@ -7,7 +7,9 @@ lines must never reach a log here. Every command's output goes to a log file
 outside the workspace that is never printed or uploaded. The only lines
 printed are this script's fixed step labels, each step's exit status, and the
 pass/fail counts parsed out of the test runners' summary lines (numbers and a
-fixed set of words, nothing copied verbatim). The commands run without the
+fixed set of words, nothing copied verbatim), plus, for a failed pytest run, the
+node id of each failing test (path and test name only, checked against a strict
+pattern; never its message, diff or source lines). The commands run without the
 runner's file-command variables (GITHUB_STEP_SUMMARY and the like), so they
 cannot write a job summary, step output or environment change either, and
 without the calling make's state (MAKEFLAGS, MAKELEVEL), so they run as the
@@ -33,6 +35,10 @@ from pathlib import Path
 ANSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
 PYTEST_SUMMARY = re.compile(r"^=*\s*(.*?) in \d+(?:\.\d+)?s(?: \(\d+:\d\d:\d\d\))?\s*=*\s*$")
 PYTEST_COUNT = re.compile(r"\b(\d+) (passed|failed|skipped|xfailed|xpassed|errors?|deselected|warnings?)\b")
+#: pytest's short summary ("-rfE"): "FAILED tests/x.py::Case::test_y - message".
+#: Only the node id is kept, and only when it is a plain path::name id.
+PYTEST_FAILED = re.compile(r"^(FAILED|ERROR) (tests/(?:[A-Za-z0-9_-]+/)*[A-Za-z0-9_-]+\.py(?:::[A-Za-z0-9_]+){1,3})(?:\[[^\]]*\])?(?: - .*)?$")
+MAX_FAILED_IDS = 20
 VITEST_LINE = re.compile(r"^\s*(Test Files|Tests)\s+(.*)$")
 VITEST_COUNT = re.compile(r"\b(\d+) (passed|failed|skipped|todo)\b")
 CARGO_RESULT = re.compile(
@@ -72,7 +78,7 @@ def python_steps(python: str) -> list[Step]:
         # runner, so use every core, and at least 2 so xdist is on.
         Step("test suite", ("timeout", "-s", "ABRT", "900", "make", "cli-tests",
                             f"PYTHON={python} -u",
-                            "PYTEST_ARGS=tests/ -q -o faulthandler_timeout=300",
+                            "PYTEST_ARGS=tests/ -q -rfE -o faulthandler_timeout=300",
                             f"PYTEST_WORKERS={python_suite_workers()}"),
              timeout_s=960, counts="pytest"),
     ]
@@ -106,6 +112,18 @@ def pytest_counts(text: str) -> str:
         if summary:
             return ", ".join(f"{n} {word}" for n, word in PYTEST_COUNT.findall(summary.group(1)))
     return ""
+
+
+def pytest_failed_ids(text: str) -> list[str]:
+    """Node ids of failing pytest tests from the short summary; parametrize ids and messages dropped."""
+    ids: list[str] = []
+    for line in ANSI.sub("", text).splitlines():
+        match = PYTEST_FAILED.match(line.strip())
+        if match:
+            entry = f"{match.group(1).lower()} {match.group(2)}"
+            if entry not in ids:
+                ids.append(entry)
+    return ids[:MAX_FAILED_IDS]
 
 
 def vitest_counts(text: str) -> str:
@@ -178,6 +196,11 @@ def run_steps(steps: list[Step], product: Path, log: Path, out=sys.stdout) -> in
                 if counts:
                     line += f" [{counts}]"
             print(line, file=out, flush=True)
+            if status != 0 and step.counts == "pytest":
+                with log.open("rb") as read:
+                    read.seek(before)
+                    for entry in pytest_failed_ids(read.read().decode("utf-8", "replace")):
+                        print(f"  {entry}", file=out, flush=True)
             if status != 0:
                 print("Output is withheld because the product repository is private; "
                       "run the same suite in a local checkout to see it.", file=out, flush=True)
