@@ -48,8 +48,8 @@ carry `docs-rail-card` plus `docs-rail-card-toc` or `-end`, and those rules in
 `assets/scss/_styles_project.scss` decide which copy shows; a new rail card
 takes the same classes. Its mailto subject names the page the reader was on.
 
-The alternate home layouts (`/home-oil/`, `/home-reveille/`) do not render
-`signal.html` and carry no band. Prose links in the docs (synced from the
+The alternate home layout (`/home-reveille/`) does not render
+`signal.html` and carries no band. Prose links in the docs (synced from the
 product repository), the Field Manual, the Trust Center and the role and
 solution FAQs stay untagged on purpose; `check_tells.py` ignores links without
 UTM parameters.
