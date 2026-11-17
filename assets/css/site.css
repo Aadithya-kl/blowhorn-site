@@ -1761,14 +1761,6 @@ body { background: var(--surface); }
 }
 .brand-hero-copy > * + * { margin-top: var(--space-4); }
 .brand-hero-copy .body-lg { max-width: 34rem; }
-.brand-hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3) var(--space-4);
-  margin-top: var(--space-6);
-}
-.brand-hero-actions .caption { max-width: 22rem; }
 /* The two kit downloads: each button with its own caption underneath, side by side
    when there is room, stacked on narrow screens. */
 .brand-downloads {
@@ -2184,7 +2176,7 @@ body { background: var(--surface); }
   .brand-page { padding-top: 0; }
   .brand-section { break-before: page; border-top: 0; }
   .brand-section .h2, .brand-subhead, .section-head { break-after: avoid; }
-  .site-header, .site-footer, .brand-index, .brand-hero-actions, .brand-cta, .asset-gets, .asset-get, .copy, .skip-link { display: none !important; }
+  .site-header, .site-footer, .brand-index, .brand-cta, .asset-gets, .asset-get, .copy, .skip-link { display: none !important; }
   .brand-section { break-inside: auto; padding-block: var(--space-8); }
   .asset, .swatch, .rule, .type-card, .major-card, .clear-grid { break-inside: avoid; }
   .major-card { box-shadow: none; }
@@ -4105,7 +4097,7 @@ html[data-tells-bar="off"] .tells-bar { display: none; }
 .tells-callout-copy > * + * { margin-top: var(--intro-gap); }
 .tells-callout-copy p { max-width: var(--text-measure); }
 .tells-callout-copy .tells-actions { margin-top: var(--space-6); column-gap: var(--space-6); }
-.tells-callout-more { color: var(--link); }
+.tells-callout-more, .tells-callout-cta { color: var(--link); }
 @media (min-width: 720px) {
   .tells-callout { grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); gap: var(--space-8); }
 }

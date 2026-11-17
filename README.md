@@ -81,6 +81,7 @@ Every CI step that runs repository logic is a make target, and the workflow call
 | `check-no-internal` | the public build holds nothing from `/internal/`, and its offline search index exists and lists no `/internal/` page | `site-check` |
 | `check-naming` | no page says Layer5 Cloud or Blowhorn Cloud, names Layer5 outside the footer and legal pages, says machines, or says Macs in marketing copy; the docs say Chrome profile and Chrome extension | `site-check` |
 | `check-download-links` | no page or script links to `/releases/latest/download` | `site-check` |
+| `check-install-cta` | no page (docs excepted) has more than one teal primary button in its main content, and no link or button reads an old install label ("Download free", "Get Blowhorn", "Enlist a computer"); the home page is exempt until its rebuild (#418) | `site-check` |
 | `check-feeds` | the Resources RSS feeds validate | `site-check` |
 | `check-brand-kits` | the Brand page links only kit zips the build publishes, at their real sizes | `site-check` |
 | `check-tells` | every Blowhorn Tells placement in `data/tells.json` is still on its page (header, bar, footer, home band, compare, `/ai/`, `/agents/`, thanks, docs, 404), and every tagged Tells link carries the right UTM parameters ([docs/tells.md](docs/tells.md)) | `site-check` |
