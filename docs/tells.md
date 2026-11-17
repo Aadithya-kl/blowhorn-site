@@ -31,10 +31,8 @@ Build a link with the partial; never hard-code a Tells URL in a template:
 
 | Placement | Where | Template |
 | --- | --- | --- |
-| `bar` | Slim, dismissible bar: message + Am I a Bot?/Free CTA centered; dismiss far right; `text_short` below 720px | `tells-bar.html`, `tells-bar-head.html`, `assets/js/tells-bar.js` |
-| `nav` | Resources menu entry (label); Free pill text for the announcement-bar CTA | `header.html`, `tells-bar.html` |
+| `nav` | Resources menu entry (label) | `header.html` |
 | `home` | Band after Trust on the Signal home page (Sleeper Cell art) | `home/tells.html` |
-| `footer` | Free tools column | `footer.html` |
 | `compare` | Callout before the FAQ on every `/compare/<slug>/` page, and the FAQ links that point at Tells | `tells-callout.html` in `versus.html` |
 | `ai`, `agents` | Callout after the first section of `/ai/` and `/agents/` | `tells-callout.html` in `ai.html`, `agents.html` |
 | `thanks` | Card after the install steps on `/download/thanks/` | `download-thanks.html` |
@@ -53,24 +51,6 @@ The alternate home layout (`/home-reveille/`) does not render
 product repository), the Field Manual, the Trust Center and the role and
 solution FAQs stay untagged on purpose; `check_tells.py` ignores links without
 UTM parameters.
-
-## The announcement bar
-
-The bar centers a group of the message text immediately followed by one CTA:
-the "Am I a Bot?" label and the green Free pill share a single link to Tells
-(`utm_content=bar`). Free appears only in the pill. The dismiss control is
-pinned to the far right and kept clear of the CTA (equal side padding keeps
-the group optically centered). Below 720px the bar shows `bar.text_short`
-instead of `bar.text` on one line with the CTA; there is no wrap or ellipsis.
-
-Dismissing the bar stores `dismissed` under `bar.storage_key`
-(`bh-tells-bar-v1`) in localStorage. An inline script in the head
-(`tells-bar-head.html`) sets `data-tells-bar="off"` on `<html>` before first
-paint, so a returning reader never sees it flash or the header jump. To show
-the bar again to everyone, bump the key (for example `bh-tells-bar-v2`). The
-close button is hidden until the script runs, so without JavaScript the bar
-simply stays. The bar scrolls away with the page; the mobile menu sheet sizes
-itself from the header's real bottom edge (`--sheet-top`, `assets/js/nav.js`).
 
 ## Copy rules
 

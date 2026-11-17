@@ -319,6 +319,7 @@ REDIRECTS = {
     "privacy.html": "https://blowhorn.ai/legal/privacy/",
     "terms.html": "https://blowhorn.ai/legal/terms/",
     "install/index.html": "/docs/how-to/set-up/install-the-app/",
+    "trust-center/index.html": "https://blowhorn.ai/legal/",
 }
 # Other files that must be published at these paths. /signup/, /login/ and
 # /early-access/ redirect to params.cloud_url, so only their presence is checked here.
