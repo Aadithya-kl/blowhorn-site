@@ -63,6 +63,11 @@ include .github/build/Makefile.show-help.mk
 #   check-api-reference Production build, then (once params.apiReference.spec is set)
 #                      fail if the API reference page drifts from its spec, loses
 #                      its "Not an HTTP API" notice or names the private repository.
+#   check-tokens       Source check, no build: fail if static/assets/brand/
+#                      tokens.json drifted from the product's marketing/brand/
+#                      tokens.json, or .ui, .caption or .label in assets/css/site.css
+#                      drifted from the token sizes. Passes (and checks nothing)
+#                      when no product checkout is present (issue #436).
 #   api-reference-export
 #                      Write the public API spec from a local OpenAPI file:
 #                      make api-reference-export API_SPEC_SRC=path/to/openapi.yaml
@@ -351,7 +356,7 @@ check-platform-pages: site-build
 	python3 .github/scripts/check_platform_pages.py $(BUILD_DIR)
 
 ## Build for production once, then validate-html, check-links, check-third-party and check-urls, plus check-schemas (what site.yml runs).
-site-check: check-schemas validate-html check-links check-third-party check-urls check-no-internal check-theme check-platform-docs check-naming check-action-matrix check-platform-pages check-download-links check-install-cta check-feeds check-brand-kits check-tells check-tips check-api-reference
+site-check: check-schemas validate-html check-links check-third-party check-urls check-no-internal check-theme check-platform-docs check-naming check-action-matrix check-platform-pages check-download-links check-install-cta check-feeds check-brand-kits check-tells check-tips check-api-reference check-tokens
 
 ## Production build, then fail if any built page or script links to /releases/latest/download (an axi release can hold Latest; build download URLs from data/download.json).
 check-download-links: site-build
@@ -372,6 +377,17 @@ check-feeds: site-build
 ## Source check, no build: fail if a published article or video lacks a column (blowhorn #1555), or a published tip lacks a video or a unique tipOrder (blowhorn #1554).
 check-tips:
 	python3 .github/scripts/check_tips.py
+
+## Source check, no build: fail if static/assets/brand/tokens.json drifted from
+## the product's marketing/brand/tokens.json, or .ui, .caption or .label in
+## assets/css/site.css drifted from the token sizes (issue #436). Passes (and
+## checks nothing) when no product checkout is present: plain CI has none, so
+## run it where one exists, e.g. make check-tokens BLOWHORN_DIR=../blowhorn.
+## Regenerate the site file from the product file with
+## python3 .github/scripts/check_brand_tokens.py --write, then fix any CSS drift
+## the check reports by hand.
+check-tokens:
+	python3 .github/scripts/check_brand_tokens.py
 
 ## Production build, then fail if a Blowhorn Tells placement (data/tells.json) left its page or a Tells link lost its UTM tags.
 check-tells: site-build
@@ -549,6 +565,7 @@ clean:
 	check-feeds \
 	check-tips \
 	check-tells \
+	check-tokens \
 	check-api-reference \
 	api-reference-export \
 	check-theme \
