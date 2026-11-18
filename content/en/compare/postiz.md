@@ -62,7 +62,7 @@
     {
       "f": "Price",
       "t": "Per channel count",
-      "b": "Free plan available, see pricing"
+      "b": "Free during early access"
     }
   ],
   "signal": "Postiz and Blowhorn agree more than they disagree: neither sells engagement. Our bet is on people. Blowhorn's sound wave includes the profiles your teammates and supporters add themselves, so the replies under your post come from people who actually chose to stand behind it.",

@@ -3342,9 +3342,11 @@ a.card.docs-card > * { margin-top: 0; }
 }
 
 /* ---------- Pricing (/pricing/) ----------
-   Four plan cards on glass, a CSS-only monthly/yearly switch (two radios and
-   :has(), monthly when :has() is unsupported), the refund promise and the FAQ.
-   Spacing follows the density tokens above. */
+   Plans come from data/pricing.yaml. With no tiers (early access) it is one
+   plan card beside the coming note (.pricing-single); with tiers, the plan
+   grid and a CSS-only monthly/yearly switch (two radios and :has(), monthly
+   when :has() is unsupported). Then what every plan includes, the limits
+   panel and the FAQ. Spacing follows the density tokens above. */
 .pricing-hero { max-width: 44rem; }
 .pricing-hero > * + * { margin-top: var(--intro-gap); }
 .pricing-hero .display { text-wrap: balance; }
@@ -3420,20 +3422,24 @@ a.card.docs-card > * { margin-top: 0; }
 }
 
 .pricing-included .h3 { font-size: 18px; }
-.pricing-refund { padding: clamp(24px, 5vw, 56px); border-radius: var(--radius-xl); }
-.refund-steps {
-  margin-top: var(--head-gap); padding: 0; list-style: none; counter-reset: refund;
+.pricing-single {
+  display: grid; gap: var(--grid-gap); align-items: center;
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 820px) {
+  .pricing-single { grid-template-columns: minmax(0, 26rem) minmax(0, 1fr); gap: calc(var(--section-y) / 2); }
+}
+.pricing-coming { max-width: var(--text-measure); }
+.pricing-coming > * + * { margin-top: var(--eyebrow-gap); }
+.plan-addon { margin-top: var(--space-4); color: var(--ink-muted); }
+.pricing-limits { padding: clamp(24px, 5vw, 56px); border-radius: var(--radius-xl); }
+.limit-list {
+  margin-top: var(--head-gap); padding: 0; list-style: none;
   display: grid; gap: var(--grid-gap); grid-template-columns: minmax(0, 1fr);
 }
-@media (min-width: 820px) { .refund-steps { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-.refund-steps li { counter-increment: refund; color: var(--ink-muted); }
-.refund-steps li::before {
-  content: counter(refund); display: grid; place-items: center;
-  width: 36px; height: 36px; margin-bottom: var(--space-3); border-radius: var(--radius-pill);
-  background: var(--teal); color: var(--on-teal); font-family: var(--font-display); font-weight: 800;
-}
-.refund-steps strong { display: block; color: var(--ink-wordmark); margin-bottom: var(--space-1); }
-.pricing-refund > .caption { margin-top: var(--head-gap); }
+@media (min-width: 820px) { .limit-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.limit-list li { color: var(--ink-muted); }
+.limit-list strong { display: block; color: var(--ink-wordmark); margin-bottom: var(--space-1); }
 .pricing-cta { margin-top: var(--head-gap); display: flex; flex-wrap: wrap; gap: var(--space-3); }
 @media (prefers-reduced-motion: reduce) {
   .billing-switch label { transition: none; }

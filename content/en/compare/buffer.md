@@ -63,7 +63,7 @@
     {
       "f": "Price",
       "t": "Per channel",
-      "b": "Free plan available, see pricing"
+      "b": "Free during early access"
     }
   ],
   "signal": "Buffer is honest software and it sells no engagement either, so this one is about reach, not ethics. A calendar publishes your post once, from one account. Feeds move on replies and real conversation in the first hour, from people who know you. Platforms are cracking down on anything that looks like a bot, and doing it all by hand does not scale. That gap is the job Blowhorn was built for: your own voice, at a human pace, amplified by real people.",

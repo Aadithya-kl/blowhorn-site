@@ -117,7 +117,7 @@
       "t": "Cloud, dedicated IP, pacing and daily caps; Dripify itself says no tool can guarantee LinkedIn will never restrict an account"
     },
     {
-      "b": "Free plan available, see pricing",
+      "b": "Free during early access",
       "f": "Price",
       "t": "Per seat, one LinkedIn account per seat; Pro and Advanced, plus Enterprise on custom quote"
     }

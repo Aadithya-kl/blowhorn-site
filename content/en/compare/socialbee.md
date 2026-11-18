@@ -57,7 +57,7 @@
     {
       "f": "Price",
       "t": "Per plan and profile count",
-      "b": "Free plan available, see pricing"
+      "b": "Free during early access"
     }
   ],
   "signal": "A steady feed is good hygiene. The posts that move a technical audience are the ones people argue about in the replies, and those need real people showing up.",
