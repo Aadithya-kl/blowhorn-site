@@ -49,7 +49,7 @@ rules that make an activity pending for a post run:
 
 ## Threads
 
-Activities that answer one another show as one thread under Activity › Upcoming: the root first, then its replies in order, under a `thread · N` line you can expand and collapse. Opening any part of a thread shows the whole chain in its editor, root first, with the open post marked. A thread is created root first from the command line; see [Content item contract](/docs/content-item-contract/).
+Activities that answer one another show as one thread under Activity › Upcoming: the root first, then its replies in order, under a `thread · N` line you can expand and collapse. Opening any part of a thread shows the whole chain in its editor, root first, with the open post marked. A thread is created root first from the command line; see [Content item contract](/docs/reference/content-item-contract/).
 
 ## Approve a waiting activity
 

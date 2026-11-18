@@ -60,6 +60,11 @@ include .github/build/Makefile.show-help.mk
 #   check-api-reference Production build, then (once params.apiReference.spec is set)
 #                      fail if the API reference page drifts from its spec, loses
 #                      its "Not an HTTP API" notice or names the private repository.
+#   check-tokens       Source check, no build: fail if static/assets/brand/
+#                      tokens.json drifted from the product's marketing/brand/
+#                      tokens.json, or .ui, .caption or .label in assets/css/site.css
+#                      drifted from the token sizes. Passes (and checks nothing)
+#                      when no product checkout is present (issue #436).
 #   api-reference-export
 #                      Write the public API spec from a local OpenAPI file:
 #                      make api-reference-export API_SPEC_SRC=path/to/openapi.yaml
@@ -84,6 +89,8 @@ include .github/build/Makefile.show-help.mk
 #                      Unit tests for the internal Worker's Access token check.
 #   test-scripts       Unit tests for the check scripts in .github/scripts/.
 #   workflow-check     actionlint on this repository's workflows.
+#   copilot-pr-handle  Mark a Copilot draft PR ready and approve pending runs
+#                      for its current head (copilot-pr-handler.yml).
 #   check              site-check, test-scripts and workflow-check.
 #   ci                 setup-ci, then everything site.yml's check job runs.
 #   dmg-check          Sanity-check a disk image: make dmg-check DMG=path/to/file.dmg
@@ -114,7 +121,7 @@ BIN_DIR ?= .bin
 # actionlint from PATH when installed; otherwise a pinned copy is downloaded into $(BIN_DIR).
 ACTIONLINT ?= $(shell command -v actionlint 2>/dev/null)
 # Workflows owned by this repo. Template workflows (labeler and friends) are left as-is.
-WORKFLOWS ?= .github/workflows/site.yml .github/workflows/publish-dmg.yml .github/workflows/sync-docs.yml .github/workflows/cloud-auth-smoke.yml .github/workflows/product-ci.yml .github/workflows/internal-site.yml .github/workflows/internal-site-auto.yml .github/workflows/publish-blowhorn-axi.yml
+WORKFLOWS ?= .github/workflows/site.yml .github/workflows/build-site-preview.yml .github/workflows/deploy-site-preview.yml .github/workflows/publish-dmg.yml .github/workflows/sync-docs.yml .github/workflows/cloud-auth-smoke.yml .github/workflows/product-ci.yml .github/workflows/internal-site.yml .github/workflows/internal-site-auto.yml .github/workflows/publish-blowhorn-axi.yml .github/workflows/copilot-pr-handler.yml
 # A blowhorn checkout for `make docs-sync` (the sync-docs.yml
 # workflow checks the product repo out at this path).
 SOURCE_DIR ?= product
@@ -180,6 +187,18 @@ build: check-go check-deps
 ## Build the site for a deploy preview.
 build-preview: check-go check-deps
 	npm run build:preview
+
+## Save the originating pull request action, number and head SHA for the preview artifact.
+site-preview-metadata:
+	python3 .github/scripts/site_preview.py save
+
+## Validate the downloaded preview against its workflow run and the current open PR.
+site-preview-validate:
+	python3 .github/scripts/site_preview.py validate
+
+## Keep the six most recently updated previews on gh-pages; retry concurrent pushes.
+site-preview-prune:
+	python3 .github/scripts/site_preview.py prune
 
 ## Build blowhorn.ai for production with optional base URL (what CI deploys).
 site-build: check-go check-deps
@@ -334,7 +353,7 @@ check-platform-pages: site-build
 	python3 .github/scripts/check_platform_pages.py $(BUILD_DIR)
 
 ## Build for production once, then validate-html, check-links, check-third-party and check-urls, plus check-schemas (what site.yml runs).
-site-check: check-schemas validate-html check-links check-third-party check-urls check-no-internal check-theme check-platform-docs check-naming check-action-matrix check-platform-pages check-download-links check-feeds check-brand-kits check-tells check-tips check-api-reference
+site-check: check-schemas validate-html check-links check-third-party check-urls check-no-internal check-theme check-platform-docs check-naming check-action-matrix check-platform-pages check-download-links check-feeds check-brand-kits check-tells check-tips check-api-reference check-tokens
 
 ## Production build, then fail if any built page or script links to /releases/latest/download (an axi release can hold Latest; build download URLs from data/download.json).
 check-download-links: site-build
@@ -351,6 +370,17 @@ check-feeds: site-build
 ## Source check, no build: fail if a published article or video lacks a column (blowhorn #1555), or a published tip lacks a video or a unique tipOrder (blowhorn #1554).
 check-tips:
 	python3 .github/scripts/check_tips.py
+
+## Source check, no build: fail if static/assets/brand/tokens.json drifted from
+## the product's marketing/brand/tokens.json, or .ui, .caption or .label in
+## assets/css/site.css drifted from the token sizes (issue #436). Passes (and
+## checks nothing) when no product checkout is present: plain CI has none, so
+## run it where one exists, e.g. make check-tokens BLOWHORN_DIR=../blowhorn.
+## Regenerate the site file from the product file with
+## python3 .github/scripts/check_brand_tokens.py --write, then fix any CSS drift
+## the check reports by hand.
+check-tokens:
+	python3 .github/scripts/check_brand_tokens.py
 
 ## Production build, then fail if a Blowhorn Tells placement (data/tells.json) left its page or a Tells link lost its UTM tags.
 check-tells: site-build
@@ -380,6 +410,11 @@ test-activity-feed:
 ## Run the unit tests for the check scripts in .github/scripts/, then the hero activity feed tests.
 test-scripts: test-internal-worker test-activity-feed
 	python3 -m unittest discover -s .github/scripts -p 'test_*.py'
+
+## Mark a Copilot draft PR ready and approve pending runs for its current head (copilot-pr-handler.yml). Requires GH_TOKEN, GITHUB_REPOSITORY and PR_NUMBER.
+copilot-pr-handle:
+	@test -n "$(PR_NUMBER)" || { echo "Error: pass PR_NUMBER=<pull request number>."; exit 1; }
+	PR_NUMBER="$(PR_NUMBER)" python3 .github/scripts/copilot_pr_handler.py
 
 ## Lint this repo's GitHub Actions workflows with actionlint.
 workflow-check:
@@ -430,11 +465,11 @@ cloud-auth-smoke:
 
 ## Run the private product repository's CI on a checkout of it, printing only step results and
 ## pass/fail counts (its output goes to PRODUCT_CI_LOG, never printed; product-ci.yml runs this):
-## make product-ci SUITE=python|desktop PRODUCT_DIR=<blowhorn checkout> [PRODUCT_CI_LOG=<file>]
+## make product-ci SUITE=python|desktop|rust PRODUCT_DIR=<blowhorn checkout> [PRODUCT_CI_LOG=<file>]
 PRODUCT_DIR ?= product
 PRODUCT_CI_LOG ?= $(or $(RUNNER_TEMP),/tmp)/product-ci/$(SUITE).log
 product-ci:
-	@test -n "$(SUITE)" || (echo "usage: make product-ci SUITE=python|desktop PRODUCT_DIR=<checkout>"; exit 1)
+	@test -n "$(SUITE)" || (echo "usage: make product-ci SUITE=python|desktop|rust PRODUCT_DIR=<checkout>"; exit 1)
 	python3 .github/scripts/product-ci/run.py $(SUITE) --product "$(PRODUCT_DIR)" --log "$(PRODUCT_CI_LOG)"
 
 ## Sync the user docs from a blowhorn checkout at $(SOURCE_DIR) into $(DOCS_DIR): make docs-sync REF=<tag|branch|sha> (see docs/deploy.md).
@@ -523,6 +558,7 @@ clean:
 	check-feeds \
 	check-tips \
 	check-tells \
+	check-tokens \
 	check-api-reference \
 	api-reference-export \
 	check-theme \
@@ -532,6 +568,9 @@ clean:
 	setup \
 	build \
 	build-preview \
+	site-preview-metadata \
+	site-preview-validate \
+	site-preview-prune \
 	build-production \
 	site-build \
 	site \
@@ -559,6 +598,7 @@ clean:
 	preview-internal \
 	check-blowhorn \
 	test-scripts \
+	copilot-pr-handle \
 	workflow-check \
 	check \
 	ci \

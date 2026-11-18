@@ -77,7 +77,7 @@ retry nor a drop is a run's to decide: the run records, you decide.
 
 ## Threads
 
-Activities that answer one another form a thread: one root, then its replies in order. The Activity screen groups each thread under its root, with a `thread · N` line you can expand and collapse. The root carries no thread fields; a reply names the root, the activity it answers, and its position from 1. The fields are set when the activity is created and never change afterwards. See [Content item contract](/docs/content-item-contract/).
+Activities that answer one another form a thread: one root, then its replies in order. The Activity screen groups each thread under its root, with a `thread · N` line you can expand and collapse. The root carries no thread fields; a reply names the root, the activity it answers, and its position from 1. The fields are set when the activity is created and never change afterwards. See [Content item contract](/docs/reference/content-item-contract/).
 
 ## Related
 
