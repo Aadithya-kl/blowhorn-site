@@ -18,7 +18,7 @@ Meta launched Muse on September 8. Each user gets a dedicated cloud VM running i
 
 On September 20, Amazon blocked it. Amazon told [GeekWire](https://www.geekwire.com/2026/amazon-blocks-metas-muse-ai-assistant-in-new-standoff-over-agentic-shopping/) it had first asked Meta to remove Amazon from the experience and Meta declined. Amazon gave three reasons: Meta never told Amazon that Muse would reach its store; the agent "doesn't identify itself when it browses"; and it "appears to capture and store customer credentials."
 
-The story did not end there. Around November 12, the "Muse from Meta" Chrome extension appeared on the Chrome Web Store, unannounced. On November 13, a video showed Amazon blocking the extension too, in the user's own tab on the user's own machine. Around the same day, Muse's shopping skill changed to "Do not search Amazon" unless the user asks. As GeekWire put it: "Amazon blocked Muse, so now Muse blocked Amazon."
+The story did not end there. Around November 12, the "Muse from Meta" Chrome extension appeared on the Chrome Web Store, unannounced. On November 13, a video showed Amazon blocking the extension too, in the user's own tab on the user's own computer. Around the same day, Muse's shopping skill changed to "Do not search Amazon" unless the user asks. As GeekWire put it: "Amazon blocked Muse, so now Muse blocked Amazon."
 
 ## How Amazon spots an agent
 
@@ -50,7 +50,7 @@ Meta has never responded on the record to the block itself. What it has done ins
 
 - **Partnerships.** Retail connectors announced at Connect on September 23: Walmart, Best Buy, Sephora, and others, plus Shopify and Shop Pay agentic checkout.
 - **Identity standards.** Meta co-launched the Personal Agent Protocol ("Poppy"), which reached v1.0 on November 13 with Shopify enabled for every merchant; Muse now checks for Poppy first on every site. DataDome also found Meta quietly testing Web Bot Auth signing of some Muse requests since around October 12, unannounced.
-- **New surfaces.** The Chrome extension and Mac operation move the agent onto the user's own machine instead of the cloud VM.
+- **New surfaces.** The Chrome extension and Mac operation move the agent onto the user's own computer instead of the cloud VM.
 - **Quiet compliance.** The shopping skill now leaves Amazon out by default.
 
 The block has not loosened. On Amazon's October 29 earnings call, CEO Andy Jassy said Amazon expects to work with "horizontal agents" eventually, but that its own Alexa for Shopping will be the main agent people use to shop Amazon.
@@ -60,7 +60,7 @@ The block has not loosened. On Amazon's October 29 earnings call, CEO Andy Jassy
 1. **Agents that browse as you, from your own browser, are the ones that pass.** The cloud VM is what got flagged. Your own connection, your own fingerprint, your own signed-in sessions are what read as human.
 2. **Identity is becoming the price of admission.** Platforms are writing agent rules into their terms, and declared identity, through protocols like Poppy and Web Bot Auth, is the way in. Expect more of this, not less.
 3. **Do not fight bot checks.** Muse itself refuses to solve them, and its terms forbid bypassing another service's access controls. When a site says no, the honest move is the human step: take control of the browser and do that step yourself.
-4. **Behavior is the signal you control.** A steady human pace, real pauses, and your own sessions are what read as human. Bursts and machine-regular timing read as a bot.
+4. **Behavior is the signal you control.** A steady human pace, real pauses, and your own sessions are what read as human. Bursts and unnaturally regular timing read as a bot.
 5. **Read the terms before you automate against a platform.** Amazon wrote its Agents section a month before the block. The block was the enforcement, not the surprise.
 
 ## Where Blowhorn fits
