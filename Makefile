@@ -418,8 +418,12 @@ test-activity-feed:
 test-download:
 	node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test assets/js/download.test.mjs
 
-## Run the unit tests for the check scripts in .github/scripts/, then the hero activity feed and download page tests.
-test-scripts: test-internal-worker test-activity-feed test-download
+## Unit tests for the asset catalog search and grid paging (node:test, no extra dependencies).
+test-asset-catalog:
+	node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test assets/js/asset-catalog.test.mjs
+
+## Run the unit tests for the check scripts in .github/scripts/, then the hero activity feed, download page and asset catalog tests.
+test-scripts: test-internal-worker test-activity-feed test-download test-asset-catalog
 	python3 -m unittest discover -s .github/scripts -p 'test_*.py'
 
 ## Mark a Copilot draft PR ready and approve pending runs for its current head (copilot-pr-handler.yml). Requires GH_TOKEN, GITHUB_REPOSITORY and PR_NUMBER.
