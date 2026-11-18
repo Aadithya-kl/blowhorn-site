@@ -84,6 +84,8 @@ include .github/build/Makefile.show-help.mk
 #                      Unit tests for the internal Worker's Access token check.
 #   test-scripts       Unit tests for the check scripts in .github/scripts/.
 #   workflow-check     actionlint on this repository's workflows.
+#   copilot-pr-handle  Mark a Copilot draft PR ready and approve pending runs
+#                      for its current head (copilot-pr-handler.yml).
 #   check              site-check, test-scripts and workflow-check.
 #   ci                 setup-ci, then everything site.yml's check job runs.
 #   dmg-check          Sanity-check a disk image: make dmg-check DMG=path/to/file.dmg
@@ -114,7 +116,7 @@ BIN_DIR ?= .bin
 # actionlint from PATH when installed; otherwise a pinned copy is downloaded into $(BIN_DIR).
 ACTIONLINT ?= $(shell command -v actionlint 2>/dev/null)
 # Workflows owned by this repo. Template workflows (labeler and friends) are left as-is.
-WORKFLOWS ?= .github/workflows/site.yml .github/workflows/publish-dmg.yml .github/workflows/sync-docs.yml .github/workflows/cloud-auth-smoke.yml .github/workflows/product-ci.yml .github/workflows/internal-site.yml .github/workflows/internal-site-auto.yml .github/workflows/publish-blowhorn-axi.yml
+WORKFLOWS ?= .github/workflows/site.yml .github/workflows/build-site-preview.yml .github/workflows/deploy-site-preview.yml .github/workflows/publish-dmg.yml .github/workflows/sync-docs.yml .github/workflows/cloud-auth-smoke.yml .github/workflows/product-ci.yml .github/workflows/internal-site.yml .github/workflows/internal-site-auto.yml .github/workflows/publish-blowhorn-axi.yml .github/workflows/copilot-pr-handler.yml
 # A blowhorn checkout for `make docs-sync` (the sync-docs.yml
 # workflow checks the product repo out at this path).
 SOURCE_DIR ?= product
@@ -180,6 +182,18 @@ build: check-go check-deps
 ## Build the site for a deploy preview.
 build-preview: check-go check-deps
 	npm run build:preview
+
+## Save the originating pull request action, number and head SHA for the preview artifact.
+site-preview-metadata:
+	python3 .github/scripts/site_preview.py save
+
+## Validate the downloaded preview against its workflow run and the current open PR.
+site-preview-validate:
+	python3 .github/scripts/site_preview.py validate
+
+## Keep the six most recently updated previews on gh-pages; retry concurrent pushes.
+site-preview-prune:
+	python3 .github/scripts/site_preview.py prune
 
 ## Build blowhorn.ai for production with optional base URL (what CI deploys).
 site-build: check-go check-deps
@@ -307,6 +321,7 @@ check-schemas:
 	npx --yes ajv-cli@$(AJV_CLI_VERSION) validate --strict=false -s schemas/action_examples.schema.json -d data/action_examples.json
 	npx --yes ajv-cli@$(AJV_CLI_VERSION) validate --strict=false -s schemas/tells.schema.json -d data/tells.json
 	npx --yes ajv-cli@$(AJV_CLI_VERSION) validate --strict=false -s schemas/support.schema.json -d data/support.json
+	npx --yes ajv-cli@$(AJV_CLI_VERSION) validate --strict=false -s schemas/social_links.schema.json -d data/social_links.json
 	npx --yes ajv-cli@$(AJV_CLI_VERSION) validate --strict=false -s schemas/docs_events.schema.json -r schemas/defs/docs-event.schema.json -d data/docs_events.json
 	npx --yes ajv-cli@$(AJV_CLI_VERSION) validate --strict=false -s schemas/internal_access.schema.json -d internal-worker/access.json
 	npx --yes ajv-cli@$(AJV_CLI_VERSION) validate --strict=false -s schemas/bookmarklet.schema.json -d data/bookmarklet.json
@@ -380,6 +395,11 @@ test-activity-feed:
 test-scripts: test-internal-worker test-activity-feed
 	python3 -m unittest discover -s .github/scripts -p 'test_*.py'
 
+## Mark a Copilot draft PR ready and approve pending runs for its current head (copilot-pr-handler.yml). Requires GH_TOKEN, GITHUB_REPOSITORY and PR_NUMBER.
+copilot-pr-handle:
+	@test -n "$(PR_NUMBER)" || { echo "Error: pass PR_NUMBER=<pull request number>."; exit 1; }
+	PR_NUMBER="$(PR_NUMBER)" python3 .github/scripts/copilot_pr_handler.py
+
 ## Lint this repo's GitHub Actions workflows with actionlint.
 workflow-check:
 ifeq ($(ACTIONLINT),)
@@ -429,11 +449,11 @@ cloud-auth-smoke:
 
 ## Run the private product repository's CI on a checkout of it, printing only step results and
 ## pass/fail counts (its output goes to PRODUCT_CI_LOG, never printed; product-ci.yml runs this):
-## make product-ci SUITE=python|desktop PRODUCT_DIR=<blowhorn checkout> [PRODUCT_CI_LOG=<file>]
+## make product-ci SUITE=python|desktop|rust PRODUCT_DIR=<blowhorn checkout> [PRODUCT_CI_LOG=<file>]
 PRODUCT_DIR ?= product
 PRODUCT_CI_LOG ?= $(or $(RUNNER_TEMP),/tmp)/product-ci/$(SUITE).log
 product-ci:
-	@test -n "$(SUITE)" || (echo "usage: make product-ci SUITE=python|desktop PRODUCT_DIR=<checkout>"; exit 1)
+	@test -n "$(SUITE)" || (echo "usage: make product-ci SUITE=python|desktop|rust PRODUCT_DIR=<checkout>"; exit 1)
 	python3 .github/scripts/product-ci/run.py $(SUITE) --product "$(PRODUCT_DIR)" --log "$(PRODUCT_CI_LOG)"
 
 ## Sync the user docs from a blowhorn checkout at $(SOURCE_DIR) into $(DOCS_DIR): make docs-sync REF=<tag|branch|sha> (see docs/deploy.md).
@@ -531,6 +551,9 @@ clean:
 	setup \
 	build \
 	build-preview \
+	site-preview-metadata \
+	site-preview-validate \
+	site-preview-prune \
 	build-production \
 	site-build \
 	site \
@@ -558,6 +581,7 @@ clean:
 	preview-internal \
 	check-blowhorn \
 	test-scripts \
+	copilot-pr-handle \
 	workflow-check \
 	check \
 	ci \

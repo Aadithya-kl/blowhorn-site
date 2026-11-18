@@ -1001,7 +1001,7 @@ html[data-theme="signal"] #platforms .logo-tile img[src*="github-invertocat-blac
 .constellation-ctl { z-index: 1; margin-top: var(--space-4); }
 /* The platforms clip (platforms-clip.html): one framed loop under the section
    head; its Pause motion reuses the constellation button. */
-.plat-clip { max-width: 960px; margin: var(--space-8) auto 0; text-align: center; }
+.plat-clip { max-width: 960px; margin: var(--space-8) auto var(--space-4); text-align: center; }
 .plat-clip-video {
   width: 100%;
   height: auto;
@@ -1036,11 +1036,12 @@ html[data-theme="signal"] #platforms .logo-tile img[src*="github-invertocat-blac
   margin: 0;
   padding: 0;
   animation: constellation-spin 48s linear infinite;
+  pointer-events: none;
 }
 .constellation:hover .constellation-orbit,
 .constellation:hover .constellation-item .logo-tile,
-.constellation:focus-within .constellation-orbit,
-.constellation:focus-within .constellation-item .logo-tile,
+.constellation:has(.constellation-item :focus) .constellation-orbit,
+.constellation:has(.constellation-item :focus) .constellation-item .logo-tile,
 .constellation.is-paused .constellation-orbit,
 .constellation.is-paused .constellation-item .logo-tile {
   animation-play-state: paused;
@@ -1050,6 +1051,7 @@ html[data-theme="signal"] #platforms .logo-tile img[src*="github-invertocat-blac
   left: 50%;
   top: 50%;
   margin: -24px 0 0 -24px;
+  pointer-events: auto;
   --angle: calc((var(--n, 0) * 360deg) / var(--total, 11));
   transform: rotate(var(--angle)) translate(min(30vw, 200px)) rotate(calc(-1 * var(--angle)));
 }
@@ -1290,3 +1292,33 @@ html[data-theme="signal"] #platforms .logo-tile img[src*="github-invertocat-blac
 }
 @keyframes posture-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 @media (max-width: 599px) { .posture { padding: var(--space-6) var(--space-4); } }
+
+/* Distributed teams (#teams): the activity card sits beside the intro on
+   wide screens (intro two thirds, card one third of the wrap) and under the
+   intro on phones. It is not wrapped in another card, so its hairline does
+   not stack on a second border. Grid gap is the only space between the
+   head, the card, the points and the CTA. */
+.home-signal #teams .teams-layout {
+  display: grid;
+  gap: var(--space-8);
+}
+.home-signal #teams .activity-feed-slot { min-width: 0; }
+.home-signal #teams .activity-feed { margin-top: 0; width: 100%; }
+.home-signal #teams .teams-layout > .section-body { margin-top: 0; }
+@media (min-width: 960px) {
+  .home-signal #teams .teams-layout {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    column-gap: var(--space-12);
+    row-gap: var(--space-8);
+    align-items: start;
+  }
+  .home-signal #teams .section-head { grid-column: 1; grid-row: 1; }
+  .home-signal #teams .activity-feed-slot {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .home-signal #teams .teams-layout > .grid,
+  .home-signal #teams .teams-layout > .section-body {
+    grid-column: 1 / -1;
+  }
+}
