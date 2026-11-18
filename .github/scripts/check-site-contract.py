@@ -34,6 +34,13 @@ PAGES = {
         "action-react", "action-follow", "action-unfollow", "action-accept",
         "action-withdraw", "action-find", "action-analytics",
     ],
+    "integrations/actions/index.html": [
+        "main", "matrix-title",
+        "group-broadcast", "group-rally", "group-ranks", "group-recon",
+        "action-post", "action-comment", "action-reply", "action-amplify",
+        "action-react", "action-star", "action-follow", "action-unfollow",
+        "action-accept", "action-withdraw", "action-find", "action-analytics",
+    ],
     "download/index.html": [
         "main", "glyph-download", "download-title", "download-status",
     ],
