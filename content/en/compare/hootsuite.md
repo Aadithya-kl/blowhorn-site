@@ -63,7 +63,7 @@
     {
       "f": "Price",
       "t": "Per user, per month",
-      "b": "Free plan available, see pricing"
+      "b": "Free during early access"
     }
   ],
   "signal": "Hootsuite's boost is paid advertising, and ads are a fair, labeled trade. What Blowhorn adds is the thing ads can't buy: people who know you, replying and reposting because they actually care about what you shipped. When platforms crack down on anything that looks like a bot, a reply from a real person still reads as a person.",

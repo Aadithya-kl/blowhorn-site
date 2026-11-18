@@ -119,7 +119,7 @@
       "t": "Cloud, dedicated IP, warm-up, limit ranges; Expandi itself says no tool guarantees protection"
     },
     {
-      "b": "Free plan available, see pricing",
+      "b": "Free during early access",
       "f": "Price",
       "t": "Per seat, one LinkedIn account per seat; Business plus Agency on custom quote"
     }

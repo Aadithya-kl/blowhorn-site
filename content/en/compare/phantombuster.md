@@ -62,7 +62,7 @@
     {
       "f": "Price",
       "t": "Per seat or license",
-      "b": "Free plan available, see pricing"
+      "b": "Free during early access"
     }
   ],
   "signal": "Lists and enrichment are about finding people. Blowhorn is about being worth answering when you find them: posts your own people amplify, and replies that turn into conversations.",

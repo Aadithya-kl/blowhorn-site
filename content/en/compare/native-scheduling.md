@@ -56,7 +56,7 @@
     {
       "f": "Price",
       "t": "Free",
-      "b": "Free plan available, see pricing"
+      "b": "Free during early access"
     }
   ],
   "signal": "A post tends to do best when real people react early. Blowhorn helps the profiles you run show up on time, as themselves, with no bought likes.",

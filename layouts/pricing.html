@@ -1,8 +1,11 @@
-{{- /* The pricing page at /pricing/ (content/en/pricing/_index.md). Plans,
-  prices and refund terms come from the product repository's pricing decision
-  (Option B, annual is ten months for twelve). The monthly/annual switch is two
-  radio buttons and CSS only: no script, and monthly shows when :has() is not
-  supported. */ -}}
+{{- /* The pricing page at /pricing/ (content/en/pricing/_index.md). Plans come
+  from data/pricing.yaml; its header comment documents the shape. While
+  tiers is empty (early access, no paid ladder adopted) the page shows the
+  one current_plan card beside the coming note. Once tiers has entries it
+  shows the tier cards and the monthly/yearly switch, which is two radio
+  buttons and CSS only: no script, and monthly shows when :has() is not
+  supported. The page copy (lead, included, faq) stays in front matter so
+  the FAQPage JSON-LD reads it. */ -}}
 {{ define "head" }}
     {{- $faq := slice -}}
     {{- range .Params.faq }}{{ $faq = $faq | append (dict "@type" "Question" "name" .q "acceptedAnswer" (dict "@type" "Answer" "text" .a)) }}{{ end }}
@@ -10,26 +13,33 @@
 {{- end }}
 
 {{ define "main" }}
+    {{- $pricing := site.Data.pricing -}}
+    {{- if not $pricing }}{{ errorf "pricing.html: data/pricing.yaml is missing" }}{{ end -}}
+    {{- $tiers := $pricing.tiers | default slice -}}
+    {{- $plan := $pricing.current_plan -}}
+    {{- if and (not $tiers) (not $plan) }}{{ errorf "data/pricing.yaml: tiers is empty, so current_plan is required" }}{{ end -}}
+    {{- if not $pricing.limits }}{{ errorf "data/pricing.yaml: limits is required" }}{{ end -}}
     {{- $download := "download/" | relURL }}
     <main id="main" class="page pricing-page">
       <div class="wrap">
         <header class="pricing-hero">
           <p class="label">Pricing</p>
-          <h1 id="pricing-title" class="display">Plans that grow with your voice</h1>
+          <h1 id="pricing-title" class="display">{{ if $tiers }}Plans that grow with your voices{{ else }}One plan, and it's free{{ end }}</h1>
           <p class="body-lg muted">{{ .Params.lead }}</p>
         </header>
 
         <section class="pricing-section pricing-plans" aria-labelledby="plans-title">
           <h2 id="plans-title" class="visually-hidden">Plans</h2>
+          {{- if $tiers }}
           <input class="visually-hidden" type="radio" name="billing" id="billing-monthly" value="monthly" checked>
           <input class="visually-hidden" type="radio" name="billing" id="billing-annual" value="annual">
           <div class="billing-switch glass" role="group" aria-label="Billing period">
             <label for="billing-monthly">Monthly</label>
-            <label for="billing-annual">Yearly <span class="save-badge">2 months free</span></label>
+            <label for="billing-annual">Yearly{{ with $pricing.annual_badge }} <span class="save-badge">{{ . }}</span>{{ end }}</label>
           </div>
           <ul class="pricing-grid">
-            {{- range $i, $t := .Params.tiers }}
-            <li class="plan card{{ if .featured }} plan-featured card-paper{{ else }} {{ partial "card-variant.html" (dict "i" $i "grid" "pricing-grid" "n" (len $.Params.tiers)) }}{{ end }}">
+            {{- range $i, $t := $tiers }}
+            <li class="plan card{{ if .featured }} plan-featured card-paper{{ else }} {{ partial "card-variant.html" (dict "i" $i "grid" "pricing-grid" "n" (len $tiers)) }}{{ end }}">
               {{- with .badge }}<p class="plan-badge caption">{{ . }}</p>{{ end }}
               <h3 class="h3 plan-name">{{ .name }}</h3>
               <p class="plan-blurb">{{ .blurb }}</p>
@@ -37,21 +47,48 @@
                 <span class="price-monthly"><span class="price-amount">${{ .monthly }}</span> <span class="price-unit">{{ .unit_m }}</span></span>
                 <span class="price-annual"><span class="price-amount">${{ .annual }}</span> <span class="price-unit">{{ .unit_a }}</span></span>
               </p>
-              <p class="plan-note caption"><span class="price-monthly">{{ if eq .monthly "0" }}No card needed{{ else }}Or ${{ .annual }} yearly, 2 months free{{ end }}</span><span class="price-annual">{{ with .note_a }}{{ . }}{{ else }}No card needed{{ end }}</span></p>
-              {{- /* The free plan is the install call to action; the paid plans name their plan. Only the featured plan is the page's primary. */ -}}
+              <p class="plan-note caption"><span class="price-monthly">{{ if eq .monthly "0" }}No card needed{{ else }}Or ${{ .annual }} {{ .unit_a }}{{ end }}</span><span class="price-annual">{{ with .note_a }}{{ . }}{{ else }}No card needed{{ end }}</span></p>
+              {{- /* A free tier is the install call to action; a paid tier names its plan. Only the featured tier is the page's primary. */ -}}
               {{- if eq .monthly "0" }}
               {{ partial "download-button.html" (dict "kind" "secondary" "class" "plan-cta") }}
               {{- else }}
               <a class="button{{ if .featured }} button-primary{{ end }} plan-cta" href="{{ $download }}">{{ .cta }}</a>
               {{- end }}
               <ul class="plan-features">
+                {{- with .voices }}
+                <li>{{ . }} {{ cond (eq (string .) "1") "voice" "voices" }}</li>
+                {{- end }}
                 {{- range .features }}
                 <li>{{ . }}</li>
                 {{- end }}
               </ul>
+              {{- with .addon }}<p class="plan-addon caption">{{ . }}</p>{{ end }}
             </li>
             {{- end }}
           </ul>
+          {{- else }}
+          {{- /* One plan: the featured card (paper) is the page's teal primary; the coming note sits beside it. */}}
+          <div class="pricing-single">
+            <div class="plan card card-paper">
+              <h3 class="h3 plan-name">{{ $plan.name }}</h3>
+              <p class="plan-blurb">{{ $plan.blurb }}</p>
+              <p class="plan-price"><span class="price-amount">${{ $plan.price }}</span> <span class="price-unit">{{ $plan.unit }}</span></p>
+              <p class="plan-note caption">No card needed</p>
+              {{ partial "download-button.html" (dict "kind" "primary" "class" "plan-cta") }}
+              <ul class="plan-features">
+                {{- range $plan.features }}
+                <li>{{ . }}</li>
+                {{- end }}
+              </ul>
+            </div>
+            {{- with $pricing.coming }}
+            <div class="pricing-coming">
+              <p class="label">Paid plans</p>
+              <p class="body-lg">{{ . }}</p>
+            </div>
+            {{- end }}
+          </div>
+          {{- end }}
         </section>
 
         <section class="pricing-section" aria-labelledby="included-title">
@@ -69,19 +106,17 @@
           </ul>
         </section>
 
-        <section id="refunds" class="pricing-section" aria-labelledby="refunds-title">
-          <div class="pricing-refund glass">
+        <section id="limits" class="pricing-section" aria-labelledby="limits-title">
+          <div class="pricing-limits glass">
             <div class="section-head">
-              <p class="label">Fair and simple</p>
-              <h2 id="refunds-title" class="h2">Our refund promise</h2>
+              <p class="label">No surprises</p>
+              <h2 id="limits-title" class="h2">What happens at a limit</h2>
             </div>
-            <ol class="refund-steps">
-              <li><strong>14 days to change your mind.</strong> On your first purchase, you can ask for a refund within 14 days.</li>
-              <li><strong>Haven't posted yet?</strong> You get all of it back.</li>
-              <li><strong>Already posted through Blowhorn?</strong> We keep one month at the monthly price and refund the rest.</li>
-              <li><strong>After 14 days.</strong> No cash refunds. Your plan keeps working to the end of the year you paid for, then your account moves to Free.</li>
-            </ol>
-            <p class="caption muted">Billing mistakes, double charges and refunds the law requires are always honored.</p>
+            <ul class="limit-list">
+              {{- range $pricing.limits }}
+              <li><strong>{{ .title }}</strong> {{ .body }}</li>
+              {{- end }}
+            </ul>
           </div>
         </section>
 

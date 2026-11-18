@@ -1,0 +1,41 @@
+# Plans for /pricing/ (layouts/pricing.html and layouts/pricing.md).
+#
+# status        early-access today. No paid ladder is adopted yet.
+# current_plan  the one card shown while tiers is empty: name, price (a number),
+#               unit, blurb, features (list).
+# tiers         empty today. When a ladder is adopted, add one entry per plan and
+#               the page switches to tier cards with the monthly/yearly toggle:
+#                 name, blurb, monthly, annual (strings, "0" for free),
+#                 unit_m, unit_a, note_a (optional yearly note),
+#                 features (list), cta (button text; ignored when monthly is "0",
+#                 which gets the Download button), featured (true on at most one,
+#                 the page's primary), badge (optional), voices (optional, how
+#                 many voices the plan includes), addon (optional, one line on
+#                 what extra voices cost).
+# annual_badge  optional, a short pill on the Yearly switch (tiers only).
+# coming        the note under the current plan while tiers is empty.
+# limits        "What happens at a limit": title, body.
+status: early-access
+
+current_plan:
+  name: Early access
+  blurb: Everything Blowhorn does today, for everyone.
+  price: 0
+  unit: while early access lasts
+  features:
+    - Everything Blowhorn can do, on every platform it works with
+    - Runs on a schedule while you're away
+    - Dry runs, the command line and MCP
+    - As many voices as you run
+
+tiers: []
+
+coming: Paid plans aren't set yet. When they are, they'll show up right here, with how many voices each one includes. You'll never pay per post, and dry runs stay free on every plan.
+
+limits:
+  - title: Today, no plan limits
+    body: During early access there's no cap on voices or platforms, so there's no plan limit to hit.
+  - title: Safety limits are for everyone
+    body: The only stops today are safety limits, such as how much a platform allows in a day. They're the same on every plan and never for sale.
+  - title: Nothing gets deleted
+    body: When paid plans arrive, going over a plan's voice count won't delete anything. Extra voices sit out until you make room.

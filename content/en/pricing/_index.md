@@ -1,97 +1,42 @@
 ---
 title: Pricing
-seo_title: Blowhorn pricing - plans for one voice or a whole team
-description: Start free. Solo is $19 a month, Pro is $39 a month for 10 profiles, Team is $35 a seat a month. Pay yearly and get two months free.
-lead: Start free, upgrade when you need more profiles or more platforms. Every plan posts from your own browser, as you, without handing anyone your password.
+seo_title: Blowhorn pricing - free during early access
+description: Blowhorn is free during early access, with no limits on voices or platforms. Paid plans aren't set yet. Here's what a voice is and how plans will count them.
+lead: Free while early access lasts. Every platform Blowhorn works with, and more than we can list here, as many voices as you run, all from your own browser, as you, without handing anyone your password.
 layout: pricing
-lastmod: 2026-10-13
+lastmod: 2026-11-18
 sitemap:
   changefreq: monthly
   priority: 0.8
-# Source of truth: the product repository's marketing/gtm/pricing-options.md
-# (Option B) and marketing/gtm/annual-pricing-and-refunds.md. Annual is ten
-# months for twelve.
-tiers:
-  - name: Free
-    blurb: Try Blowhorn on the two networks most people start with.
-    monthly: "0"
-    annual: "0"
-    unit_m: forever
-    unit_a: forever
-    features:
-      - 1 profile
-      - LinkedIn and X
-      - Posts from your own browser
-      - 1 computer
-  - name: Solo
-    blurb: For one person running a company's voice.
-    monthly: "19"
-    annual: "190"
-    unit_m: a month
-    unit_a: a year
-    note_a: Works out to $15.83 a month
-    cta: Start with Solo
-    features:
-      - 3 profiles
-      - Every supported platform
-      - Scheduler that runs while you're away
-      - Amplify a post from every profile
-      - Basic LinkedIn invite tidy-up
-      - Up to 2 computers
-  - name: Pro
-    featured: true
-    badge: Most room for one person
-    blurb: For the person who amplifies a whole crew of colleagues.
-    monthly: "39"
-    annual: "390"
-    unit_m: a month
-    unit_a: a year
-    note_a: Works out to $32.50 a month
-    cta: Start with Pro
-    features:
-      - 10 profiles
-      - Every supported platform
-      - Scheduler that runs while you're away
-      - Amplify a post from every profile
-      - Full LinkedIn invite tidy-up (send, accept, withdraw)
-      - Up to 5 computers
-  - name: Team
-    blurb: For small teams sharing one queue.
-    monthly: "35"
-    annual: "350"
-    unit_m: a seat a month
-    unit_a: a seat a year
-    note_a: Works out to $29.17 a seat a month
-    cta: Start with Team
-    features:
-      - Up to 25 profiles for your organization
-      - Every supported platform
-      - Scheduler that runs while you're away
-      - Amplify a post from every profile
-      - Full LinkedIn invite tidy-up (send, accept, withdraw)
-      - Up to 3 computers per seat
+# Plans live in data/pricing.yaml. No paid ladder is adopted yet; add tiers there when one is.
 included:
   - title: No passwords handed over
     body: Blowhorn posts from your own signed-in browser. We never ask for your password, cookies or two-factor codes.
   - title: No license keys
-    body: Your plan lives in your account. Sign in on a computer and it just knows what you have.
+    body: Your plan lives in your Blowhorn account. Sign in on a computer and it just knows what you have.
   - title: Keeps going offline
-    body: If your computer loses the internet, posting keeps working for up to 72 hours on your current plan.
-  - title: Never locked out
-    body: If a plan ends, nothing is deleted. Your queue, history and stats stay, and you drop to the Free limits.
+    body: Once plans are checked, posting keeps working for up to 72 hours if your computer loses the internet.
+  - title: Never charged per post
+    body: Plans will count voices, not clicks. Checking before you post is always free.
 faq:
-  - q: Is the Free plan really free?
-    a: Yes. One profile on LinkedIn and X, for as long as you like. No card needed.
-  - q: What is a profile?
-    a: A profile is one person's set of social accounts, such as your own LinkedIn and X. Solo covers 3 people, Pro covers 10.
-  - q: How does yearly billing work?
-    a: You pay for ten months and get twelve. Solo is $190 a year, Pro is $390 a year and Team is $350 a seat a year.
-  - q: Can I get a refund?
-    a: Yes, within 14 days of your first purchase. If you haven't posted through Blowhorn yet, you get everything back. If you have, we keep one month at the monthly price and refund the rest. After 14 days there are no cash refunds.
-  - q: What happens when I cancel?
-    a: You can cancel anytime from Settings, which stops the next renewal. You keep everything you paid for until the end of your billing period, then your account moves to Free. Your posts and history stay.
-  - q: Can I change plans later?
-    a: Yes. Upgrades start right away and you only pay the difference for the rest of your term. A switch from yearly to monthly starts at your next renewal.
+  - q: Is Blowhorn free right now?
+    a: Yes. During early access there's one plan, it's free, and there are no limits on voices or platforms. No card needed.
+  - q: How much will paid plans cost?
+    a: That isn't decided yet, so this page doesn't name a price. When plans are set, they'll be listed here with the voice count for each one.
+  - q: What is a "voice"?
+    a: "A voice is one name a reader sees as the author. In plain words: you, or a brand you post as. One voice covers that name on every platform, with one account on each, so your own LinkedIn, X, Bluesky, GitHub and every other account in your name are all one voice: you. A second account on the same platform is a second voice. Groups, subreddits, Slack channels and other places you post into don't count, even the ones you run."
+  - q: How do I count my voices?
+    a: Count names, not sign-ins. You plus your company is 2 voices. Add a LinkedIn Showcase Page for your product and it's 3. Running a LinkedIn Group and a subreddit on the side? Still 2. If one X sign-in also posts as your company's account, that's 2 voices, because readers see two names.
+  - q: What's the difference between a Blowhorn account, a Blowhorn profile and a Chrome profile?
+    a: "Your Blowhorn account is you as a customer: you sign in at cloud.blowhorn.ai, and it's where a plan lives. A Blowhorn profile holds one sign-in per platform, so a second LinkedIn or X account means a second Blowhorn profile. A Chrome profile belongs to your browser and keeps its saved sign-ins. Blowhorn pairs each Blowhorn profile with a Chrome profile on your computer and posts from there. A Blowhorn profile is usually one voice, but not always: LinkedIn Pages ride along inside the admin's Blowhorn profile and still count as voices of their own."
+  - q: Is adding a platform the same as adding a voice?
+    a: "No. Adding a platform to a voice you already have doesn't add a voice: put your X account next to your LinkedIn and you're still one voice. A new name, or a second account on a platform you already use, is a new voice. Slack is generous: one Slack sign-in can reach several workspaces, and channels never count."
+  - q: How do LinkedIn Pages and Groups count?
+    a: You post to a Company Page or Showcase Page through your own LinkedIn sign-in, inside your Blowhorn profile, so there's no extra login to manage. Counting still goes by the name readers see. A Company Page is your brand's voice, not yours, and each Showcase Page is a voice of its own. LinkedIn Groups are places you post into, so they're free and never count as voices, even the ones you own.
+  - q: My teammates and I share a brand. How does that count?
+    a: "The brand is one voice, however many people help with it. A teammate who posts as themselves is their own voice. Nobody hands over a password: Blowhorn never asks for one."
+  - q: What happens when I hit a limit?
+    a: During early access there are no plan limits to hit. The only stops are safety limits, which are the same for everyone and never for sale. When paid plans arrive, going over a plan's voice count won't delete anything.
   - q: Do I need a computer?
     a: Yes. Blowhorn runs on your computer, Apple silicon or Intel, together with a small browser extension.
 ---
