@@ -1,6 +1,6 @@
 ---
 title: "MCP server"
-description: "The local MCP server: one tool per CLI command, a few hidden by default, over stdio, with dry run as the default for anything that changes state."
+description: "The local MCP server: one tool per CLI command, a few split into two tools, a few hidden by default, over stdio, with dry run as the default for anything that changes state."
 weight: 225
 ---
 
@@ -10,7 +10,11 @@ learning a second surface. It is generated, not hand-written: at
 startup it reads `schemas/dist/openapi.yaml` and builds one tool per
 operation in that bundle, except the few
 [hidden by default](#hidden-tools), named by the operation id
-(`post`, `schedule_trigger_now`, `profile_list`, and so on). A command
+(`post`, `schedule_trigger_now`, `profile_list`, and so on). A few
+commands are split into two tools, so a distinct form gets its own
+tool: a read-only check, a fleet-wide scope, or a sign-up form. The
+base tool refuses the split-out argument and names the tool that owns
+it. A command
 added to the CLI appears as a tool the next time the server starts,
 and `make mcp-generate` fails if the tool list ever stops matching the
 bundle. The tool inputs are the command's flags and arguments, taken
@@ -35,7 +39,8 @@ or the CLI itself. The steps for connecting a client are in
 
 The tools are grouped the way the command bundle groups them, and a
 group's tools cover the commands in it, no more and no less, except
-the few that are [hidden by default](#hidden-tools):
+the few that are [hidden by default](#hidden-tools) and the few split
+into two tools:
 
 - **Act** - the outward actions: `post`, `comment`, `follow`,
   `unfollow`, `accept`, `withdraw`, `find`, and `source`, plus the
@@ -81,8 +86,9 @@ or later; see [The blowhorn-mcp command](#the-blowhorn-mcp-command)),
 and so does a checkout install (`tools/install.sh`). Any arguments after
 the command go to the server unchanged, so
 `~/.local/bin/blowhorn-mcp --list-tools` works too. The npm package
-`blowhorn-mcp`, run as `npx -y blowhorn-mcp`, is coming soon and not
-published yet.
+[`blowhorn-mcp`](https://www.npmjs.com/package/blowhorn-mcp) is
+published, so `npx -y blowhorn-mcp` (Node.js 20 or later) starts the
+same server; it still needs the Blowhorn app installed and opened once.
 
 Without the command, run the server from a checkout, with the
 checkout's Python environment:
@@ -231,7 +237,9 @@ computer.
 stdin. Passing it adds the command's `--payload-stdin` flag. Every
 other call runs with stdin closed.
 
-## Safety: dry run first, confirm to act
+<a id="safety-dry-run-first-confirm-to-act"></a>
+
+## Dry run first, confirm to act
 
 A tool that only reads runs as asked. A tool that changes anything
 runs with `--dry-run` unless the call passes `confirm` as true. With
@@ -299,32 +307,77 @@ Every tool carries the standard MCP hints, and they follow from
 `destructiveHint` tells a client whether a changing tool can take
 something away. False means the tool only adds new things, such as a
 post, a comment, a follow, a star, a Slack message, an accepted
-invitation or a new record. Blowhorn's own bookkeeping on the record
-it just acted on, such as marking a content item as posted, does not
-count as changing what exists. True means it may delete, overwrite, replace or undo existing
-state: an upsert, a set, an edit, a delete, an unfollow, a withdrawal,
+invitation, a new record or a reaction. Blowhorn's own bookkeeping on
+the record it just acted on, such as marking a content item as posted,
+does not count as changing what exists. True means it may delete,
+overwrite, replace or undo existing state: an upsert, a set, an edit,
+a delete, an unfollow, a withdrawal,
 a pause or a stop. Where the command's code leaves it unclear, the
 tool is marked destructive. A client may use the hint to ask you
 before a destructive call; an additive call still reaches the outside
 world, so it is still a dry run until `confirm` is true.
 
-The additive tools are `accept`, `chrome_create_profile`,
-`chrome_extension_enable`, `chrome_open_profile`, `comment`,
+The additive tools are `accept`, `analytics`,
+`chrome_create_profile`,
+`chrome_extension_enable`, `chrome_open_profile`, `chrome_remember`,
+`chrome_spaces_setup`, `comment`,
 `diagnostics_opened`, `diagnostics_support`, `find`, `follow`, `post`,
-`profile_create`, `risk_grid`, `slack_send` and `star`. Two of them,
-`find` and `risk_grid`, create nothing: they only read, and are listed
-as not destructive because they write nothing. Every other changing
-tool is destructive. Some that mostly add are destructive
-because one of their flags removes something: `slack_react`
-(`--remove`) and `schedule_bootstrap` (`--replace`).
+`profile_create`, `slack_react`, `slack_send` and `star`, and the
+page-invitation tool described in the next paragraph. Every other
+changing tool is destructive. `risk_grid` is read-only: it only reads
+your profiles and runs, so it runs for real with no `confirm`. `find`
+stays a preview: it writes nothing to your profiles, but every call
+signs in to Bluesky live, so it is a dry run until `confirm` is true,
+like any other changing tool. `analytics` stays a preview too: it only
+reads the platforms, but every call signs in live and writes export
+files, so it is a dry run until `confirm` is true, like any other
+changing tool.
+
+Some commands are split into more than one tool, so each form keeps
+its own label. The page-invitation command is additive, and its
+held-entry form, `invite_held`, carries `--requeue` and `--dismiss` (a
+destructive tool, because it removes a held entry or rewrites its
+note). `slack_react` is additive, and `slack_unreact` carries `--remove`
+(it deletes a reaction). `post` gains `post_check_queue`, which only
+shows pending posts and is read-only, and `chrome_attach_chrome` gains
+`chrome_attach_chrome_status`, the `status` action on its own, also
+read-only. `schedule_pause` and `schedule_resume` each gain an `--all`
+form for every computer sharing the store, `auth_login` gains
+`auth_login_sign_up`, `profile_auth` gains `profile_auth_all`, and
+`auth_anonymous_usage_stats` gains `auth_anonymous_usage_stats_on` and
+`auth_anonymous_usage_stats_off`, and `auth_share_activity_publicly` gains
+`auth_share_activity_publicly_on` and `auth_share_activity_publicly_off`.
+The base tool does not accept the split-out
+arguments: a call to `slack_react` that names `remove` is refused as an
+unknown argument, and the refusal says `remove belongs to slack_unreact`.
+The base tool's description ends by naming each split-out argument and
+the tool that takes it, since the command summary it shares with the CLI
+still mentions them.
+
+When the tool that owns a split-out argument is [hidden](#hidden-tools)
+and not served, the refusal says that tool is labeled experimental and
+is not available for use, as `chrome_attach_chrome` does for `action`
+`uninstall-agent`. A split-out tool needs its own form: `slack_unreact`
+requires `remove`, and `invite_held` refuses a call with neither
+`requeue` nor `dismiss`. Apart from those, a split-out tool takes every
+argument its base tool takes. The command line does not change; the
+split is only in the MCP tools. Other commands are destructive when one
+of their flags removes something, such as `schedule_bootstrap`
+(`--replace`).
 
 ### Hidden tools
 
-Five tools are hidden from MCP clients by default, because each
-removes or replaces your Blowhorn install or signs you out:
-`uninstall`, `service_uninstall`, `auth_logout`, `desktop_build` and
-`desktop_install`. They are not in `tools/list` and a call to one
-answers `unknown tool`. Their `x-mcp` says `expose: false`.
+Seven tools are hidden from MCP clients by default, because each
+removes or replaces your Blowhorn install, removes a background
+service or a LaunchAgent, or signs you out: `uninstall`,
+`service_uninstall`, `service_adopt`, `auth_logout`, `desktop_build`,
+`desktop_install`, and `chrome_attach_chrome_uninstall_agent`, which is
+the `uninstall-agent` action of `blowhorn chrome attach-chrome` split
+out of that command. They are not in `tools/list`, and a call to one
+answers that the tool is labeled experimental and is not available for
+use. The answer never says how to enable it: that is the operator's
+choice, below. Their `x-mcp` (or the `x-mcp` variant that
+names them) says `expose: false`.
 
 To serve one, name it when the server starts, with
 `--allow-hidden-tool NAME` (repeat the flag for more) or
@@ -475,7 +528,7 @@ The label values:
 - `outcome` is `ok` (the command ran and succeeded), `error` (the call
   failed or named no tool) or `refused` (a change the server would not
   run without `confirm`, or `confirm` with `dry_run`; see
-  [Safety](#safety-dry-run-first-confirm-to-act)).
+  [Dry run first](#dry-run-first-confirm-to-act)).
 - `kind` is `timeout`, `cli_not_found`, `nonzero_exit`, `refused`,
   `invalid_arguments`, `unknown_tool`, `tool_error` (a failed result no
   other kind names), or one of the JSON-RPC errors `parse_error`,
@@ -550,7 +603,7 @@ scrape_configs:
 | Batches | A JSON-RPC batch (an array) is refused with `-32600` (invalid request). |
 | Protocol versions | `2024-11-05`, `2025-03-26`, `2025-06-18` and `2025-11-25`. A client asking for one of these gets it; any other request gets `2025-11-25`. |
 | Server info | Name `blowhorn-mcp`; version is the Blowhorn release, or `0.0.0` when it cannot be read. |
-| Annotations | Each tool's four hints come from its operation's `x-mcp` in the bundle, never from a list in the server. A tool whose `x-mcp` says `readOnly`: `readOnlyHint` and `idempotentHint` true, `destructiveHint` and `openWorldHint` false. Any other tool: `readOnlyHint` and `idempotentHint` false, `openWorldHint` true, and `destructiveHint` true only when `x-mcp` also says `destructive`; see [Destructive and additive tools](#destructive-and-additive-tools). An operation with `expose` false is no tool unless it is [opted in](#hidden-tools); one with no `x-mcp`, or one that does not match `McpOperation`, stops the server from starting. |
+| Annotations | Each tool's four hints come from its operation's `x-mcp` in the bundle (or, for a split tool, from its own variant), never from a list in the server. A tool whose `x-mcp` says `readOnly`: `readOnlyHint` and `idempotentHint` true, `destructiveHint` and `openWorldHint` false. Any other tool: `readOnlyHint` and `idempotentHint` false, `openWorldHint` true, and `destructiveHint` true only when `x-mcp` also says `destructive`; see [Destructive and additive tools](#destructive-and-additive-tools). A tool with `expose` false is no tool unless it is [opted in](#hidden-tools); one with no `x-mcp`, or one that does not match `McpOperation`, stops the server from starting. |
 | Results | A text content item with the command's output; a `--json` command's output is the JSON text. A session on `2025-06-18` or later also gets `outputSchema` on each JSON tool and `structuredContent` in its results; see [Structured output](#structured-output). |
 | Errors | A command that exits nonzero returns `isError` true with its exit code and its stderr (or stdout), redacted and cut to 4000 characters. A command that runs past the timeout returns `isError` true with a timed-out message only, no exit code or output. An unknown tool name also returns `isError` true, not a protocol error. |
 
@@ -567,26 +620,40 @@ startup:
 
 ### The interim hosted gateway
 
-Until Cloud serves `/mcp` itself, an interim, read-only gateway runs at
-`https://mcp.blowhorn.ai/mcp` (`hosted/` in blowhorn-ai/blowhorn-mcp). It
-takes your Cloud API token as `Authorization: Bearer <token>` and offers four
-read tools. Every `tools/call` it serves is recorded as one event in your
-Cloud activity, written with your own token:
+Until Cloud answers on `mcp.blowhorn.ai` itself, an interim transport proxy
+runs at `https://mcp.blowhorn.ai/mcp` (`hosted/` in blowhorn-ai/blowhorn-mcp).
+It forwards each MCP request to Cloud's `/mcp` and Cloud's answer
+back. Cloud owns the tools, token checks and activity events. The Worker
+serves RFC 9728 protected-resource metadata locally (both
+`/.well-known/oauth-protected-resource` and
+`/.well-known/oauth-protected-resource/mcp`), naming Cloud's Blowhorn
+authorization server, and rewrites Cloud's `401` `WWW-Authenticate` so
+`resource_metadata` points at this origin.
 
-| Field | Value |
-|---|---|
-| `category` / `action` | `mcp` / `tool_called` |
-| `severity` | `informational` on success, `warning` for a caller fault (unknown tool, invalid arguments, a refused request, a Cloud 4xx), `error` when Cloud or the path to it failed |
-| `operationId` | The request's W3C `traceparent` trace id, else a random UUID per request |
-| `metadata` | Tool, outcome, HTTP status, duration, the arguments with secret-named values redacted, and on failure `error`: a MeshKit error with a `blowhorn-mcp-1000` to `blowhorn-mcp-1009` code, probable causes and suggested remediations |
+Connect today with a Blowhorn API token as `Authorization: Bearer <token>`.
+Create one on the Tokens page of your Blowhorn account; the steps are in
+[Get a Blowhorn API token](/docs/how-to/set-up/connect-mcp-client/#get-a-blowhorn-api-token). The
+Blowhorn desktop app has no screen for creating one.
+Standards-following MCP OAuth clients can discover the authorization server
+from the metadata, but end-to-end sign-in stays gated until Cloud enables
+dynamic client registration (`POST /oauth2/register` currently returns 403).
 
-The event is posted after the tool result and never delays or changes it. A
-call with a missing or malformed token, or one Cloud answers `401`, records
-nothing in Cloud. `initialize` and `tools/list` record nothing. The codes are
-provisional until the structured error code registry (#1662) allocates
-them.
+The gateway is read-only today. Cloud serves four tools through it,
+`listContentItems`, `getContentItem`, `getEvents` and `getConnections`, so a
+client can read your queue, a post, your activity and your connections, but
+cannot post, schedule or change anything. Writes with approval come with the
+hosted Blowhorn MCP server.
 
-If the token this server uses leaks, see
+The gateway is stateless: every MCP message is its own JSON-RPC `POST` to
+`/mcp`. Opening `/mcp` in a browser sends a `GET` without a token, so it
+answers with a JSON error, such as `Bearer token required` or
+`Method not allowed: this stateless gateway answers POST only.`, rather than a
+page. That is by design; see
+[Opening the gateway URL in a browser](/docs/how-to/set-up/connect-mcp-client/#opening-the-gateway-url-in-a-browser).
+`GET /healthz` answers `{"ok": true, ...}` without calling Cloud, so use it to
+check that the gateway is up.
+
+If a token you send through this gateway leaks, see
 [Revoke a leaked token](/docs/how-to/set-up/connect-mcp-client/#revoke-a-leaked-token).
 
 ## Checking it
@@ -621,14 +688,36 @@ call may run at most 600 seconds by default
 
 ## Catalog listings
 
-The server is not listed in the official MCP Registry or other catalogs
-yet. The listing input, `server.json`, lives in the public
+The server is listed in the
+[official MCP Registry](https://registry.modelcontextprotocol.io/) as
+`io.github.blowhorn-ai/blowhorn`, status `active`, and its launcher is on
+npm as [`blowhorn-mcp`](https://www.npmjs.com/package/blowhorn-mcp).
+The registry lists versions from 0.1.1 on, and npm from 0.1.0 on. As of
+2026-11-13 the latest is 1.0.2 on both; the commands below print the
+current one.
+
+Version 1.0.0 is the first stable release of the launcher. It adds no
+launcher features over 0.1.4. It moves the launcher and the registry
+entry to Apache-2.0 (0.1.4 on npm still says AGPL-3.0-only), and it
+changes the hosted endpoint's rate limiter. The launcher needs Node.js
+20 or later.
+
+The listing input, `server.json`, lives in the public
 [blowhorn-mcp repository](https://github.com/blowhorn-ai/blowhorn-mcp)
-beside the source of the `blowhorn-mcp` npm launcher. It names the server
-for the registry and carries the npm launcher's version, not the Blowhorn
-release's: the launcher works with Blowhorn 1.61.0 or later. Neither the npm
-package nor the listing is published yet; publication waits on the catalog
-description's approval.
+beside the source of the npm launcher. It carries the npm launcher's
+version, not the Blowhorn release's, and each registry publish pairs with
+an npm publish of the same version. Other catalogs are not listed yet.
+
+To check the listing yourself:
+
+```sh
+npm view blowhorn-mcp version
+curl -s "https://registry.modelcontextprotocol.io/v0.1/servers?search=blowhorn"
+```
+
+The first prints the latest npm version. The second lists the registry
+entries; the one named `io.github.blowhorn-ai/blowhorn` with
+`"isLatest": true` is the current one.
 
 See also the [CLI reference](/docs/reference/cli/) for the commands themselves,
 [Connect an AI assistant over MCP](/docs/how-to/set-up/connect-mcp-client/)

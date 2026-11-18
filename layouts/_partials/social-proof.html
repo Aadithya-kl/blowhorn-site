@@ -54,9 +54,20 @@
 {{- $t := index . 0 -}}
 <section class="section proof-interlude" aria-label="A Blowhorn user, in their own words">
   <div class="wrap">
+    {{- /* The first sentence leads in full ink with a green marker that
+       sweeps in as the quote scrolls into view; the rest reads quieter, so
+       the quote has a way in instead of one flat block of display type. */ -}}
+    {{- $parts := split $t.quote ". " -}}
     <figure class="proof-big">
-      <blockquote class="display">{{ $t.quote }}</blockquote>
-      <figcaption class="label">{{ $t.name }} · {{ $t.role }}, {{ $t.company }}{{ if $t.placeholder }} <span class="proof-flag">Placeholder</span>{{ end }}</figcaption>
+      <span class="proof-big-mark" aria-hidden="true">&ldquo;</span>
+      <blockquote class="proof-big-quote">
+        {{- if gt (len $parts) 1 -}}
+        <span class="proof-big-lead">{{ index $parts 0 }}.</span> {{ delimit (after 1 $parts) ". " }}
+        {{- else -}}
+        <span class="proof-big-lead">{{ $t.quote }}</span>
+        {{- end -}}
+      </blockquote>
+      <figcaption class="proof-who proof-big-who">{{ partial "proof-who.html" $t }}{{ if $t.placeholder }} <span class="proof-flag">Placeholder</span>{{ end }}</figcaption>
     </figure>
   </div>
 </section>
@@ -68,19 +79,18 @@
       <h2 id="users-title" class="display">Fewer tabs. More reach.</h2>
       <p class="body-lg muted">What users say after a launch or two.</p>
     </div>
+    {{- /* The first quote is the paper feature across the whole first row; the rest
+      are dealt as their own grid. Paper is last in their order, so the deal never
+      reaches it in the row under the feature. */}}
     <ul class="proof-grid section-body">
       {{- range $i, $t := . }}
-      <li class="proof-card{{ if eq $i 0 }} proof-card-feature{{ end }}">
+      <li class="proof-card{{ if eq $i 0 }} proof-card-feature card-paper{{ else }} {{ partial "card-variant.html" (dict "i" (sub $i 1) "grid" "proof-grid" "n" (sub (len $items) 1) "variants" (slice "card-stamp" "card-field" "card-plain" "card-paper")) }}{{ end }}">
         {{- if $t.placeholder }}
         <span class="proof-flag">Placeholder</span>
         {{- end }}
         <span class="proof-mark" aria-hidden="true">&ldquo;</span>
         <blockquote class="body-lg">{{ $t.quote }}</blockquote>
-        <p class="proof-who"><span class="proof-avatar" aria-hidden="true">
-          {{- with $t.picture }}
-          <img src="{{ . | relURL }}" alt="">
-          {{- end }}
-        </span><span><strong>{{ $t.name }}</strong><br><span class="caption muted">{{ $t.role }}, {{ $t.company }}</span></span></p>
+        <p class="proof-who">{{ partial "proof-who.html" $t }}</p>
       </li>
       {{- end }}
     </ul>
@@ -88,8 +98,8 @@
 </section>
 {{- else if eq $slot "closing" -}}
 <div class="proof-band" role="group" aria-label="Blowhorn users">
-  {{- range first 3 . }}
-  <figure>
+  {{- range $i, $t := first 3 . }}
+  <figure class="{{ partial "card-variant.html" (dict "i" $i "grid" "proof-band" "n" (len (first 3 $items)) "variants" (slice "card-stamp" "card-field" "card-plain")) }}">
     <blockquote class="h3">{{ .quote | truncate 80 }}</blockquote>
     <figcaption class="caption muted">{{ .name }}, {{ .company }}{{ if .placeholder }} <span class="proof-flag">Placeholder</span>{{ end }}</figcaption>
   </figure>
@@ -103,13 +113,9 @@
   </div>
   <div class="proof-rotate" data-proof-rotate>
     {{- range $i, $t := . }}
-    <figure class="proof-rotate-item{{ if eq $i 0 }} is-current{{ end }}"{{ if ne $i 0 }} aria-hidden="true"{{ end }}>
+    <figure class="proof-rotate-item card-paper{{ if eq $i 0 }} is-current{{ end }}"{{ if ne $i 0 }} aria-hidden="true"{{ end }}>
       <blockquote class="body-lg">{{ $t.quote }}</blockquote>
-      <figcaption class="proof-who"><span class="proof-avatar" aria-hidden="true">
-        {{- with $t.picture }}
-        <img src="{{ . | relURL }}" alt="">
-        {{- end }}
-      </span><span><strong>{{ $t.name }}</strong><br><span class="caption muted">{{ $t.role }}, {{ $t.company }}</span></span>{{ if $t.placeholder }} <span class="proof-flag">Placeholder</span>{{ end }}</figcaption>
+      <figcaption class="proof-who">{{ partial "proof-who.html" $t }}{{ if $t.placeholder }} <span class="proof-flag">Placeholder</span>{{ end }}</figcaption>
     </figure>
     {{- end }}
     <div class="proof-rotate-nav">

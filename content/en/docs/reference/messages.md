@@ -54,6 +54,20 @@ what to do, and the code names the case; the codes are listed under
 [Opening Chrome when it is closed](/docs/reference/chrome/#opening-chrome-when-it-is-closed).
 Exit 1.
 
+`Chrome didn't respond. Make sure Chrome is open with the Blowhorn extension, then try again.`:
+a scheduled run's Chrome extension did not answer in time. Last Error shows
+this sentence. The log keeps the raw timeout line. Open Chrome with the
+Blowhorn extension and try the activity again.
+
+`The Chrome profile for <profile> isn't connected to Blowhorn.`: the activity's
+Chrome profile has no connected Blowhorn extension. Connect that profile, then
+run again. This is separate from a timeout.
+
+`error: page did not load`: Google Chrome was running. LinkedIn did not
+finish loading in the Blowhorn tab, or its received list could not be
+read. The sentence above the summary says which, and nothing was done.
+Run the activity again. Exit 1.
+
 A profile with no Chrome mapping on this computer, a mapped directory
 Chrome no longer has, or an identity that drifted since binding is
 refused by name before anything opens, with the command that re-maps
@@ -101,11 +115,14 @@ then clear "Date Promoted" to try again or leave it. See
 ## Failures inside Blowhorn
 
 A failure Blowhorn has no specific sentence for still prints one sentence
-and a `Details:` line, then exits 1. The `Details:` line names the error log,
-`~/Library/Application Support/Blowhorn/logs/blowhorn-errors.log`. The log
-holds the full error with anything that looks like a password, token or
-cookie removed. Share that log when you report a problem. Add `--debug`, or
-set `BLOWHORN_DEBUG=1`, to see the full error on the terminal as well.
+and a `Details:` line, then exits 1. The `Details:` line names the file it
+wrote, `blowhorn-errors.log`, under `accounts/<your account id>/` (or
+`machine/` before sign-in) in Blowhorn's log directory. On an installed Mac
+that directory is
+`~/Library/Application Support/Blowhorn/home/data/logs/`. The log holds the
+full error with anything that looks like a password, token or cookie
+removed. Share that log when you report a problem. Add `--debug`, or set
+`BLOWHORN_DEBUG=1`, to see the full error on the terminal as well.
 
 `Blowhorn's browser engine didn't start, so nothing was done.`: the browser
 engine bundled with Blowhorn exited before the run could use it. Nothing was

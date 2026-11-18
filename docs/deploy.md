@@ -34,13 +34,116 @@ every push to `master`:
    - `make check-urls`: every public URL and every anchor the site has
      published still exists
      ([`check-site-contract.py`](../.github/scripts/check-site-contract.py)).
-4. `public/` is uploaded as the Pages artifact.
-5. On `master` only (a push or a manual run), the `deploy` job publishes that
-   artifact with `actions/deploy-pages` under the `github-pages` environment.
-   The job needs `pages: write` and `id-token: write`, which it declares itself.
+4. On `master` only (a push or a manual run), `public/` is uploaded as
+   `site-production-build`. Pull request checks do not upload this artifact.
+5. After the checks pass, the `deploy` job downloads that exact build and
+   publishes it to `gh-pages` with `peaceiris/actions-gh-pages`. The job has
+   `contents: write`, sets `CNAME` to `blowhorn.ai`, and adds `.nojekyll`.
+   `keep_files: true` preserves `pr-preview/` when production is updated.
+   Like layer5io/docs, this also retains deleted production files; removing
+   an obsolete published file requires deliberate cleanup on `gh-pages`.
+   If production publishing loses a concurrent `gh-pages` push, rerun `Site`
+   on `master`; unlike retention, the production publisher does not retry.
 
-A pull request never deploys. Its run still uploads the built site as the
-`github-pages` artifact, which you can download from the run to inspect.
+### Pull request deployment previews
+
+The preview flow mirrors [layer5io/docs](https://github.com/layer5io/docs):
+
+1. [`build-site-preview.yml`](../.github/workflows/build-site-preview.yml)
+   runs on opened, reopened or updated pull requests targeting `master`
+   when public site inputs or preview workflows change. It uses the same
+   pinned toolchain, `make setup-ci`, and `make build-preview` with
+   `HUGO_PREVIEW=true` and `BASE_URL=/pr-preview/pr-N/`. The preview-only
+   post-build helper rebases browser URL attributes (including video/cast
+   data URLs) without rewriting documentation examples or script text.
+   Stylesheet asset URLs are relative, so they work in production and previews.
+2. It uploads `public/` plus `pr/action`, `pr/number` and `pr/sha` in the
+   `site-preview-build` artifact, retained for seven days. Preview builds
+   include draft, future and expired public content. They disable analytics,
+   mark pages `noindex, nofollow`, and write a disallow-all `robots.txt`.
+3. After a successful build,
+   [`deploy-site-preview.yml`](../.github/workflows/deploy-site-preview.yml)
+   runs through `workflow_run` on trusted default-branch code. It validates
+   the artifact metadata against the originating run and live PR before
+   deploying, skips closed or superseded heads, and never executes artifact
+   code. Only in-repository PR branches deploy automatically. Fork builds
+   receive no write token or live preview: arbitrary fork HTML/JS must not
+   run on the production origin. A maintainer can review the change and
+   bring it to an in-repository branch. Only the post-build workflow can
+   write `gh-pages` and PR comments.
+4. `rossjrw/pr-preview-action` publishes `public/` under `pr-preview/pr-N/`
+   on `gh-pages`. A sticky PR comment links to
+   `https://blowhorn.ai/pr-preview/pr-N/` and identifies the commit. The
+   comment is posted before Pages finishes publishing; follow its deployment
+   link and refresh if the URL is not ready yet.
+5. After deployment, retention keeps the six most recently updated previews,
+   matching docs' `PREVIEW_RETENTION_LIMIT=6`. Pruning recomputes from fresh
+   branch state and retries a non-fast-forward push up to five times. Only
+   successfully pruned previews get their sticky comment replaced with a
+   removal notice. Housekeeping failure does not fail a deployed preview.
+   Closing a PR does not immediately remove its preview; retention removes
+   it as newer previews arrive. Push a public-site change to regenerate it.
+
+These are public, same-origin previews, not private staging or a security
+sandbox. Never put secrets or private/internal content in public PRs. A
+preview's `robots.txt` is below the domain root, so crawlers may ignore it;
+per-page `noindex` is the indexing safeguard. Bot-created PRs that suppress
+`pull_request` events do not start preview builds automatically.
+
+New `workflow_run` workflows only become active after they reach `master`.
+The first preview must therefore be verified on a new or updated PR after
+this change is merged and the one-time Pages handoff below is complete.
+
+## Relationship to layer5io/docs workflows
+
+The site borrows workflow patterns from `layer5io/docs`, but only where they
+match Blowhorn's build and hosting model. The comparison for issue #425 made
+these decisions:
+
+- Keep `site.yml` as the only production build and deployment workflow.
+  Layer5's `hugo.yaml` is not copied: `site.yml` already uses the repository's
+  pinned Go, Node.js and Hugo toolchain, runs the repository checks, uploads a
+  Pages artifact and deploys it from `master` with GitHub's Pages actions.
+- Keep the existing `label-commenter.yml`, `labeler.yml` and `slack.yml`
+  workflows instead of adding copies from Layer5.
+- Do not port `cloud-release-docs.yml`,
+  `meshery-extension-release-docs.yml`, `discussion-data-files-update.yml`,
+  `feature-list.yml`, `generate-keys.yml` or `generate-pricing-list.yml`.
+  They dispatch Meshery and Kanvas release notes, fetch Meshery discussion
+  data or generate Meshery documentation from Google Sheets, and have no
+  Blowhorn equivalent.
+- `copilot-pr-handler.yml` adapts Layer5's Copilot pull-request handler with a
+  Blowhorn repository guard, the `copilot-swe-agent[bot]` author check and
+  pinned actions.
+- Treat the Layer5 pull-request preview workflows as a pattern, not a direct
+  port. They publish to a `gh-pages` branch, while this repository publishes
+  Pages from a workflow artifact. Preview publication therefore waits for a
+  maintainer-selected host; the production deployment model stays unchanged.
+
+### Copilot pull-request handler
+
+[`copilot-pr-handler.yml`](../.github/workflows/copilot-pr-handler.yml) runs
+when `copilot-swe-agent[bot]` opens, updates or reopens a pull request against
+`master`. It marks a draft ready for review, then approves any workflow runs
+waiting for approval at that pull request's exact head SHA. A maintainer can
+also run it manually with a pull request number. This `workflow_dispatch` path
+is maintainer-only and intentionally bypasses the Copilot-author check; it is a
+recovery or testing path, not equivalent to automatic handling. Approval is
+deliberately workflow-agnostic: every run waiting for approval at that exact
+head SHA is approved, including runs from workflows added later. The
+pending-run search reads at most 100 pages of 100 runs. If all 100 pages are
+full, it fails before approving anything rather than assume the result set is
+complete; that bound is an intentional fail-closed trade-off.
+
+The handler needs `actions: write` to approve runs, `pull-requests: write` to
+mark a draft ready and `contents: read` to check out its helper. It uses the
+run's `GITHUB_TOKEN`; this repository does not need a separate access-token
+secret. Because `pull_request_target` is privileged, its checkout is pinned to
+`master`, credentials are not persisted, and it never checks out or executes
+the pull request head. Repository logic lives in
+`.github/scripts/copilot_pr_handler.py`, runs through
+`make copilot-pr-handle PR_NUMBER=<number>` and is covered by
+`make test-scripts`.
 
 ### Verify a deployment
 
@@ -59,23 +162,49 @@ at the Pages URL within a minute of the `deploy` job finishing:
 
 ## Pages configuration
 
-Pages is configured to publish from GitHub Actions (`build_type: workflow`),
-not from a branch. The one-time setup, done with an account that administers
-the repository:
+Production and previews share the root of **`gh-pages`**. Pages must use
+`build_type: legacy` with source branch `gh-pages`, path `/`, as layer5io/docs
+already does. The custom domain stays `blowhorn.ai`; no DNS change is needed.
 
-```bash
-gh-axi api -X POST repos/blowhorn-ai/blowhorn-site/pages --field build_type=workflow
-# or, if Pages already exists:
-gh-axi api -X PUT repos/blowhorn-ai/blowhorn-site/pages --field build_type=workflow
-```
+### One-time handoff after merge (repository administrator)
 
-This was done on 2026-10-08: Pages exists with `build_type: workflow` and the
-custom domain `blowhorn.ai`. HTTPS enforcement is set once GitHub issues the
-certificate, which needs the DNS records below.
+The repository was using `build_type: workflow` when this change was written.
+This pull request does not change Pages settings or pre-create a branch.
 
-`static/CNAME` (published as `/CNAME`) carries `blowhorn.ai` for completeness. With a workflow
-deployment GitHub ignores the file; the custom domain is the one set through
-the API or Settings > Pages, below.
+1. After merge, wait for the `Site` run on `master` to finish. The production
+   publisher creates `gh-pages` if missing, populated with the full site,
+   `CNAME` and `.nojekyll`. Do not switch Pages to a minimal/empty branch.
+2. Confirm the branch has production `index.html`, `CNAME` (`blowhorn.ai`) and
+   `.nojekyll`. Then, with administrator approval, change the publishing
+   source once ([GitHub REST API](https://docs.github.com/en/rest/pages/pages#update-information-about-a-github-pages-site)):
+
+   ```bash
+   gh-axi api -X PUT repos/blowhorn-ai/blowhorn-site/pages \
+     --field build_type=legacy \
+     --field 'source[branch]=gh-pages' --field 'source[path]=/'
+   gh-axi api repos/blowhorn-ai/blowhorn-site/pages \
+     --jq '{build_type: .build_type, source: .source, cname: .cname}'
+   ```
+
+3. Run `Site` on `master` again if needed for the first branch-based
+   deployment, and watch the automatic `pages-build-deployment` workflow.
+   Verify the homepage and a deep link before considering the handoff done.
+4. Open or update a public-site PR. Wait for `Build Site Preview`,
+   `Site Preview Post-Build` and the Pages deployment; inspect its sticky
+   preview URL, nested navigation and assets. Confirm a later production
+   deploy leaves that preview reachable.
+
+The first production branch push alone does not replace the live site while
+Pages still uses the old Actions source. The administrator handoff is needed
+before new production updates and preview URLs can become live. Keep the
+current live deployment in place until the full `gh-pages` tree is ready.
+GitHub's branch publishing requires this initial source selection when using
+`GITHUB_TOKEN`; if a successful branch push does not publish, check the Pages
+run and administrator/verified-email setup rather than assuming it is live.
+
+`static/CNAME` is copied into production output and the publisher also sets
+`cname: blowhorn.ai`. The branch publisher creates `.nojekyll` so GitHub serves
+Hugo's already-built output without Jekyll processing.
 
 ## Custom domain: blowhorn.ai (the apex)
 
@@ -181,7 +310,9 @@ The public URLs are a contract, checked by `make site-check`:
   Blowhorn (no early-access form: anyone without a plan starts the beta
   there), whose URL is `params.cloud_url` in `hugo.toml` alone. None of these
   is listed in `sitemap.xml` or `llms.txt`.
-- `/assets/brand/...` (from `static/assets/brand/`), `/favicon.ico`, `/CNAME`.
+- `/assets/brand/...` (from `static/assets/brand/`), `/assets/brand/cards.css`
+  (the card variants, published from `assets/css/cards.css` for tells.blowhorn.ai;
+  [DESIGN.md](../DESIGN.md), Cards), `/favicon.ico`, `/CNAME`.
 - The two brand kits on `/brand/`: `/brand/blowhorn-brand-kit.zip` (the full kit,
   the URL the kit has always had) and `/brand/blowhorn-logo-kit.zip`.
 - Generated: `/sitemap.xml`, `/robots.txt` (which names the sitemap),
@@ -202,6 +333,10 @@ make setup         # once: npm install
 make check         # production build, html-validate, link, third-party and contract checks, check-script tests, actionlint: what CI runs
 make site          # http://localhost:1313 with live reload
 ```
+
+## API reference
+
+The reference page for the product's operations (`/docs/reference/api/`) is built but not enabled; see [api-reference.md](api-reference.md). `make check-api-reference` runs in `site-check` and does nothing while `params.apiReference.spec` is empty.
 
 ## Product docs sync
 
@@ -316,7 +451,7 @@ repository, and only the internal environment mounts it.
 | Target | What it does | Output |
 | --- | --- | --- |
 | `make site-build` | Public build (`hugo`, production environment, `renderSegments = ["public"]`), what CI deploys | `public/`, no `/internal/` |
-| `make site-internal-build` | Internal build (`hugo --environment internal`, `renderSegments = ["internal"]`) with the blowhorn clone mounted; renders only `/internal/`, with its own header, footer and navigation, and no search index; the output's root page redirects to `/internal/` | `public-internal/`, only `/internal/` |
+| `make site-internal-build` | Internal build (`hugo --environment internal`, `renderSegments = ["internal"]`) with the blowhorn clone mounted; renders only `/internal/`, with its own header, footer and navigation, and Docsy offline search over those internal pages only; the output's root page redirects to `/internal/` | `public-internal/`: `/internal/` pages, and `offline-search-index.json` at the output root |
 | `make site` / `make site-internal` | Live-reload servers for the two builds (the internal one renders in memory) | http://localhost:1313 |
 
 The internal targets need a blowhorn clone at `BLOWHORN_DIR`
@@ -446,16 +581,25 @@ need a token for the private repository.
 The internal section's committed `content/en/internal/_index.md` is
 `build: {list: never}` itself and cascades `build: {list: local}` and
 `type: docs` to every internal page. Internal pages stay out of the
-site-wide collections (menus, the search index, llms.txt, the sitemap),
+site-wide collections (menus, llms.txt, the sitemap and related lists),
 even in the internal build, but stay in their parents' `.Pages`, so they
 render in the docs shell (`layouts/docs/baseof.html` with
 `layouts/docs/internal.html`) with the docs sidebar, breadcrumb, table of
 contents and prev/next built from the `/internal/` section tree. Page order
-is each page's `weight`. The public build never renders any of it.
+is each page's `weight`. Docsy's offline index reads `.Site.AllPages`, which
+those `list` settings leave empty of internal pages, so the internal build
+does not use it. It publishes its own index,
+`public-internal/offline-search-index.json`, by walking the `/internal/`
+section (`.Pages` recursively,
+`assets/json/offline-search-index-internal.json`). That file is generated
+only in the internal environment. The public build keeps Docsy's index and
+never lists an `/internal/` page, title or passage. The public build never
+renders any internal page.
 
 `make check-no-internal` (part of `make site-check`, and a step in
 `site.yml`) fails when `public/internal` exists, a public page links to
-`/internal/` or names an internal file, or git tracks anything under
+`/internal/` or names an internal file, the public offline search index is
+missing or contains `/internal/`, or git tracks anything under
 `content/en/internal/` other than `_index.md`.
 
 ### Where the internal build runs
@@ -488,12 +632,14 @@ The internal build is served by the `blowhorn-internal` Cloudflare Worker
 Access application. Nobody reaches a page, asset or file there without
 signing in to Access as someone the allow list admits: anyone at an allowed
 email domain (layer5.io), a named team member, or an extra address from the
-`INTERNAL_ACCESS_EXTRA_EMAILS` secret. See "Who can read it" below.
+`INTERNAL_ACCESS_EXTRA_EMAILS` secret. See "Who can read it" below. The one
+exception is a request from a trusted network in `bypass_ip_ranges`, which
+reaches the site without signing in; see "Trusted networks" below.
 
 | Layer | What it enforces |
 | --- | --- |
-| Access application (self-hosted, the whole hostname) | Login required; one reusable `allow` policy whose only rules are the email domains, named emails and extras, and the login methods in `allowed_idps`. Anything not allowed is denied. |
-| Worker (`internal-worker/src/worker.js`, `run_worker_first`) | Every request, assets included, must carry an Access token signed by the team's keys, for this application's audience, unexpired, for an email the Worker admits: a named address, or an address whose domain is exactly one of `ALLOWED_EMAIL_DOMAINS` (no subdomain or look-alike match). Otherwise 403. A missing or misconfigured Access application, or an empty allow list, fails closed. |
+| Access application (self-hosted, the whole hostname) | Login required; one reusable `allow` policy whose only rules are the email domains, named emails and extras, and the login methods in `allowed_idps`. When `bypass_ip_ranges` is not empty, one reusable `bypass` policy whose only rules are those IP ranges comes first (precedence 1, the allow policy 2). Anything not allowed is denied. |
+| Worker (`internal-worker/src/worker.js`, `run_worker_first`) | Every request, assets included, must carry an Access token signed by the team's keys, for this application's audience, unexpired, for an email the Worker admits: a named address, or an address whose domain is exactly one of `ALLOWED_EMAIL_DOMAINS` (no subdomain or look-alike match). The only exception is a request whose `CF-Connecting-IP` (set by Cloudflare's edge, not the client) is inside `ALLOWED_IP_RANGES`, the same `bypass_ip_ranges`. Otherwise 403. A missing or misconfigured Access application, or an empty allow list, fails closed. |
 | `wrangler.json` | Custom domain only: `workers_dev` and `preview_urls` are off, so no other hostname serves the Worker. `verify-worker` confirms it after each deploy. |
 
 The root (`/`) serves the `/internal/` page, whose table of contents
@@ -527,6 +673,33 @@ so the Access policy and the Worker's allow list always match:
 
 A change to the secret takes effect on the next deploy. To apply it now, run
 `make site-internal-deploy` by hand.
+
+### Trusted networks
+
+`bypass_ip_ranges` in `internal-worker/access.json` lists the networks that
+reach the site without signing in, as CIDRs with no host bits set (a single
+address is `/32` for IPv4 or `/128` for IPv6). Client operating systems often
+rotate temporary IPv6 addresses inside the same `/64` (privacy extensions),
+so a home network should be listed as that `/64` rather than one `/128`.
+It is the one place to edit them. From it:
+
+- `internal_access.py ensure` creates or updates the reusable `bypass` policy
+  named `bypass_policy_name`, whose only rules are those IP ranges, and
+  attaches it to the application before the allow policy. Access issues no
+  token for a bypassed request.
+- `internal-deploy.sh` passes the same list to the Worker as
+  `ALLOWED_IP_RANGES`, so the Worker serves those networks without a token.
+
+The verification fails unless the application has exactly the bypass policy
+then the allow policy, and the bypass policy holds exactly the configured
+ranges and nothing else (no Everyone, no email rule). Empty the list, or
+remove the key, to drop the bypass: the next deploy detaches the policy.
+Addresses in this file are public, so add only networks you are happy to
+name. `make site-internal-verify` probes from a GitHub runner, which is not a
+trusted network, so it still expects the Access login.
+
+To change the list, edit `bypass_ip_ranges` in a pull request and merge; the
+push to `master` redeploys (see "Shipping an update").
 
 ### Login methods
 
@@ -574,7 +747,7 @@ own after a change to anything the internal build is made from:
   minutes under a mounted path (`marketing/strategy/**`,
   `marketing/capability-comparison/**`, `marketing/brand/**` including the
   asset catalog, `marketing/cast/**`, `marketing/assets.manifest.json`, or
-  `internal/{engineering,design,specs,plans,research}/**`). If so it deploys
+  `internal/{engineering,design,specs,plans,research,features}/**`). If so it deploys
   that `master` SHA. The run fails, rather than skipping, when
   `DMG_SOURCE_TOKEN` is missing or cannot read the repository. Polling keeps
   the work on this public repository's free minutes; the private repository
@@ -619,7 +792,7 @@ The workflow, in order (each step is a make target):
    `marketing/capability-comparison`, `marketing/brand`, `marketing/cast`,
    `marketing/assets.manifest.json`, `internal/engineering`,
    `internal/design`, `internal/specs`, `internal/plans`,
-   `internal/research`) with the read-only deploy key.
+   `internal/research`, `internal/features`) with the read-only deploy key.
 5. `site-internal-build` with `BASE_URL=https://internal.blowhorn.ai/`, output
    suppressed.
 6. `site-internal-worker-deploy`: `wrangler deploy` with a filtered summary,
@@ -627,6 +800,24 @@ The workflow, in order (each step is a make target):
 7. `site-internal-verify`: unauthenticated probes of `/`, a deep link, an
    asset and a guessed URL must all redirect to the Access login. A 2xx
    deletes the Worker and fails the run.
+
+### Dynamic pages (signups, fleet stats)
+
+Two pages are rendered by the Worker per request from D1, after the same
+Access check as every static page, so their data changes without a build:
+
+- `/internal/signups/` and `/internal/signups/export`: the `SIGNUPS_DB`
+  binding (`blowhorn-signups`), written by the public signup worker.
+- `/engineering/fleet/` (moved from `/internal/fleet/`, which now 301s here), plus `data.json`, `workload.csv` and `disk.csv` beside
+  it (each takes `?days=N`, default 7, at most 90): the `FLEET_DB` binding
+  (`blowhorn-fleet-stats`). A zero-token cron on Bastion writes teammate
+  workload every hour and machine disk free every 6 hours into its
+  `snapshots` table (`kind`, `collected_at`, JSON `body`). The teammate workload table defaults to Done 24h descending (highest first, numeric); clicking a column header still sorts, and that choice is kept across refreshes. The collector, its
+  schedule and its least-privilege D1 token live in koopverse/firstmate
+  `fleet/fleet-stats/` (koopverse/firstmate#72).
+
+`.github/scripts/resolve-d1.sh` swaps every placeholder `database_id` in
+`wrangler.json` for the real one, creating a database that does not exist yet.
 
 ### This repository is public
 

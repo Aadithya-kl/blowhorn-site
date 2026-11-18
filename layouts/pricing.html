@@ -28,8 +28,8 @@
             <label for="billing-annual">Yearly <span class="save-badge">2 months free</span></label>
           </div>
           <ul class="pricing-grid">
-            {{- range .Params.tiers }}
-            <li class="plan card{{ if .featured }} plan-featured{{ end }}">
+            {{- range $i, $t := .Params.tiers }}
+            <li class="plan card{{ if .featured }} plan-featured card-paper{{ else }} {{ partial "card-variant.html" (dict "i" $i "grid" "pricing-grid" "n" (len $.Params.tiers)) }}{{ end }}">
               {{- with .badge }}<p class="plan-badge caption">{{ . }}</p>{{ end }}
               <h3 class="h3 plan-name">{{ .name }}</h3>
               <p class="plan-blurb">{{ .blurb }}</p>
@@ -38,7 +38,12 @@
                 <span class="price-annual"><span class="price-amount">${{ .annual }}</span> <span class="price-unit">{{ .unit_a }}</span></span>
               </p>
               <p class="plan-note caption"><span class="price-monthly">{{ if eq .monthly "0" }}No card needed{{ else }}Or ${{ .annual }} yearly, 2 months free{{ end }}</span><span class="price-annual">{{ with .note_a }}{{ . }}{{ else }}No card needed{{ end }}</span></p>
+              {{- /* The free plan is the install call to action; the paid plans name their plan. Only the featured plan is the page's primary. */ -}}
+              {{- if eq .monthly "0" }}
+              {{ partial "download-button.html" (dict "kind" "secondary" "class" "plan-cta") }}
+              {{- else }}
               <a class="button{{ if .featured }} button-primary{{ end }} plan-cta" href="{{ $download }}">{{ .cta }}</a>
+              {{- end }}
               <ul class="plan-features">
                 {{- range .features }}
                 <li>{{ . }}</li>
@@ -55,8 +60,8 @@
             <p class="muted">The things that keep your accounts safe are never an upsell.</p>
           </div>
           <ul class="grid grid-4 pricing-included">
-            {{- range .Params.included }}
-            <li class="card">
+            {{- range $i, $inc := .Params.included }}
+            <li class="card {{ partial "card-variant.html" (dict "i" $i "grid" "grid-4" "n" (len $.Params.included)) }}">
               <h3 class="h3">{{ .title }}</h3>
               <p>{{ .body }}</p>
             </li>
@@ -85,14 +90,14 @@
             <h2 id="faq-title" class="h2">Frequently Asked Questions</h2>
           </div>
           <div class="agent-faq">
-            {{- range .Params.faq }}
-            <details class="glass">
+            {{- range $i, $f := .Params.faq }}
+            <details class="card {{ partial "card-variant.html" (dict "i" $i "grid" "stack" "n" (len $.Params.faq) "variants" (slice "card-field" "card-plain")) }}">
               <summary>{{ .q }}</summary>
               <p>{{ .a }}</p>
             </details>
             {{- end }}
           </div>
-          <p class="compare-cta pricing-cta"><a class="button button-primary" href="{{ $download }}">Download Blowhorn free</a> <a class="button" href="{{ (site.GetPage "/compare").RelPermalink }}">See how we compare</a></p>
+          <p class="compare-cta pricing-cta">{{ partial "download-button.html" (dict "kind" "secondary") }} <a class="button" href="{{ (site.GetPage "/compare").RelPermalink }}">See how we compare</a></p>
         </section>
       </div>
     </main>

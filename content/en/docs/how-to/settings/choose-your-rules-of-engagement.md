@@ -28,7 +28,7 @@ the Risk Profile, so old scripts keep working.
 Choose it in the app on the **Posture** screen: the slider at the top is
 the choice for everyone, a track from Safety on (slow end, in the
 brand's teal blue) through Weapons tight (teal) to Weapons free (fast
-end, in the warn colour). The same choice shows as a mini-slider in
+end, in coral). The same choice shows as a mini-slider in
 the menu-bar popover, which opens Posture, and changing it anywhere
 changes it everywhere. Or use
 `blowhorn risk set cautious`. `blowhorn risk show` says which preset is
@@ -45,7 +45,7 @@ LinkedIn on Safety on while the rest stay on Weapons tight:
 
 1. Open **Posture**.
 2. In the grid, pick the chip in the **Each platform** row under
-   **LinkedIn**, and choose **Safety on**.
+   **LinkedIn**. It opens a small slider: move it to **Safety on**.
 
 Or, from Terminal:
 
@@ -54,26 +54,34 @@ blowhorn risk set cautious --platform linkedin
 ```
 
 The choice is kept with your organization, so every computer you run
-Blowhorn on uses it, and the row's caption says **every computer**. If your
-organization cannot keep it yet, it is saved on this computer only: the
-command says `scope: this_computer` with the reason, and the row says
-**this computer only**. Your organization's choice for that platform comes
+Blowhorn on uses it. If your organization cannot keep it yet, it is saved on
+this computer only: the command says `scope: this_computer` with the reason,
+the app says so in one line under the grid, and the chip's slider reads
+**Set here, on this computer only**. Each grid cell shows only its rules of
+engagement (Warming, Safety on, Weapons tight or Weapons free); hold the
+pointer over a chip to see where its choice comes from. Your organization's choice for that platform comes
 first, so when it already has one, the command says it still applies on
 every computer and this computer's choice has no effect until an
-organization admin clears it. Choose **Inherit** in the same chip, or run
-`blowhorn risk set default --platform linkedin`, to clear it.
+organization admin clears it. Choose **Follows Everyone** under the same
+chip's slider, or run `blowhorn risk set default --platform linkedin`, to
+clear it.
 
 ## Set one profile, or one profile on one platform
 
 - **One profile on every platform:** pick the chip in that profile's
-  **Every platform** column, or `blowhorn risk set cautious --profile company`.
+  **Every platform** column and move its slider, or
+  `blowhorn risk set cautious --profile company`. When a platform has its own
+  choice, the slider's window says that the more careful of the two wins and
+  names each platform that wins over this profile.
 - **One profile on one platform:** pick that profile's cell under the
   platform, or `blowhorn risk set brisk --profile company --platform x`.
 
 A chip you chose is filled; a dashed chip is inherited, and the line under
 it says where it comes from ("from LinkedIn", "from this profile", "from
 everyone"). To put a cell back, point at it and press its reset, or choose
-**Inherit** in its menu; the menu names what it would inherit first.
+**Inherit** in its menu; the menu names what it would inherit first. A
+platform's or a profile's slider says **Set here.** with **Follows Everyone**
+to put it back, or **Follows Everyone** and the preset it follows.
 
 ## Which choice wins
 
@@ -88,12 +96,20 @@ Safety on for its first 14 days. The
 full order is in
 [Which choice wins](/docs/reference/configuration/#which-choice-wins).
 
+An activity may set its own rules, and they may be looser than Posture
+for that profile on that platform: Blowhorn keeps them as you set them.
+The app marks a looser activity with a note in coral, such as "Looser
+than Kara Linden on LinkedIn (Weapons tight)". The warm-up and each
+platform's published limits still apply above it. A new order follows
+Posture: its **Rules** row says which rules each profile and platform
+will use, and you change them in Posture.
+
 ## Adjust the limits yourself
 
 Under the grid, **The limits Blowhorn keeps** starts from the preset: change
-the pace and daily caps per platform in the **by platform** table, and the
-other limits below it, including typing and pointer timing, then **save
-limits**. The header reads "Custom, based on Weapons tight, 3 dials changed" once
+the pace and daily caps per platform in **by platform** (pick a platform by its
+logo, then slide each cap), and the other limits below it, including typing and
+pointer timing. Each change saves as you make it. The header reads "Custom, based on Weapons tight, 3 dials changed" once
 dials move, and **reset to preset** puts every dial back. No dial may exceed a
 built-in ceiling: your own cap can only lower a ceiling, never raise it.
 Two dials carry a driver note: pauses and mistakes run on the Playwright
@@ -200,11 +216,12 @@ chosen preset's caps, quiet hours and outreach.
 
 One recurring activity can run under Safety on while everything else on
 the same profile and platform runs under Weapons tight: open the
-activity, set **rules of engagement** (inherit means the activity's own
-choice is blank, exactly as before), and save.
+activity, open its **Rules** row and set **rules of engagement** (inherit
+means the activity's own choice is blank, exactly as before); it saves as
+you choose.
 From the terminal the same value is `risk_profile=cautious` in the
-activity's params. The activity's detail then shows the preset and
-where it came from (`Safety on · this activity`, or `Safety on ·
+activity's params. The Rules row then says the activity's own preset, and its
+troubleshooting facts (under the Log row) say the preset and where it came from (`Safety on · this activity`, or `Safety on ·
 inherits: LinkedIn × work profile`), and while the profile is warming
 it also says what the tick enforces (`warming: runs Safety on for
 now`). An activity without one profile and one platform names no

@@ -19,13 +19,16 @@ The throwaway home is seeded from the same `.blowhorn.yaml` a packaged app
 seeds, then given a `postgres` backend. That is the file an older install
 left behind. The walk reaches the console only when the engine opens Cloud
 anyway. In the app, Activity shows the draft and Routines runs a dry fire
-check. A `blowhorn post --dry-run` then reports the fixture row without
-publishing it.
+check. A new profile starts on the cautious preset, whose quiet hours are
+22:00 to 07:00 on the computer's clock. Inside them the dry fire says the
+activity would be held for quiet hours and exits 1, and the walk accepts
+that; at any other time it must exit 0. A `blowhorn post --dry-run` then
+reports the fixture row without publishing it.
 
 It runs four walks. The happy path and `linkedin-session` are the same walk,
 but `linkedin-session` first plants a cookie named `li_at` in the throwaway
 Chrome profile. Only the cookie's name matters, as with the planted Slack
-login. With the cookie, Confirm and then Check again have to record exactly
+login. With the cookie, Confirm and then Discover have to record exactly
 one LinkedIn account in the local Cloud: connected, with no credential,
 and mapped to the new profile. `blowhorn profile accounts` has to list it
 too. Without the cookie, no LinkedIn account may be recorded. In both walks,
@@ -40,27 +43,30 @@ After setup, both walks also check the console a new person sees:
   Home's button opens its own step, not the Profiles table. LinkedIn's row
   there says which Chrome profile to sign in to and offers **Open LinkedIn
   sign-in** and **Check again**, with no form field.
-- **Check again:** on the Chrome profiles step and in **Profiles › chrome
-  profiles** after setup, each press must read **Checking…** while it runs
+- **Discover:** on Confirm troops and in a profile's **Browser** tab after setup, each press must read **Checking…** while it runs
   and then leave a result line. With the planted cookie, the walk marks the
   LinkedIn account disconnected in the local Cloud first: the press must
   reconnect that same account and say so, and a second press must say
   **Nothing new found** and leave one LinkedIn account.
-- **Profile detail:** the mapped profile's LinkedIn card shows that same
-  guidance (or, with the planted cookie, that LinkedIn is connected) and a
-  **Check again** button. It shows no setting name like `LI_PASSWORD`, no
+- **Browser tab:** the mapped profile's LinkedIn row shows that same guidance (or, with
+  the planted cookie, that LinkedIn is found), with **Set up** and **Open in Chrome**.
+  **Discover** sits at the top of the list. It shows no setting name like `LI_PASSWORD`, no
   password field, no **advanced** section (by its label or its slot) and no raw `LI_`, `X_` or `RDDT_`
   field: LinkedIn's sign-in is the person's own Chrome session.
   `blowhorn chrome open-profile <profile> --sign-in linkedin --dry-run` must pick the
   Chrome profile confirm mapped.
 - **New activity:** `blowhorn schedule destinations` reports no blog set up
   for the local organization, and the picker offers no organization
-  blog action. The unit tests cover an organization that has one.
-- **Next run:** saving a daily Accept LinkedIn invitations from that picker
+  blog action. The unit tests cover an organization that has one. It offers
+  only platforms with a connected account: Slack, and LinkedIn with the
+  planted cookie; without it the tile reads **Connect LinkedIn**.
+- **Next run:** without the planted cookie, the walk first connects a
+  LinkedIn account in the local Cloud. Saving a daily Accept LinkedIn invitations from that picker
   stores one enabled routine in the local Cloud, and **Activity > Routines**
   lists it with its next run at the time the step typed. Home names no next run. The rail's status line
-  never shows a "next check" countdown: on watch it names that same next run, and
-  otherwise it keeps its own reason and promises no next run.
+  never shows a countdown. The walk reads the rail's duty kind: while this computer is on watch, the
+  duty switch's tooltip names the next run, and any other kind is checked against that kind's own line.
+  `run.json` records the kind and whether this Mac's service is registered.
 
 `empty-profile` covers
 a new organization with no planted logins. `sign-up` presses Create account,
@@ -125,7 +131,9 @@ a leftover registration from an earlier run is reported, never removed.
 Each step prints its name. Each variant writes its run to
 `data/cache/e2e/onboarding/<run-id>/` in the checkout, the directory the script
 prints at the start: `shots/` holds a screenshot per step, `logs/electron.log`
-the app's output, and `run.json` each step's outcome. A failure names the step,
+the app's output, and `run.json` each step's outcome. When the next-run step ran, `run.json` also
+records the rail's duty kind and whether this Mac's service is registered, so a failure says which
+branch it took. A failure names the step,
 leaves a screenshot of that screen, and records the failure in `run.json`. If
 the local Cloud stand-in raises, the check stops and prints that error. The
 folder is git-ignored and nothing prunes it, so delete old runs when you no

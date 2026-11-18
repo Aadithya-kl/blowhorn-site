@@ -70,6 +70,8 @@
       card.hidden = !visible;
       if (visible) shown += 1;
     });
+    // Hidden cards leave gaps in the deal; hand it out again to the visible ones (card-deal.js).
+    window.blowhornCardDeal(grid);
     if (status) {
       status.textContent = shown === cards.length ? "" : shown + " of " + cards.length + " " + (grid.getAttribute("data-collection-noun") || "items") + " shown";
     }
@@ -79,7 +81,7 @@
     tab.addEventListener("click", function () {
       activeCategory = tab.getAttribute("data-category-tab");
       tabs.forEach(function (t) {
-        t.setAttribute("aria-selected", t === tab ? "true" : "false");
+        t.setAttribute("aria-pressed", t === tab ? "true" : "false");
       });
       apply();
       if (history.replaceState) {

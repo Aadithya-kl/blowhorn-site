@@ -47,6 +47,10 @@ rules that make an activity pending for a post run:
   a warning.
 - `unsupported`: a `Platform` `blowhorn post` cannot publish to.
 
+## Threads
+
+Activities that answer one another show as one thread under Activity › Upcoming: the root first, then its replies in order, under a `thread · N` line you can expand and collapse. Opening any part of a thread shows the whole chain in its editor, root first, with the open post marked. A thread is created root first from the command line; see [Content item contract](/docs/reference/content-item-contract/).
+
 ## Approve a waiting activity
 
 An activity whose `Approved?` is not `yes` waits, and no run picks it up.
@@ -105,9 +109,10 @@ without retyping it. It holds no credential and reaches no account: it hands
 the page's address, title, and any selected text to the desktop app, which
 opens Activity › Upcoming on a new entry pre-filled from it.
 
-To install it: in the app, **Activity › Upcoming → from browser → copy code**, then add
-a bookmark in your browser named `Blowhorn: capture` and paste the code as
-its address.
+To install it, open **Settings › Setup** (or **Activity › Upcoming → from browser**) and
+drag the **Blowhorn: capture** link onto your Google Chrome bookmarks bar. If you
+would rather paste, choose **copy code**, add a bookmark in Google Chrome named
+`Blowhorn: capture`, and paste the code as its address.
 
 or paste this:
 

@@ -9,6 +9,19 @@ weight: 241
 will work on YouTube in your own signed-in Google Chrome, and this page will list what
 it can do there.
 
+<!-- BEGIN generated limits: release/scripts/capabilities_docs/build.py; do not edit -->
+
+## Limits
+
+The limits Blowhorn knows for YouTube.
+
+| Limit | Value |
+|---|---|
+| Post | 5000 |
+| Title | 100 |
+
+<!-- END generated limits -->
+
 ## Supported actions
 
 {{< supported-actions "youtube" >}}

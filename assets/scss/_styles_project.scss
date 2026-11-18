@@ -43,30 +43,42 @@
   }
 }
 
-// ---------- Blowhorn Tells card ----------
+// ---------- Docs rail cards: Blowhorn Tells, then support ----------
 
-// layouts/_partials/tells-docs-card.html renders twice: under the table of
-// contents (shown from 1280px, unless the column is collapsed) and at the
-// end of the page (everywhere else). Exactly one shows at any width. The
-// link and arrow share their style with the announcement bar (site.css).
-.tells-docs-card {
+// layouts/docs/baseof.html renders each rail card twice: under the table
+// of contents (shown from 1280px, unless the column is collapsed) and at
+// the end of the page (everywhere else). The docs-rail-card rules show
+// exactly one copy at any width. The Tells card (tells-docs-card.html) is
+// Field-toned; the support card (docs-support-card.html) below it is a
+// Dispatch card from cards.css, so the two never share a variant
+// (DESIGN.md, Cards). The Tells link and arrow share their style with the
+// Tells link rules (site.css).
+.docs-rail-card {
   max-width: 24rem;
   margin-top: var(--space-12);
   padding: var(--space-4);
   border-radius: var(--radius-md);
+}
+
+.docs-rail-card + .docs-rail-card {
+  margin-top: var(--space-4);
+}
+
+.docs-rail-card > * {
+  margin: 0;
+}
+
+.docs-rail-card > * + * {
+  margin-top: var(--space-1);
+}
+
+.tells-docs-card {
   background: var(--surface-tint);
   color: var(--ink);
 }
 
-.tells-docs-card > * {
-  margin: 0;
-}
-
-.tells-docs-card > * + * {
-  margin-top: var(--space-1);
-}
-
-.tells-docs-card-title {
+.tells-docs-card-title,
+.docs-support-card-title {
   font-family: var(--font-display);
   font-size: 16px;
   line-height: 22px;
@@ -74,36 +86,56 @@
   color: var(--ink-wordmark);
 }
 
-.tells-docs-card-text {
+.tells-docs-card-text,
+.docs-support-card .docs-support-card-text {
   font-size: 13px;
   line-height: 18px;
 }
 
-.tells-docs-card .tells-docs-card-link {
+.tells-docs-card .tells-docs-card-link,
+.docs-support-card .docs-support-card-link {
   margin-top: var(--space-2);
   font-size: 14px;
   line-height: 20px;
 }
 
-.tells-docs-card-toc {
+// The address is the link text, in mono so it reads as an address. Like
+// every link on the site it carries no underline (site.css); Dispatch sets
+// --link and --link-hover for its own subtree (cards.css).
+.docs-support-card-link a {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--link);
+  overflow-wrap: anywhere;
+}
+
+.docs-support-card-link a:hover {
+  color: var(--link-hover);
+}
+
+.docs-rail-card-toc {
   display: none;
+}
+
+.td-toc + .docs-rail-card-toc {
   margin-top: var(--space-8);
 }
 
 @media (min-width: 1280px) {
-  .tells-docs-card-toc {
+  .docs-rail-card-toc {
     display: block;
   }
 
-  .tells-docs-card-end {
+  .docs-rail-card-end {
     display: none;
   }
 
-  .docs-wrap.toc-collapsed .tells-docs-card-toc {
+  .docs-wrap.toc-collapsed .docs-rail-card-toc {
     display: none;
   }
 
-  .docs-wrap.toc-collapsed .tells-docs-card-end {
+  .docs-wrap.toc-collapsed .docs-rail-card-end {
     display: block;
   }
 }
@@ -226,7 +258,6 @@ div.docs-start-list {
   flex-direction: column;
   gap: var(--space-1);
   padding: var(--space-4) var(--space-6);
-  border: 1px solid var(--line);
   border-radius: var(--radius-lg);
 }
 
@@ -249,41 +280,51 @@ div.docs-start-list {
   }
 }
 
-// Quadrants: auto-fit with a 280px floor collapses to one column
-// instead of going skinny. Div-qualified for the same reason as above:
-// site.css's .grid-2 would otherwise win on load order.
+// Quadrants: one column, then 2 x 2 from 640px. Fixed columns, not auto-fit,
+// so the card variants dealt for 1 and 2 across (docs-content.html,
+// card-deal.html "docs-quadrants") hold at every width. Div-qualified for
+// the same reason as above: site.css's .grid-2 would otherwise win on load order.
 div.docs-quadrants {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
   margin-top: var(--space-6);
 }
 
+@media (min-width: 640px) {
+  div.docs-quadrants {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .docs-quadrants .docs-card {
   padding: var(--space-4) var(--space-6);
-  border: 1px solid var(--line);
   border-radius: var(--radius-lg);
 }
 
+// The fill, edge, text colour and hover lift are the card variant each card is
+// dealt (layouts/_partials/docs-content.html, assets/css/cards.css).
 .docs-card {
   display: flex;
   flex-direction: column;
   text-decoration: none;
-  color: var(--ink);
 }
 
 .docs-card:hover {
-  background: var(--surface-tint);
   text-decoration: none;
-  color: var(--ink);
 }
 
 .docs-card > span {
   display: block;
 }
 
+// The span is the card's body text, so it reads the card's own muted token
+// (cards.css): a dispatch card's description stays mint on near-black and a
+// paper card's stays charcoal on cream. No visual change today, since
+// dispatch and paper already re-scope --ink-muted to the same values; this
+// reads the token directly, so the rule stays right if that changes.
 .docs-card > span:last-child {
-  color: var(--ink-muted);
+  color: var(--card-muted, var(--ink-muted));
 }
 
 .docs-landing .platforms {

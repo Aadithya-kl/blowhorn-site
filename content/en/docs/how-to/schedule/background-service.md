@@ -6,32 +6,33 @@ weight: 153
 
 
 Scheduled passes keep running with no window open. One background service owns
-the timer and runs a pass every ten minutes, starting with one as soon as it
-starts.
+the schedule: it runs a pass when an activity falls due, re-scans at least once
+a minute, and starts with a pass as soon as it starts.
 
 ## Check the service
 
 ```bash
 blowhorn service status
-blowhorn service tick-now --follow
+blowhorn service start
 ```
 
 `service status` names the owner, whether the service is running, the last
-pass and the pass in flight. `tick-now` asks the running service for a pass
-now and watches it. In the app, the "this computer" screen shows the same state.
+pass and the pass in flight. `service start` loads the service if it is stopped
+and asks a running one to look at the schedule now. In the app, the "this
+computer" screen shows the same state.
 
 While no pass is running, the service also tells your Blowhorn account that this
 computer is still here, about once a minute, so the computer shows online there
 between passes. It sends nothing while you are signed out.
 
-When this install is signed in to a Blowhorn account, one tick runs at a time. A
+When this install is signed in to a Blowhorn account, one pass runs at a time. A
 second `blowhorn schedule tick` or `blowhorn schedule trigger-now` while that
-tick is running stops, and Blowhorn says it is already running a tick on this
+pass is running stops, and Blowhorn says it is already running on this
 install.
 
 The owner tells you who manages it: the desktop app registered it itself, or
 the command line installed it from a file. When the app owns it, the app's
-setting "keep this computer on watch after quit" (on by default)
+setting "keep this computer on duty after quit" (on by default)
 decides whether quitting stops it. Quitting with a pass in flight asks what to
 do, in a small prompt in the Blowhorn window that lists what is running:
 
@@ -48,6 +49,51 @@ it started, removes its menu-bar icon and exits within a few seconds. A quit by
 signal (logging out, for example) has nobody to answer the prompt, so with the
 setting off and a pass in flight it takes **finish, then stop**. With the
 setting on, no quit of any kind touches the service.
+
+## When the service keeps exiting
+
+If This computer says the background service keeps exiting, the service starts,
+stops at once, and macOS starts it again, so nothing scheduled goes out. The
+**Service** row on the Status tab names the likely cause in one line. Choose **See
+how to fix it** to open the Troubleshooting tab, where a card says why, read from
+the service's own log:
+
+- **The likely cause**, and what to do about it. A step Blowhorn can take for you
+  is a button: **Register the service**, **Update Blowhorn**, **Open service log**
+  or **Contact support**. When Blowhorn itself crashed, **Open service log** opens
+  the error log that holds the full details. After you take one, the card reads the service again and
+  says whether it now runs or still exits. That answer stays only while the service
+  is in the state it describes; when the service changes again, the card shows the
+  new state instead.
+- **The last line the service logged**, and an **error code** such as
+  `blowhorn-engine-1007` to quote to support.
+
+Below that card, the Troubleshooting tab has the rest: how the service last exited,
+who registered it, and the service log's last lines, with **Open log** and **Show in Finder**.
+If the log can't be opened, the screen says why.
+From the command line, `blowhorn service status --json` carries the same facts
+under `last_exit`, `logs` and `diagnosis`.
+
+Blowhorn 1.100.0 through 2.0.1 had one such cause on every signed-in computer: the
+service's control connection lived inside the account's log folder, whose path is
+longer than macOS allows for one. Update Blowhorn, and the service starts on its
+own.
+
+## When the service runs but passes say Blowhorn is unreachable
+
+A pass that cannot reach your Blowhorn account is skipped and tried again on the next
+pass; the service itself is fine. Each failed attempt writes one line to that pass's log
+(and to the daily error log) saying why the connection failed:
+
+- `dns`: this Mac could not look up the address - check the network or VPN.
+- `timeout`: the request got no answer in time.
+- `tls`: the secure connection was refused or intercepted - a proxy or VPN is the usual cause.
+- `refused` or `reset`: something closed the connection.
+- `other`: none of the above; the line also names the error's type.
+
+The Service log on the Troubleshooting tab shows the end of the launcher's own error file,
+which is never cleared, so lines from an earlier version can sit beside today's.
+Check the **written** time and the version before reading one as current.
 
 ## A separate data folder
 

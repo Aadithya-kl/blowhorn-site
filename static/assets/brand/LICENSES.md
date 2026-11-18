@@ -20,6 +20,11 @@ Old Thunderlung (`mascot/thunderlung/`, PNG and WebP) is the product repository'
 `marketing/cast/major-blowhorn/thunderlung/brand-style/` cutouts of Major's bugle,
 with and without its red cord, approved 28 Oct 2026 and copied unchanged.
 
+The Field Manual (`mascot/field-manual/`, WebP) is the product repository's
+`marketing/cast/major-blowhorn/field-manual/` locked leather-tome cast art and
+open page plates (Lee locked 6 Nov 2026), copied unchanged for the public
+Field Manual pages at `/field-manual/`.
+
 The two kits on the Brand page (`/brand/blowhorn-brand-kit.zip` and
 `/brand/blowhorn-logo-kit.zip`) are built by the product repository and published
 unchanged, under the same terms. They carry no font files: the full kit's
@@ -127,8 +132,3 @@ organisations of Blowhorn users and are not licensed for any other use.
 
 - Fraunces (`static/assets/alt-style/Fraunces-Variable.woff2`): Copyright 2018 The Fraunces Project Authors, SIL Open Font License 1.1 (`static/assets/alt-style/OFL-Fraunces.txt`).
 - The illustrations in `static/assets/alt-style/` are original Blowhorn artwork.
-
-## Alternate oil-painting style (/home-oil/)
-
-- The paintings in `static/assets/oil-style/` are original Blowhorn artwork. Sources and the prompts log live in the blowhorn repository, `marketing/brand/oil-style/`.
-- The page reuses Fraunces from `static/assets/alt-style/` (SIL Open Font License 1.1).

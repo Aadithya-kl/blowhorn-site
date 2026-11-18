@@ -41,7 +41,11 @@ here and the next pass claims again.
 `/Applications/Blowhorn.app` is one app for every macOS user on the Mac.
 While another user on this Mac has Blowhorn open, or has its background
 service running after quitting it, the update says so and waits: it installs
-once they quit it and their service stops.
+once they quit it and their service stops. If `/Applications/Blowhorn.app`
+belongs to another account on this Mac, or your account can't write to the
+Applications folder, the update is not started and says why before anything
+is downloaded: update from the account that owns it, or reinstall Blowhorn
+from yours.
 
 ## What you see while it updates
 
@@ -86,7 +90,7 @@ If a scheduled pass is running when the new version opens, the carry waits
 until the pass ends, and the service stays as it was until then. If the
 carry cannot finish, the service is put back as it was and the next launch
 tries again. A notification says what was carried, and the Setup screen's
-**this computer on watch** row and the Service screen carry the same line.
+**this computer on duty** row and the Service screen carry the same line.
 
 ## If an update stalls
 

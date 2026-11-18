@@ -18,6 +18,9 @@ from pathlib import Path
 
 # Published path -> ids that must exist on that page: the section anchors other
 # pages link to, and the sprite symbols and labels the page itself references.
+# The preview home page (/home-reveille/) is not listed: it was a
+# noindex preview, out of the sitemap and llms.txt, and is no longer built
+# (`build: render: never`), so it was never part of the public contract.
 PAGES = {
     "index.html": [
         "glyph-menubar", "glyph-terminal", "glyph-clock", "glyph-extension",
@@ -31,18 +34,18 @@ PAGES = {
         "action-react", "action-follow", "action-unfollow", "action-accept",
         "action-withdraw", "action-find", "action-analytics",
     ],
-    "home-reveille/index.html": [
-        "main", "hero-title", "hero-art-title", "fan-title", "platforms", "platforms-title", "how",
-        "how-title", "teams", "teams-title", "trust", "trust-title", "download", "download-title",
+    "integrations/actions/index.html": [
+        "main", "matrix-title",
+        "group-broadcast", "group-rally", "group-ranks", "group-recon",
+        "action-post", "action-comment", "action-reply", "action-amplify",
+        "action-react", "action-star", "action-follow", "action-unfollow",
+        "action-accept", "action-withdraw", "action-find", "action-analytics",
     ],
     "download/index.html": [
         "main", "glyph-download", "download-title", "download-status",
     ],
     "download/thanks/index.html": [
         "main", "thanks-title", "steps", "download-fallback", "updates-email",
-    ],
-    "home-oil/index.html": [
-        "main", "hero-title", "platforms", "sound-wave", "how", "signal", "trust", "control", "download", "download-title",
     ],
     "legal/index.html": [
         "main", "glance", "policies",
@@ -103,6 +106,9 @@ PAGES = {
     "for/agencies/index.html": [
         "main", "role-title", "pains-title", "gets-title", "faq-title", "cta-title",
     ],
+    "for/social-media/index.html": [
+        "main", "role-title", "pains-title", "gets-title", "faq-title", "cta-title",
+    ],
     "use-cases/index.html": [
         "main", "use-cases-title", "pick-title",
     ],
@@ -113,6 +119,15 @@ PAGES = {
         "main", "use-case-title", "pains-title", "gets-title", "faq-title", "cta-title",
     ],
     "use-cases/conference/index.html": [
+        "main", "use-case-title", "pains-title", "gets-title", "faq-title", "cta-title",
+    ],
+    "use-cases/linkedin-outreach/index.html": [
+        "main", "use-case-title", "pains-title", "gets-title", "faq-title", "cta-title",
+    ],
+    "use-cases/team-amplification/index.html": [
+        "main", "use-case-title", "pains-title", "gets-title", "faq-title", "cta-title",
+    ],
+    "use-cases/agent-publishing/index.html": [
         "main", "use-case-title", "pains-title", "gets-title", "faq-title", "cta-title",
     ],
     "solutions/index.html": [
@@ -304,6 +319,7 @@ REDIRECTS = {
     "privacy.html": "https://blowhorn.ai/legal/privacy/",
     "terms.html": "https://blowhorn.ai/legal/terms/",
     "install/index.html": "/docs/how-to/set-up/install-the-app/",
+    "trust-center/index.html": "https://blowhorn.ai/legal/",
 }
 # Other files that must be published at these paths. /signup/, /login/ and
 # /early-access/ redirect to params.cloud_url, so only their presence is checked here.
@@ -319,6 +335,7 @@ FILES = [
     "llms-full.txt",
     "assets/brand/tokens.json",
     "assets/brand/LICENSES.md",
+    "assets/brand/cards.css",
     "assets/brand/marketing/blowhorn-social-banner-16x9.png",
     "assets/brand/logo/blowhorn-favicon-32.svg",
     "assets/brand/logo/blowhorn-apple-touch-icon-180.png",

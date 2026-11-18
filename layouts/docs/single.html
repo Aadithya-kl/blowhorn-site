@@ -6,12 +6,14 @@
   {{ with .Description -}}
   <p class="body-lg docs-lead">{{ . | markdownify }}</p>
   {{ end -}}
-  {{ .Content }}
-  {{ partial "page-meta-lastmod.html" . -}}
+  {{ partial "docs-content.html" . }}
+  <footer class="docs-page-footer">
+    <div class="docs-page-meta">
+      {{ partial "page-meta-lastmod.html" . -}}
+      {{ partial "docs-page-edit-link.html" . -}}
+    </div>
+    {{ partial "docs-contributor-resources.html" . -}}
+  </footer>
 </div>
-{{- if eq .CurrentSection.RelPermalink "/docs/reference/platforms/" -}}
-{{ partial "platform-pager.html" . -}}
-{{- else -}}
-{{ partial "pager.html" . -}}
-{{- end -}}
+{{- partial "docs-sibling-pager.html" . -}}
 {{ end -}}

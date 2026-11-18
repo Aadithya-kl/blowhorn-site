@@ -31,32 +31,26 @@ Build a link with the partial; never hard-code a Tells URL in a template:
 
 | Placement | Where | Template |
 | --- | --- | --- |
-| `bar` | Slim, dismissible bar above the header on every public page | `tells-bar.html`, `tells-bar-head.html`, `assets/js/tells-bar.js` |
-| `nav` | Top-level "Am I a Bot?" item with a Free pill, before Pricing; also the Resources menu entry | `header.html` |
+| `nav` | Resources menu entry (label) | `header.html` |
 | `home` | Band after Trust on the Signal home page (Sleeper Cell art) | `home/tells.html` |
-| `footer` | Free tools column | `footer.html` |
 | `compare` | Callout before the FAQ on every `/compare/<slug>/` page, and the FAQ links that point at Tells | `tells-callout.html` in `versus.html` |
 | `ai`, `agents` | Callout after the first section of `/ai/` and `/agents/` | `tells-callout.html` in `ai.html`, `agents.html` |
 | `thanks` | Card after the install steps on `/download/thanks/` | `download-thanks.html` |
 | `docs` | Card under the table of contents (1280px and up), else at the end of the page | `tells-docs-card.html` in `docs/baseof.html` |
 | `404` | Line under the 404 message | `404.html` |
 
-The alternate home layouts (`/home-oil/`, `/home-reveille/`) do not render
-`signal.html` and carry no band. Prose links in the docs (synced from the
+The docs card shares its spot with the support card: `docs-support-card.html`,
+copy and address in `data/support.json` (schema: `schemas/support.schema.json`),
+a Dispatch card so it never matches the Field-toned Tells card above it. Both
+carry `docs-rail-card` plus `docs-rail-card-toc` or `-end`, and those rules in
+`assets/scss/_styles_project.scss` decide which copy shows; a new rail card
+takes the same classes. Its mailto subject names the page the reader was on.
+
+The alternate home layout (`/home-reveille/`) does not render
+`signal.html` and carries no band. Prose links in the docs (synced from the
 product repository), the Field Manual, the Trust Center and the role and
 solution FAQs stay untagged on purpose; `check_tells.py` ignores links without
 UTM parameters.
-
-## The announcement bar
-
-Dismissing the bar stores `dismissed` under `bar.storage_key`
-(`bh-tells-bar-v1`) in localStorage. An inline script in the head
-(`tells-bar-head.html`) sets `data-tells-bar="off"` on `<html>` before first
-paint, so a returning reader never sees it flash or the header jump. To show
-the bar again to everyone, bump the key (for example `bh-tells-bar-v2`). The
-close button is hidden until the script runs, so without JavaScript the bar
-simply stays. The bar scrolls away with the page; the mobile menu sheet sizes
-itself from the header's real bottom edge (`--sheet-top`, `assets/js/nav.js`).
 
 ## Copy rules
 
