@@ -52,9 +52,8 @@
     switchTo(li);
     hovered = li;
   }
-  // The sheet fills the screen below the header. Anything above the header
-  // (the announcement bar, until it scrolls away) moves its bottom edge, so
-  // measure it while the sheet is open instead of assuming --header-h.
+  // The sheet fills the screen below the header. Measure the header's bottom
+  // edge while the sheet is open instead of assuming --header-h.
   var sheetFrame = 0;
   function fitSheet() {
     sheetFrame = 0;
