@@ -100,16 +100,23 @@ touches your account. In the app every scope is one duty switch, reading
   switch, the flagless pause above.
 - **The fleet** (every computer sharing your schedule, `--all`) - the
   **Entire fleet** row on Home's Fleet card, **Take leave for the fleet** in
-  Posture, or the popover's **Fleet** switch, which takes no reason. A reason
-  is optional; on Home you type
-  it beside the switch and it saves as you type. While the fleet is off duty,
+  Posture, or the popover's **Fleet** switch, which takes no reason. On Home,
+  the switch opens an optional reason under the row with two buttons: **Save**
+  takes leave with the reason you typed, and **Skip** takes leave with no reason.
+  Escape closes the reason and takes nothing. Clicking away keeps it open and
+  takes nothing either. If the leave cannot be written, the reason stays put so
+  you can press Save or Skip again. While the fleet is off duty,
   the card shows who took it off duty, when and why, and this computer's row is
   held until the fleet is back on duty.
 - **This order** (`--activity N`) - the duty switch on the item's row in the
-  Routines list or on its calendar chip, reading **On duty** or **Off duty**.
-  While it is held, the item's details (click the item and it opens in a
-  dialog, a box over the screen) show who held it, when and why where the
-  **When** row opens, with **Resume**.
+  Routines list or on its calendar chip, reading **On duty** or **Off duty**,
+  and the same hold in the item's details as **On watch** or **Off watch**.
+  Off watch opens an optional reason under the switch: **Save** sends the
+  reason, **Skip** sends none, and Escape sends nothing. Clicking away keeps
+  the reason open and sends nothing. If the hold cannot be written, the reason
+  stays so you can press Save or Skip again. While it is held, the item's
+  details (click the item and it opens in a dialog, a box over the screen)
+  show who held it, when and why where the **When** row opens, with **Resume**.
 
 There is no switch for another computer: take leave on that computer from
 its own Blowhorn app, or take leave for the whole fleet.

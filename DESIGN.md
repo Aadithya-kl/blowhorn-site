@@ -117,6 +117,12 @@ The miniature product UI in the Product menu and the homepage "Ways in" section 
 - Platform marks are the app's monoline marks (`interface-art-mark.html`), not filled brand logos. App labels say "activity", never "post".
 - The menu's narrow rows draw the art at 92px; a container query in the same CSS keeps each piece legible there. Check both widths, light and dark.
 
+## Home scroll reveals
+
+On the Signal home page, each `section.section` below the hero settles in once as it scrolls into view. `assets/js/home-reveal.js` (Motion, bundled the same way as `assets/js/ai-cards.js`) fades the eyebrow, the headline and the lede in a short stagger, about 0.08s apart, then the body a beat later. Each piece moves from opacity 0 and a 20px rise to rest in about 0.65s, ease `0.2, 0.7, 0.2, 1`. Transform and opacity only. The script does not animate `.iface-art`; `ai-cards.js` owns that.
+
+The hidden start is set by the script, never by CSS. With JavaScript off, or with `prefers-reduced-motion: reduce`, every section is fully visible and nothing moves. Anything already in the viewport when the script runs stays visible, so the hero and the first screen do not flash. A hash target (`#platforms`, `#how`, `#trust`, `#download`, or any other id in a section) or focus inside a hidden section shows that section at once, with no animation. Content stays in the accessibility tree.
+
 ## Mascot consistency
 
 Mascot art comes from the product repository's locked style (`marketing/cast/major-blowhorn/STYLE-LOCKED.md` and `consistency.md` there: one locked prompt, reference images, no text in the art). The oil-painting process that used to be described here is historical; never start a new scene from it. On the site:
