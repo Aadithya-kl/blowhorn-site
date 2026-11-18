@@ -79,7 +79,7 @@
   border-top: var(--stroke-hairline) solid var(--line);
 }
 .matrix-group-name {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 16px;
   font-weight: 600;
   letter-spacing: 0.08em;
