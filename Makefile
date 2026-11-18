@@ -43,8 +43,11 @@ include .github/build/Makefile.show-help.mk
 #   site-check         Production build once, then validate-html, check-links,
 #                      check-third-party, check-urls, check-no-internal,
 #                      check-theme, check-platform-docs, check-naming,
-#                      check-action-matrix, check-platform-pages and
-#                      check-download-links (site.yml).
+#                      check-action-matrix, check-platform-pages,
+#                      check-download-links and check-install-cta (site.yml).
+#   check-install-cta  Production build, then fail if a page (docs excepted)
+#                      shows more than one teal primary in its main content,
+#                      or an old install label ("Download free", "Get Blowhorn").
 #   check-no-internal  Fail if the production build contains /internal/,
 #                      or its offline search index is missing or contains /internal/.
 #   check-platform-docs Production build, then fail if a supported platform
@@ -353,11 +356,15 @@ check-platform-pages: site-build
 	python3 .github/scripts/check_platform_pages.py $(BUILD_DIR)
 
 ## Build for production once, then validate-html, check-links, check-third-party and check-urls, plus check-schemas (what site.yml runs).
-site-check: check-schemas validate-html check-links check-third-party check-urls check-no-internal check-theme check-platform-docs check-naming check-action-matrix check-platform-pages check-download-links check-feeds check-brand-kits check-tells check-tips check-api-reference check-tokens
+site-check: check-schemas validate-html check-links check-third-party check-urls check-no-internal check-theme check-platform-docs check-naming check-action-matrix check-platform-pages check-download-links check-install-cta check-feeds check-brand-kits check-tells check-tips check-api-reference check-tokens
 
 ## Production build, then fail if any built page or script links to /releases/latest/download (an axi release can hold Latest; build download URLs from data/download.json).
 check-download-links: site-build
 	python3 .github/scripts/check_download_links.py $(BUILD_DIR)
+
+## Production build, then fail if a page shows more than one teal primary in its main content, or an old install label (issue #420). Docs are skipped; the home page is pending its rebuild (#418).
+check-install-cta: site-build
+	python3 .github/scripts/check_install_cta.py $(BUILD_DIR)
 
 ## Production build, then fail if the Brand page links a kit zip the build does not publish, or states its size wrong.
 check-brand-kits: site-build
@@ -407,8 +414,12 @@ check-no-internal: site-build
 test-activity-feed:
 	node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test assets/js/activity-feed.test.mjs
 
-## Run the unit tests for the check scripts in .github/scripts/, then the hero activity feed tests.
-test-scripts: test-internal-worker test-activity-feed
+## Unit tests for the asset catalog search and grid paging (node:test, no extra dependencies).
+test-asset-catalog:
+	node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test assets/js/asset-catalog.test.mjs
+
+## Run the unit tests for the check scripts in .github/scripts/, then the hero activity feed and asset catalog tests.
+test-scripts: test-internal-worker test-activity-feed test-asset-catalog
 	python3 -m unittest discover -s .github/scripts -p 'test_*.py'
 
 ## Mark a Copilot draft PR ready and approve pending runs for its current head (copilot-pr-handler.yml). Requires GH_TOKEN, GITHUB_REPOSITORY and PR_NUMBER.
