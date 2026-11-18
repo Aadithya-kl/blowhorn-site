@@ -177,6 +177,15 @@ test('signups export is CSV with quoted commas', async () => {
 });
 test('signups admin without a database fails closed', async () =>
   assert.equal((await handle(authed('/internal/signups/'), env, certsFetch)).status, 503));
+test('signups admin without trailing slash redirects to /internal/signups/ with 301, preserving query params', async () => {
+  const res = await handle(authed('/internal/signups?sort=desc&page=2'), adminEnv(sampleRows), certsFetch);
+  assert.equal(res.status, 301);
+  const loc = new URL(res.headers.get('location'));
+  assert.equal(loc.pathname, '/internal/signups/');
+  assert.equal(loc.search, '?sort=desc&page=2');
+});
+test('signups admin without trailing slash requires authentication', async () =>
+  assert.equal(await status(adminReq('/internal/signups'), adminEnv(sampleRows)), 403));
 
 // Fleet stats page: snapshots the Bastion cron writes to FLEET_DB.
 const diskSnap = {
@@ -228,6 +237,32 @@ test('fleet page flags a snapshot older than two runs as stale', async () => {
   const old = { ...diskSnap, collected_at: '2020-01-01T00:00:00Z' };
   const html = await (await handle(authed('/engineering/fleet/'), fleetEnv({ disk: [old] }), certsFetch)).text();
   assert.match(html, /Stale: the cron has missed at least two runs/);
+});
+test('fleet page preserves row collected_at when body does not repeat it', async () => {
+  const diskWithoutDateInBody = { ...diskSnap };
+  delete diskWithoutDateInBody.collected_at;
+  const db = {
+    prepare: () => ({
+      bind: () => ({
+        all: async () => ({ results: [{ collected_at: '2020-01-01T00:00:00Z', body: JSON.stringify(diskWithoutDateInBody) }] }),
+      }),
+    }),
+  };
+  const html = await (await handle(authed('/engineering/fleet/'), { ...env, FLEET_DB: db }, certsFetch)).text();
+  assert.match(html, /Stale: the cron has missed at least two runs/);
+  assert.match(html, /Collected Dec 31, 6:00 PM CST/);
+});
+test('fleet page ignores array snapshot body', async () => {
+  const db = {
+    prepare: () => ({
+      bind: () => ({
+        all: async () => ({ results: [{ collected_at: '2020-01-01T00:00:00Z', body: JSON.stringify(['malformed', 'array']) }] }),
+      }),
+    }),
+  };
+  const html = await (await handle(authed('/engineering/fleet/'), { ...env, FLEET_DB: db }, certsFetch)).text();
+  assert.match(html, /No workload snapshot yet/);
+  assert.match(html, /No disk snapshot yet/);
 });
 test('fleet page says so when there is no data yet', async () => {
   const html = await (await handle(authed('/engineering/fleet/'), fleetEnv({}), certsFetch)).text();
@@ -368,4 +403,32 @@ test('fleet sort script normalizes storage units and disk table embeds byte keys
   const html = await (await handle(authed('/engineering/fleet/'), e, certsFetch)).text();
   assert.match(html, /data-v="45000000000"/);
   assert.match(html, /data-v="500000000000"/);
+});
+
+test('internal responses include security headers for MIME, frame and referrer protection', async () => {
+  const e = fleetEnv({ disk: [diskSnap], workload: [workloadSnap] });
+
+  // Denied / unauthenticated response
+  const deniedRes = await handle(new Request('https://internal.blowhorn.ai/'), e, certsFetch);
+  assert.equal(deniedRes.headers.get('x-content-type-options'), 'nosniff');
+  assert.equal(deniedRes.headers.get('x-frame-options'), 'DENY');
+  assert.equal(deniedRes.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+
+  // Authenticated asset response
+  const assetRes = await handle(authed('/internal/'), e, certsFetch);
+  assert.equal(assetRes.headers.get('x-content-type-options'), 'nosniff');
+  assert.equal(assetRes.headers.get('x-frame-options'), 'DENY');
+  assert.equal(assetRes.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+
+  // Authenticated fleet dashboard
+  const fleetRes = await handle(authed('/engineering/fleet/'), e, certsFetch);
+  assert.equal(fleetRes.headers.get('x-content-type-options'), 'nosniff');
+  assert.equal(fleetRes.headers.get('x-frame-options'), 'DENY');
+  assert.equal(fleetRes.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+
+  // Authenticated fleet CSV export
+  const csvRes = await handle(authed('/engineering/fleet/disk.csv'), e, certsFetch);
+  assert.equal(csvRes.headers.get('x-content-type-options'), 'nosniff');
+  assert.equal(csvRes.headers.get('x-frame-options'), 'DENY');
+  assert.equal(csvRes.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
 });

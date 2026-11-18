@@ -1,6 +1,6 @@
 /* Hero activity card. Pure helpers are exported for node:test.
    Items and the page envelope mirror EventFeedItem and EventFeedPage from
-   meshery/schemas v1.3.116 (schemas/event_feed_page.schema.json).
+   meshery/schemas v1.3.117 (schemas/event_feed_page.schema.json).
    The feed URL is not in this file: the partial puts it in the card's
    data-feed-url from params.cloud_url, and boot turns it into the
    transport. With no URL the card shows the bundled examples. Live items
@@ -25,7 +25,8 @@ export const LIMITS = Object.freeze({
   roleMax: 40,
   lineMin: 10,
   lineMax: 120,
-  name: 80,
+  name: 200,
+  handle: 64,
   organization: 255,
   network: 255,
   networks: 20,
@@ -33,14 +34,17 @@ export const LIMITS = Object.freeze({
   profileUrl: 2048,
 });
 
-export const INTERVAL_MS = 7000;
-export const SWAP_MS = 180;
+export const INTERVAL_MS = 8000;
+// Outgoing fade, then the incoming stagger; about 420ms end to end.
+export const SWAP_MS = 160;
+export const ENTER_MS = 300;
 export const MAX_LIVE_TTL_MS = 30000;
 const RATE_LIMIT_FALLBACK_MS = 60000;
 const HTTPS = "https:";
 const DATE_TIME = /^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])[Tt]([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\.[0-9]+)?([Zz]|[+-]([01][0-9]|2[0-3]):[0-5][0-9])$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const PLATFORM_SET = new Set(PLATFORMS);
+const HANDLE = /^[A-Za-z0-9._:\/-]+$/;
 const ITEM_KEYS = new Set([
   "id",
   "userId",
@@ -52,6 +56,7 @@ const ITEM_KEYS = new Set([
   "line",
   "networks",
   "displayName",
+  "handle",
   "avatarUrl",
   "organizationName",
   "publicProfileUrl",
@@ -120,7 +125,7 @@ export function validateItem(input) {
     example: false,
   };
 
-  if (input.networks !== undefined) {
+  if (input.networks != null) {
     if (!Array.isArray(input.networks) || input.networks.length < 1 || input.networks.length > LIMITS.networks) {
       return fail("networks");
     }
@@ -133,21 +138,28 @@ export function validateItem(input) {
     item.networks = networks;
   }
 
-  if (input.displayName !== undefined) {
+  if (input.displayName != null) {
     const displayName = plain(input.displayName, 1, LIMITS.name);
     if (!displayName) return fail("displayName");
     item.displayName = displayName;
   }
-  if (input.organizationName !== undefined) {
+  // handle is not in meshery/schemas and Cloud does not send it; it is a local
+  // extension kept for forward compatibility. Without one the handle slot stays
+  // hidden. A malformed one is dropped, not the row.
+  if (input.handle != null) {
+    const handle = typeof input.handle === "string" ? plain(input.handle.trim().replace(/^@+/, ""), 1, LIMITS.handle) : null;
+    if (handle && HANDLE.test(handle)) item.handle = handle;
+  }
+  if (input.organizationName != null) {
     const organizationName = plain(input.organizationName, 1, LIMITS.organization);
     if (!organizationName) return fail("organizationName");
     item.organizationName = organizationName;
   }
-  if (input.avatarUrl !== undefined) {
+  if (input.avatarUrl != null) {
     if (!isHttpsUrl(input.avatarUrl)) return fail("avatarUrl");
     item.avatarUrl = input.avatarUrl.trim();
   }
-  if (input.publicProfileUrl !== undefined) {
+  if (input.publicProfileUrl != null) {
     if (!isHttpsUrl(input.publicProfileUrl, LIMITS.profileUrl)) return fail("publicProfileUrl");
     item.publicProfileUrl = input.publicProfileUrl.trim();
   }
@@ -171,7 +183,7 @@ export function normalizePayload(payload) {
   const empty = { items: [], example: false, dropped: 0, rawCount: 0, valid: false };
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) return empty;
   // Unknown page keys are ignored; required EventFeedPage fields are checked below.
-  if (payload.example !== undefined && typeof payload.example !== "boolean") return empty;
+  if (payload.example != null && typeof payload.example !== "boolean") return empty;
   const example = payload.example === true;
   if (!Array.isArray(payload.data)) return empty;
   if (!example) {
@@ -232,7 +244,7 @@ export function createFeedSource(options = {}) {
     return { items: normalized.items, live: false, example: normalized.example, expiresAt: null };
   }
 
-  function finishFallback(reason, replaceLive) {
+  function finishFallback(reason, replaceLive, waitMs = 0) {
     const normalized = normalizePayload(fallback);
     if (replaceLive) memory = exampleHold();
     return {
@@ -240,7 +252,7 @@ export function createFeedSource(options = {}) {
       example: normalized.example,
       reason,
       fromFallback: true,
-      ttlMs: 0,
+      ttlMs: waitMs,
     };
   }
 
@@ -260,18 +272,19 @@ export function createFeedSource(options = {}) {
       const header = response.headers && response.headers.get ? response.headers.get("retry-after") : null;
       const until = parseRetryAfter(header, now());
       retryNotBefore = until == null ? now() + rateLimitFallbackMs : until;
-      return finishFallback("rate-limit", replaceLive);
+      const waitMs = Math.max(0, retryNotBefore - now()) || rateLimitFallbackMs;
+      return finishFallback("rate-limit", replaceLive, waitMs);
     }
-    if (!status || status < 200 || status >= 300) return finishFallback("http", replaceLive);
+    if (!status || status < 200 || status >= 300) return finishFallback("http", replaceLive, rateLimitFallbackMs);
     let payload;
     try {
       payload = await response.json();
     } catch {
-      return finishFallback("malformed", replaceLive);
+      return finishFallback("malformed", replaceLive, rateLimitFallbackMs);
     }
     const normalized = normalizePayload(payload);
     if (!normalized.items.length) {
-      return finishFallback(normalized.valid && normalized.rawCount === 0 ? "empty" : "invalid", replaceLive);
+      return finishFallback(normalized.valid && normalized.rawCount === 0 ? "empty" : "invalid", replaceLive, rateLimitFallbackMs);
     }
     const liveItems = normalized.items.filter((item) => !item.example);
     const header = response.headers && response.headers.get ? response.headers.get("cache-control") : null;
@@ -285,7 +298,7 @@ export function createFeedSource(options = {}) {
         ttlMs: 0,
       };
     }
-    if (ttlMs <= 0) return finishFallback("ttl", true);
+    if (ttlMs <= 0) return finishFallback("ttl", true, rateLimitFallbackMs);
     memory = {
       items: liveItems,
       live: true,
@@ -315,7 +328,10 @@ export function createFeedSource(options = {}) {
       const replaceLive = claimed.expired;
       const transport = Object.prototype.hasOwnProperty.call(options, "transport") ? options.transport : null;
       if (transport == null) return finishFallback("disabled", replaceLive);
-      if (now() < retryNotBefore) return finishFallback("rate-limit", replaceLive);
+      if (now() < retryNotBefore) {
+        const waitMs = Math.max(0, retryNotBefore - now()) || rateLimitFallbackMs;
+        return finishFallback("rate-limit", replaceLive, waitMs);
+      }
       try {
         const response = await new Promise((resolve, reject) => {
           timer = setTimer(() => {
@@ -331,8 +347,8 @@ export function createFeedSource(options = {}) {
         return await handleResponse(response, replaceLive);
       } catch (err) {
         if (gen !== epoch) return finishFallback("destroyed", replaceLive);
-        if (err && err.code === "TIMEOUT") return finishFallback("timeout", replaceLive);
-        return finishFallback("network", replaceLive);
+        if (err && err.code === "TIMEOUT") return finishFallback("timeout", replaceLive, rateLimitFallbackMs);
+        return finishFallback("network", replaceLive, rateLimitFallbackMs);
       } finally {
         if (timer != null) {
           clearTimer(timer);
@@ -351,13 +367,15 @@ export function createFeedSource(options = {}) {
 }
 
 export function createRotation(options = {}) {
-  const count = options.count || 0;
+  let count = options.count || 0;
   const intervalMs = options.intervalMs ?? INTERVAL_MS;
   const isReduced = options.isReduced ?? (() => false);
   const isHidden = options.isHidden ?? (() => false);
   const setTimer = options.setTimer ?? ((fn, ms) => setTimeout(fn, ms));
   const clearTimer = options.clearTimer ?? ((id) => clearTimeout(id));
   const onIndex = options.onIndex ?? (() => {});
+  // Told whether autoplay is armed, so the card can show or still its cue.
+  const onState = options.onState ?? (() => {});
   let index = 0;
   let timer = null;
   let hoverPaused = false;
@@ -377,13 +395,15 @@ export function createRotation(options = {}) {
 
   function arm() {
     clear();
-    if (!canRun()) return;
-    timer = setTimer(() => {
-      timer = null;
-      index = (index + 1) % count;
-      onIndex(index, { manual: false });
-      arm();
-    }, intervalMs);
+    if (canRun()) {
+      timer = setTimer(() => {
+        timer = null;
+        index = (index + 1) % count;
+        onIndex(index, { manual: false });
+        arm();
+      }, intervalMs);
+    }
+    onState(timer != null);
   }
 
   function step(delta, manual) {
@@ -399,6 +419,7 @@ export function createRotation(options = {}) {
     pause() {
       hoverPaused = true;
       clear();
+      onState(false);
     },
     resume() {
       hoverPaused = false;
@@ -406,8 +427,10 @@ export function createRotation(options = {}) {
     },
     onVisibility() {
       hidePaused = isHidden();
-      if (hidePaused) clear();
-      else arm();
+      if (hidePaused) {
+        clear();
+        onState(false);
+      } else arm();
     },
     next() {
       return step(1, true);
@@ -415,9 +438,16 @@ export function createRotation(options = {}) {
     prev() {
       return step(-1, true);
     },
+    // A refreshed list: keep the running interval when autoplay can still run.
+    sync(nextCount, nextIndex) {
+      count = nextCount || 0;
+      index = count ? Math.min(Math.max(nextIndex || 0, 0), count - 1) : 0;
+      if (timer == null || !canRun()) arm();
+    },
     destroy() {
       destroyed = true;
       clear();
+      onState(false);
     },
     get index() {
       return index;
@@ -432,51 +462,364 @@ function slot(root, selector) {
   return root.querySelector(selector);
 }
 
-export function paintActivity(root, item, flags = {}) {
-  const example = !!(flags.example || (item && item.example));
-  const line = slot(root, "[data-activity-line]");
-  const role = slot(root, "[data-activity-role]");
-  const when = slot(root, "[data-activity-when]");
-  const badge = slot(root, "[data-activity-examples]");
-  const note = slot(root, "[data-activity-note]");
-  if (line) line.textContent = item && item.line ? item.line : "";
-  if (role) role.textContent = item && item.role ? item.role : "";
-  if (when) when.textContent = example ? "Example activity" : (item && item.createdAt ? item.createdAt.slice(0, 10) : "");
-  if (badge) badge.hidden = !example;
-  if (note) note.hidden = !example;
+/* Avatar images load only from these hosts, over https, and only for live
+   items. Bare hostnames: the third-party check reads URL-shaped strings. */
+export const AVATAR_HOSTS = Object.freeze([
+  "pbs.twimg.com",
+  "abs.twimg.com",
+  "avatars.githubusercontent.com",
+  "media.licdn.com",
+  "cdn.bsky.app",
+  "avatars.slack-edge.com",
+  "ca.slack-edge.com",
+  "styles.redditmedia.com",
+  "www.redditstatic.com",
+  "cloud.blowhorn.ai",
+  "lh3.googleusercontent.com",
+]);
+const AVATAR_HOST_SET = new Set(AVATAR_HOSTS);
+const AVATAR_PX = 64;
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MAX_DOTS = 8;
 
-  const linkSlot = slot(root, "[data-activity-link-slot]");
-  if (!linkSlot) return;
-  const showLink = !!(item && item.publicProfileUrl && isHttpsUrl(item.publicProfileUrl) && !example);
-  let link = slot(root, "[data-activity-link]");
-  if (!showLink) {
-    linkSlot.hidden = true;
-    if (link) link.removeAttribute("href");
+export function avatarAllowed(url) {
+  if (!isHttpsUrl(url)) return false;
+  return AVATAR_HOST_SET.has(new URL(url.trim()).hostname.toLowerCase());
+}
+
+/* The avatar a card may request, or null for the monogram. */
+export function avatarFor(item) {
+  if (!item || item.example || !item.avatarUrl) return null;
+  return avatarAllowed(item.avatarUrl) ? item.avatarUrl.trim() : null;
+}
+
+export const HUE_STEPS = 12;
+
+/* Deterministic hue step (0-11, 30 degrees each) from a user id: its first
+   8 hex digits mod 12. The card applies it as the class af-hue-<n>, so no
+   inline style is needed; layouts/_partials/activity-feed.html applies the
+   same rule to the static first example. */
+export function monogramHue(userId) {
+  const hex = String(userId || "").replace(/[^0-9a-f]/gi, "").slice(0, 8);
+  if (!hex) return 0;
+  return parseInt(hex, 16) % HUE_STEPS;
+}
+
+export function initials(name) {
+  const words = String(name || "").split(/\s+/).map((word) => word.replace(/^[^\p{L}\p{N}]+/u, "")).filter(Boolean);
+  if (!words.length) return Array.from(String(name || "").trim()).slice(0, 1).join("");
+  return words.slice(0, 2).map((word) => Array.from(word)[0].toUpperCase()).join("");
+}
+
+export function relativeTime(iso, nowMs) {
+  const then = Date.parse(iso);
+  if (Number.isNaN(then)) return "";
+  const seconds = (nowMs - then) / 1000;
+  if (seconds < 45) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${Math.max(1, minutes)}m ago`;
+  const hours = Math.floor(seconds / 3600);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(seconds / 86400);
+  if (days < 7) return `${days}d ago`;
+  const date = new Date(then);
+  const label = `${MONTHS[date.getUTCMonth()]} ${date.getUTCDate()}`;
+  return date.getUTCFullYear() === new Date(nowMs).getUTCFullYear() ? label : `${label}, ${date.getUTCFullYear()}`;
+}
+
+export function displayName(item) {
+  return (item && (item.displayName || (item.handle ? `@${item.handle}` : "") || item.role)) || "";
+}
+
+const platformCache = new WeakMap();
+function platformsFor(root, flags) {
+  if (flags && flags.platforms) return flags.platforms;
+  if (platformCache.has(root)) return platformCache.get(root);
+  let map = {};
+  const raw = root.getAttribute ? root.getAttribute("data-platforms") : null;
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") map = parsed;
+    } catch {
+      map = {};
+    }
+  }
+  platformCache.set(root, map);
+  return map;
+}
+
+function clearChildren(node) {
+  while (node.children ? node.children.length : node.firstChild) {
+    node.removeChild(node.children ? node.children[0] : node.firstChild);
+  }
+}
+
+function paintAvatar(root, item, name) {
+  const media = slot(root, "[data-activity-avatar]");
+  const monogram = slot(root, "[data-activity-monogram]");
+  if (monogram) {
+    monogram.textContent = initials(name);
+    monogram.className = `af-monogram af-hue-${monogramHue(item && item.userId)}`;
+  }
+  if (!media) return;
+  let img = slot(root, "[data-activity-avatar-img]");
+  const url = avatarFor(item);
+  if (!url) {
+    if (img) {
+      img.hidden = true;
+      img.removeAttribute("src");
+      img.removeAttribute("data-current");
+    }
+    if (monogram) monogram.hidden = false;
     return;
   }
   const doc = root.ownerDocument;
-  if (!link) {
-    link = doc.createElement("a");
-    link.setAttribute("data-activity-link", "");
-    link.className = "ui";
-    link.textContent = "Public profile";
-    linkSlot.appendChild(link);
+  if (!img) {
+    img = doc.createElement("img");
+    img.setAttribute("data-activity-avatar-img", "");
+    img.className = "af-avatar-img";
+    img.setAttribute("alt", "");
+    img.setAttribute("referrerpolicy", "no-referrer");
+    img.setAttribute("decoding", "async");
+    img.setAttribute("width", String(AVATAR_PX));
+    img.setAttribute("height", String(AVATAR_PX));
+    img.addEventListener("load", () => {
+      if (img.getAttribute("src") !== img.getAttribute("data-current")) return;
+      img.hidden = false;
+      const mono = slot(root, "[data-activity-monogram]");
+      if (mono) mono.hidden = true;
+    });
+    img.addEventListener("error", () => {
+      // A late error for an earlier src must not hide the current image.
+      if (img.getAttribute("src") !== img.getAttribute("data-current")) return;
+      img.hidden = true;
+      img.removeAttribute("src");
+      const mono = slot(root, "[data-activity-monogram]");
+      if (mono) mono.hidden = false;
+    });
+    media.appendChild(img);
   }
-  link.textContent = "Public profile";
-  link.setAttribute("href", item.publicProfileUrl.trim());
-  link.setAttribute("rel", "noopener noreferrer nofollow");
-  link.setAttribute("target", "_blank");
-  linkSlot.hidden = false;
+  if (img.getAttribute("data-current") === url && img.getAttribute("src") === url) return;
+  // Show the new person's monogram until their own picture has loaded, so the
+  // previous face never sits next to the new name.
+  img.hidden = true;
+  if (monogram) monogram.hidden = false;
+  img.setAttribute("data-current", url);
+  img.setAttribute("src", url);
+  if (img.complete && img.naturalWidth > 0) {
+    img.hidden = false;
+    if (monogram) monogram.hidden = true;
+  }
+}
+
+/* Network badges stacked on the avatar. At most BADGE_CAP badges show; a
+   longer list shows BADGE_CAP - 1 logos and a +N badge for the rest. */
+export const BADGE_CAP = 3;
+
+const bareName = (value) => String(value || "").replace(/ \(.*\)$/, "").trim().toLowerCase();
+
+/* One network, by platform id or display name ("X (Twitter)" matches X), as
+   { id, name, logo } from the data-platforms map. An unknown name keeps its
+   raw text and has no id or logo. */
+export function resolveNetwork(value, platforms) {
+  const raw = String(value || "").trim();
+  const map = platforms || {};
+  const key = raw.toLowerCase();
+  const bare = bareName(raw);
+  for (const id of Object.keys(map)) {
+    const entry = map[id] || {};
+    if (id === key || (entry.name && bareName(entry.name) === bare)) {
+      return { id, name: entry.name || id, logo: entry.logo || "" };
+    }
+  }
+  return { id: null, name: raw, logo: "" };
+}
+
+/* The item's networks (its platform when it has none), resolved, without
+   repeats, in PLATFORMS order, then unknown names as first seen. */
+export function networksFor(item, platforms) {
+  if (!item) return [];
+  const names = Array.isArray(item.networks) && item.networks.length
+    ? item.networks
+    : [platforms && platforms[item.platform] && platforms[item.platform].name ? platforms[item.platform].name : item.platform];
+  const known = new Map();
+  const unknown = new Map();
+  for (const name of names) {
+    const net = resolveNetwork(name, platforms);
+    if (net.id) {
+      if (!known.has(net.id)) known.set(net.id, net);
+    } else if (net.name && !unknown.has(net.name.toLowerCase())) {
+      unknown.set(net.name.toLowerCase(), net);
+    }
+  }
+  const rank = (id) => (PLATFORMS.includes(id) ? PLATFORMS.indexOf(id) : PLATFORMS.length);
+  const ordered = [...known.values()].sort((a, b) => rank(a.id) - rank(b.id));
+  return [...ordered, ...unknown.values()];
+}
+
+/* { shown, hidden }: every network when they fit the cap, else cap - 1. */
+export function badgeStack(networks, cap = BADGE_CAP) {
+  if (networks.length <= cap) return { shown: networks, hidden: [] };
+  const keep = Math.max(0, cap - 1);
+  return { shown: networks.slice(0, keep), hidden: networks.slice(keep) };
+}
+
+function paintBadges(root, item, platforms) {
+  const stack = slot(root, "[data-activity-badges]");
+  if (!stack) return;
+  clearChildren(stack);
+  const doc = root.ownerDocument;
+  const { shown, hidden } = badgeStack(networksFor(item, platforms));
+  for (const net of shown) {
+    const badge = doc.createElement("span");
+    badge.className = "af-platform-badge";
+    badge.setAttribute("title", net.name);
+    if (net.logo) {
+      const img = doc.createElement("img");
+      img.setAttribute("src", net.logo);
+      img.setAttribute("alt", net.name);
+      img.setAttribute("width", "16");
+      img.setAttribute("height", "16");
+      badge.appendChild(img);
+    } else {
+      badge.className = "af-platform-badge af-badge-initial";
+      badge.setAttribute("role", "img");
+      badge.setAttribute("aria-label", net.name);
+      badge.textContent = Array.from(net.name)[0].toUpperCase();
+    }
+    stack.appendChild(badge);
+  }
+  if (hidden.length) {
+    const more = doc.createElement("span");
+    const label = `Also on ${hidden.map((net) => net.name).join(", ")}`;
+    more.className = "af-platform-badge af-badge-more";
+    more.setAttribute("role", "img");
+    more.setAttribute("aria-label", label);
+    more.setAttribute("title", label);
+    more.textContent = `+${hidden.length}`;
+    stack.appendChild(more);
+  }
+  stack.hidden = stack.children.length === 0;
+}
+
+export function paintActivity(root, item, flags = {}) {
+  const example = !!(flags.example || (item && item.example));
+  const nowMs = flags.now != null ? flags.now : Date.now();
+  const name = displayName(item);
+  const platforms = platformsFor(root, flags);
+  const platform = (item && platforms[item.platform]) || null;
+  if (root.setAttribute) root.setAttribute("data-state", example ? "examples" : "live");
+
+  const stage = slot(root, "[data-activity-stage]");
+  const empty = slot(root, "[data-activity-empty]");
+  if (stage) stage.hidden = false;
+  if (empty) empty.hidden = true;
+
+  const line = slot(root, "[data-activity-line]");
+  const role = slot(root, "[data-activity-role]");
+  const nameSlot = slot(root, "[data-activity-name]");
+  const org = slot(root, "[data-activity-org]");
+  const when = slot(root, "[data-activity-when]");
+  const platformName = slot(root, "[data-activity-platform]");
+  const badge = slot(root, "[data-activity-examples]");
+  const live = slot(root, "[data-activity-live]");
+  const note = slot(root, "[data-activity-note]");
+  if (line) line.textContent = item && item.line ? item.line : "";
+  if (role) role.textContent = item && item.role ? item.role : "";
+  if (org) {
+    // An organization's own account names itself; "Layer5 at Layer5" says nothing.
+    const rawOrg = item && item.organizationName ? item.organizationName : "";
+    const orgName = rawOrg && rawOrg.toLowerCase() !== name.toLowerCase() ? rawOrg : "";
+    org.textContent = orgName ? ` at ${orgName}` : "";
+    org.hidden = !orgName;
+  }
+  if (when) {
+    when.textContent = example ? "Example activity" : (item && item.createdAt ? relativeTime(item.createdAt, nowMs) : "");
+    if (item && item.createdAt) when.setAttribute("datetime", item.createdAt);
+    else when.removeAttribute("datetime");
+  }
+  const handleSlot = slot(root, "[data-activity-handle]");
+  if (handleSlot) {
+    // The name line already carries the handle when there is no displayName.
+    const handle = item && item.handle && item.displayName ? `@${item.handle}` : "";
+    handleSlot.textContent = handle;
+    handleSlot.hidden = !handle;
+  }
+  if (platformName) platformName.textContent = platform && platform.name ? platform.name : (item && item.platform) || "";
+  if (badge) badge.hidden = !example;
+  if (live) live.hidden = example;
+  if (note) note.hidden = !example;
+  paintAvatar(root, item, name);
+  paintBadges(root, item, platforms);
+  if (nameSlot) nameSlot.textContent = name;
 }
 
 export function paintEmpty(root) {
-  paintActivity(root, { line: "No activity to show.", role: "", createdAt: "" }, { example: false });
-  const badge = slot(root, "[data-activity-examples]");
-  const note = slot(root, "[data-activity-note]");
-  if (badge) badge.hidden = true;
-  if (note) note.hidden = true;
+  if (root.setAttribute) root.setAttribute("data-state", "empty");
+  const stage = slot(root, "[data-activity-stage]");
+  const empty = slot(root, "[data-activity-empty]");
+  if (stage) stage.hidden = true;
+  if (empty) empty.hidden = false;
+  for (const selector of ["[data-activity-examples]", "[data-activity-note]", "[data-activity-live]"]) {
+    const node = slot(root, selector);
+    if (node) node.hidden = true;
+  }
+  const line = slot(root, "[data-activity-line]");
+  if (line) line.textContent = "";
   const when = slot(root, "[data-activity-when]");
   if (when) when.textContent = "";
+  const progress = slot(root, "[data-activity-progress]");
+  if (progress) clearChildren(progress);
+}
+
+/* Swatch dots under the card: a sliding window of at most 8 that always
+   holds the active one, ringed; an end dot is smaller when more items lie
+   beyond it. They are aria-hidden and not interactive; Previous and Next are
+   the controls. */
+export function paintProgress(root, index, count) {
+  const progress = slot(root, "[data-activity-progress]");
+  if (!progress) return;
+  const dots = count >= 2 ? Math.min(count, MAX_DOTS) : 0;
+  const start = Math.max(0, Math.min(index - 3, count - dots));
+  const doc = root.ownerDocument;
+  const existing = progress.children ? progress.children.length : progress.childElementCount;
+  if (existing !== dots) {
+    clearChildren(progress);
+    for (let i = 0; i < dots; i += 1) {
+      const dot = doc.createElement("span");
+      dot.className = "af-swatch";
+      progress.appendChild(dot);
+    }
+  }
+  const list = progress.children ? Array.from(progress.children) : [];
+  list.forEach((dot, i) => {
+    const classes = ["af-swatch"];
+    if (start + i === index) classes.push("is-active");
+    if ((i === 0 && start > 0) || (i === dots - 1 && start + dots < count)) classes.push("af-dot-edge");
+    dot.className = classes.join(" ");
+  });
+}
+
+/* Resolves when the avatar is cached (or failed) or after capMs, so a swap
+   never waits long and the incoming avatar does not pop in. */
+export function preloadAvatar(view, url, capMs = 400, setTimer = (fn, ms) => setTimeout(fn, ms)) {
+  if (!url || !view || typeof view.Image !== "function") return Promise.resolve(false);
+  return new Promise((resolve) => {
+    const img = new view.Image();
+    let done = false;
+    const finish = (ok) => {
+      if (done) return;
+      done = true;
+      resolve(ok);
+    };
+    img.referrerPolicy = "no-referrer";
+    img.decoding = "async";
+    img.onload = () => finish(true);
+    img.onerror = () => finish(false);
+    setTimer(() => finish(false), capMs);
+    img.src = url;
+  });
 }
 
 function listen(bag, target, type, fn) {
@@ -494,8 +837,15 @@ export function mountActivityFeed(root, options = {}) {
   const source = options.source || createFeedSource({ transport: null, fallback: options.fallback });
   const setTimer = options.setTimer ?? ((fn, ms) => setTimeout(fn, ms));
   const clearTimer = options.clearTimer ?? ((id) => clearTimeout(id));
+  const now = options.now ?? (() => Date.now());
+  const platforms = options.platforms || null;
+  const intervalMs = options.intervalMs ?? INTERVAL_MS;
+  // The progress ring draws in over the same interval the rotation arms.
+  root.style.setProperty("--af-interval", `${intervalMs}ms`);
   const listeners = [];
   let items = [];
+  let enterTimer = null;
+  let swapGen = 0;
   let rotation = null;
   let swapTimer = null;
   let ttlTimer = null;
@@ -515,38 +865,81 @@ export function mountActivityFeed(root, options = {}) {
     }
   }
 
+  function clearEnter() {
+    if (enterTimer != null) {
+      clearTimer(enterTimer);
+      enterTimer = null;
+    }
+    root.classList.remove("is-entering");
+  }
+
+  // Warm the cache for the row after this one, so its avatar is ready.
+  function warmNext(index) {
+    if (items.length < 2) return;
+    const next = items[(index + 1) % items.length];
+    preloadAvatar(view, avatarFor(next), 400, setTimer);
+  }
+
+  function apply(index) {
+    const item = items[index];
+    paintActivity(root, item, { example: item.example, now: now(), platforms });
+    paintProgress(root, index, items.length);
+    warmNext(index);
+  }
+
   function show(index, animate) {
     const item = items[index];
     if (!item) {
       paintEmpty(root);
       return;
     }
-    const apply = () => paintActivity(root, item, { example: item.example });
     clearSwap();
+    clearEnter();
+    const gen = ++swapGen;
     if (!animate || reduced) {
       root.classList.remove("is-swap");
-      apply();
+      apply(index);
       return;
     }
     root.classList.add("is-swap");
-    swapTimer = setTimer(() => {
-      swapTimer = null;
-      if (destroyed) return;
-      apply();
+    const ready = preloadAvatar(view, avatarFor(item), 400, setTimer);
+    const left = new Promise((resolve) => {
+      swapTimer = setTimer(() => {
+        swapTimer = null;
+        resolve();
+      }, SWAP_MS);
+    });
+    Promise.all([ready, left]).then(() => {
+      if (destroyed || gen !== swapGen) return;
+      apply(index);
       root.classList.remove("is-swap");
-    }, SWAP_MS);
+      root.classList.add("is-entering");
+      enterTimer = setTimer(() => {
+        enterTimer = null;
+        root.classList.remove("is-entering");
+      }, ENTER_MS);
+    });
+  }
+
+  // The progress cue restarts on every armed interval and stills otherwise.
+  function setPlaying(armed) {
+    root.classList.remove("is-playing");
+    if (!armed || destroyed) return;
+    void root.offsetWidth;
+    root.classList.add("is-playing");
   }
 
   function armRotation() {
     if (rotation) rotation.destroy();
     rotation = createRotation({
       count: items.length,
-      intervalMs: options.intervalMs ?? INTERVAL_MS,
+      intervalMs,
       isReduced: () => reduced,
       isHidden: () => !!doc.hidden,
       setTimer,
       clearTimer,
       onIndex: (index, meta) => show(index, !(meta && meta.manual)),
+      onState: setPlaying,
     });
     rotation.start();
   }
@@ -571,7 +964,10 @@ export function mountActivityFeed(root, options = {}) {
     const onMotion = () => {
       reduced = !!reducedQuery.matches;
       if (rotation) rotation.onVisibility();
-      if (reduced) root.classList.remove("is-swap");
+      if (reduced) {
+        root.classList.remove("is-swap");
+        clearEnter();
+      }
     };
     listen(listeners, reducedQuery, "change", onMotion);
   }
@@ -580,7 +976,7 @@ export function mountActivityFeed(root, options = {}) {
     const nav = slot(root, ".activity-feed-nav");
     const prev = slot(root, "[data-activity-prev]");
     const next = slot(root, "[data-activity-next]");
-    const showNav = items.length >= 2;
+    const showNav = items.length >= 2 && root.getAttribute("data-state") !== "empty";
     if (nav) nav.hidden = !showNav;
     for (const btn of [prev, next]) {
       if (!btn) continue;
@@ -590,12 +986,21 @@ export function mountActivityFeed(root, options = {}) {
   }
 
   function showResult(result) {
+    const shown = rotation ? items[rotation.index] : null;
     items = result.items || [];
-    if (!items.length) paintEmpty(root);
-    else show(0, false);
-    syncNav();
-    root.classList.add("is-ready");
-    armRotation();
+    // A refresh keeps the shown item, repainted in place, and the rotation's timer.
+    const kept = shown ? items.findIndex((entry) => entry.id === shown.id) : -1;
+    if (kept >= 0) {
+      show(kept, false);
+      syncNav();
+      rotation.sync(items.length, kept);
+    } else {
+      if (!items.length) paintEmpty(root);
+      else show(0, false);
+      syncNav();
+      root.classList.add("is-ready");
+      armRotation();
+    }
     clearTtl();
     if (destroyed || !result.ttlMs) return;
     ttlTimer = setTimer(() => {
@@ -622,6 +1027,7 @@ export function mountActivityFeed(root, options = {}) {
     destroy() {
       destroyed = true;
       clearSwap();
+      clearEnter();
       clearTtl();
       if (rotation) rotation.destroy();
       if (source.destroy) source.destroy();
@@ -662,6 +1068,7 @@ export function boot(doc) {
   const fallback = embedded || { example: true, data: [] };
   const feedUrl = root.getAttribute("data-feed-url");
   return mountActivityFeed(root, {
+    now: () => Date.now(),
     source: createFeedSource({ transport: feedTransport(feedUrl), fallback }),
   });
 }
@@ -670,6 +1077,18 @@ export const BlowhornActivityFeed = {
   PLATFORMS,
   LIMITS,
   INTERVAL_MS,
+  AVATAR_HOSTS,
+  avatarAllowed,
+  avatarFor,
+  BADGE_CAP,
+  resolveNetwork,
+  networksFor,
+  badgeStack,
+  monogramHue,
+  initials,
+  relativeTime,
+  paintProgress,
+  preloadAvatar,
   validateItem,
   sanitizeItem,
   normalizePayload,

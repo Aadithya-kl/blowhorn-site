@@ -34,10 +34,17 @@ let certsCache = { url: '', keys: null, fetchedAt: 0 };
 
 const certsUrl = (teamDomain) => `https://${teamDomain}/cdn-cgi/access/certs`;
 
+const SECURITY_HEADERS = {
+  'x-content-type-options': 'nosniff',
+  'x-frame-options': 'DENY',
+  'referrer-policy': 'strict-origin-when-cross-origin',
+};
+
 const DENY_HEADERS = {
   'content-type': 'text/plain; charset=utf-8',
   'cache-control': 'no-store',
   'x-robots-tag': 'noindex, nofollow',
+  ...SECURITY_HEADERS,
 };
 
 function deny(status = 403) {
@@ -213,6 +220,9 @@ export async function handle(request, env, fetchImpl = fetch) {
     if (!claims) return deny();
   }
   const url = new URL(request.url);
+  if (url.pathname === '/internal/signups') {
+    return Response.redirect(new URL('/internal/signups/' + url.search, url).toString(), 301);
+  }
   // The signups admin lives behind the same Access check: the list holds
   // email addresses, so it is never served to an unauthenticated request.
   if (url.pathname === '/internal/signups/' || url.pathname === '/internal/signups/export') {
@@ -239,6 +249,7 @@ export async function handle(request, env, fetchImpl = fetch) {
   const out = new Response(res.body, res);
   out.headers.set('cache-control', 'private, no-store');
   out.headers.set('x-robots-tag', 'noindex, nofollow');
+  for (const [name, value] of Object.entries(SECURITY_HEADERS)) out.headers.set(name, value);
   return out;
 }
 
@@ -270,6 +281,7 @@ export function csvCell(v) {
 const ADMIN_HEADERS = {
   'cache-control': 'no-store',
   'x-robots-tag': 'noindex, nofollow',
+  ...SECURITY_HEADERS,
 };
 
 async function handleSignupsAdmin(url, env) {
@@ -355,7 +367,9 @@ function num(v) {
 
 function parseBody(row) {
   try {
-    return JSON.parse(row.body);
+    const data = JSON.parse(row.body);
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+    return { ...data, collected_at: row.collected_at || data.collected_at };
   } catch {
     return null;
   }
@@ -375,9 +389,10 @@ function csvOf(fields, rows) {
 
 function staleNote(snap, kind, nowMs) {
   if (!snap) return `<p class="stale">No ${kind} snapshot yet.</p>`;
-  const age = nowMs - new Date(snap.collected_at).getTime();
+  const t = new Date(snap.collected_at).getTime();
+  const age = nowMs - t;
   const when = `Collected ${escHtml(fmtCentral(snap.collected_at))} on ${escHtml(snap.collector_host || '')}`;
-  if (age > FLEET_STALE_MS[kind]) return `<p class="stale">${when}. Stale: the cron has missed at least two runs.</p>`;
+  if (Number.isNaN(age) || age > FLEET_STALE_MS[kind]) return `<p class="stale">${when}. Stale: the cron has missed at least two runs.</p>`;
   return `<p>${when}.</p>`;
 }
 

@@ -1,306 +1,279 @@
 #!/usr/bin/env python3
-"""check_brand_tokens.py: validate/generate brand tokens against the product.
+"""Tests for check_brand_tokens.py: the product-to-site token comparison, the
+CSS size check, and the --write regeneration.
 
 Run with `make test-scripts` (CI runs it too).
 """
 
-import copy
+import importlib.util
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
-import check_brand_tokens as check
-
-PRODUCT_TOKENS = {
-    "name": "Blowhorn",
-    "version": 1,
-    "color": {
-        "themes": [{"id": "light", "name": "Light"}, {"id": "dark", "name": "Dark"}],
-        "tokens": [
-            {"name": "teal", "value": "#00B39F", "usage": "primary brand fill"},
-            {"name": "teal-bright", "value": "#00D3A9", "usage": "highlights"},
-            {"name": "near-black", "value": "#1E2117", "usage": "deepest ink"},
-            {"name": "on-yellow", "value": "#1E2117", "usage": "text on yellow"},
-        ],
-    },
-    "type": {
-        "fonts": [
-            {"family": "Instrument Sans", "file": "f.woff2", "weight": "400", "style": "normal"},
-            {"family": "JetBrains Mono", "file": "f.woff2", "weight": "400", "style": "normal"},
-        ],
-        "families": {
-            "display": "\"Instrument Sans\", sans-serif",
-            "sans": "\"Instrument Sans\", sans-serif",
-            "mono": "\"JetBrains Mono\", monospace",
-        },
-        "groups": [
-            {
-                "name": "Display",
-                "family": "display",
-                "styles": [
-                    {"name": "display-xl", "fontSize": "72px", "lineHeight": "72px"},
-                    {"name": "h1", "fontSize": "40px", "lineHeight": "46px"},
-                ],
-            },
-            {
-                "name": "Text",
-                "family": "sans",
-                "styles": [
-                    {"name": "body-lg", "fontSize": "18px", "lineHeight": "28px"},
-                    {"name": "body", "fontSize": "16px", "lineHeight": "24px"},
-                    {"name": "ui", "fontSize": "14px", "lineHeight": "20px"},
-                    {"name": "caption", "fontSize": "12px", "lineHeight": "16px"},
-                ],
-            },
-            {
-                "name": "Mono",
-                "family": "mono",
-                "styles": [
-                    {"name": "code", "fontSize": "13px", "lineHeight": "20px"},
-                    {"name": "label", "fontSize": "11px", "lineHeight": "16px"},
-                ],
-            },
-        ],
-    },
-    "spacing": {
-        "tokens": [
-            {"name": "space-1", "value": "4px", "usage": "icon gaps"},
-            {"name": "space-4", "value": "16px", "usage": "card padding"},
-        ],
-    },
-    "radius": {
-        "tokens": [
-            {"name": "radius-md", "value": "10px", "usage": "buttons"},
-            {"name": "radius-lg", "value": "16px", "usage": "cards"},
-        ],
-    },
-    "shadow": {
-        "tokens": [
-            {"name": "shadow-soft", "value": {"light": "0 8px 24px rgba(0,0,0,0.12)"}, "usage": "menus"},
-        ],
-    },
-    "stroke": {
-        "tokens": [
-            {"name": "stroke-hairline", "value": "1px", "usage": "dividers"},
-        ],
-    },
-}
-
-SITE_ONLY = {
-    "video-matte": {"value": "#0F172A", "usage": "video background"},
-    "on-matte": {"value": "#FFFFFF", "usage": "text on matte"},
-    "on-teal-deep": {"value": "#FFFFFF", "usage": "text on teal-deep"},
-    "teal-glow": {"value": "#40E0D0", "usage": "glow accent"},
-    "status-bg": {"value": "#F4F7F6", "usage": "status background"},
-    "status-ink": {"value": "#1E2117", "usage": "text on status"},
-    "mark-claude": {"value": "#D97706", "usage": "Claude mark"},
-    "mark-deepseek": {"value": "#0066CC", "usage": "DeepSeek mark"},
-    "mark-openai": {"value": "#00A86E", "usage": "OpenAI mark"},
-    "proof-flag-bg": {"value": "#FFF6E0", "usage": "proof flag bg"},
-    "proof-flag-ink": {"value": "#1E2117", "usage": "text on proof flag"},
-    "print-ink": {"value": "#1E2117", "usage": "print ink"},
-    "ai-soon-ink": {"value": "#5B6A70", "usage": "AI soon muted"},
-}
-
-CSS_MATCHING = """
-.ui { font-size: 14px; line-height: 20px; font-weight: 500; }
-.caption { font-size: 12px; line-height: 16px; font-weight: 500; }
-.label { font-size: 11px; line-height: 16px; font-weight: 500; }
-"""
-
-CSS_MISMATCH = """
-.ui { font-size: 16px; line-height: 24px; font-weight: 500; }
-.caption { font-size: 12px; line-height: 16px; font-weight: 500; }
-.label { font-size: 11px; line-height: 16px; font-weight: 500; }
-"""
+SCRIPT = Path(__file__).with_name("check_brand_tokens.py")
+spec = importlib.util.spec_from_file_location("check_brand_tokens", SCRIPT)
+tokens = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(tokens)
 
 
-def site_with_site_only_colours():
+def product_tokens():
     return {
         "name": "Blowhorn",
         "version": 1,
         "color": {
-            "themes": PRODUCT_TOKENS["color"]["themes"],
-            "tokens": PRODUCT_TOKENS["color"]["tokens"]
-            + [{"name": n, "value": v["value"], "usage": v["usage"]}
-               for n, v in SITE_ONLY.items()],
+            "themes": [{"id": "light", "name": "Light"}],
+            "tokens": [
+                {"name": "teal", "value": "#00B39F",
+                 "usage": "Layer5 teal, the primary brand fill."},
+                {"name": "ink", "value": {"light": "#1E2117", "dark": "#FFFFFF"},
+                 "usage": "Body text."},
+            ],
         },
-        "type": PRODUCT_TOKENS["type"],
-        "spacing": PRODUCT_TOKENS["spacing"],
-        "radius": PRODUCT_TOKENS["radius"],
-        "shadow": PRODUCT_TOKENS["shadow"],
-        "stroke": PRODUCT_TOKENS["stroke"],
+        "type": {
+            "fonts": [{"family": "Instrument Sans", "file": "fonts/InstrumentSans-Regular.woff2"}],
+            "families": {"sans": "Instrument Sans, system-ui, sans-serif"},
+            "groups": [
+                {"name": "Display", "styles": [
+                    {"name": "h1", "fontSize": "40px", "lineHeight": "46px",
+                     "fontWeight": 700, "sample": "Product sample", "usage": "Product usage"},
+                    {"name": "label", "fontSize": "11px", "lineHeight": "16px",
+                     "fontWeight": 600, "sample": "Product label"},
+                ]},
+                {"name": "Text", "styles": [
+                    {"name": "ui", "fontSize": "15px", "lineHeight": "22px", "fontWeight": 500},
+                    {"name": "caption", "fontSize": "13px", "lineHeight": "18px", "fontWeight": 500},
+                ]},
+                {"name": "Mono", "styles": [
+                    {"name": "code", "fontSize": "13px", "lineHeight": "20px", "fontWeight": 400},
+                ]},
+            ],
+        },
+        "spacing": {"space-1": "4px"},
+        "radius": {"radius-1": "4px"},
+        "shadow": {"shadow-1": "0 1px 2px rgba(0,0,0,0.1)"},
+        "stroke": {"stroke-1": "1px"},
     }
 
 
-def make_tmp(products=None, site_tokens=None, css=None, extensions=None):
-    tmp = tempfile.TemporaryDirectory()
-    root = Path(tmp.name)
-    bh = root / "blowhorn"
-    (bh / "marketing" / "brand").mkdir(parents=True)
-    if products is not None:
-        (bh / "marketing" / "brand" / "tokens.json").write_text(
-            json.dumps(products), encoding="utf-8"
-        )
-    site = root / "site"
-    site.mkdir()
-    if site_tokens is not None:
-        (site / "tokens.json").write_text(json.dumps(site_tokens), encoding="utf-8")
-    if css is not None:
-        (site / "site.css").write_text(css, encoding="utf-8")
-    if extensions is not None:
-        (root / "extensions.json").write_text(json.dumps(extensions), encoding="utf-8")
-    return tmp, bh, site, root
+def site_tokens():
+    """The same tokens as the site keeps them: reworded usage prose, the ui and
+    caption sizes the product moved to, and the site-only mono label."""
+    site = product_tokens()
+    site["color"]["tokens"][0]["usage"] = "Blowhorn teal, the primary brand fill."
+    site["type"]["groups"][0]["styles"] = [
+        {"name": "h1", "fontSize": "40px", "lineHeight": "46px",
+         "fontWeight": 700, "sample": "Site sample", "usage": "Site usage"},
+    ]
+    site["type"]["groups"][2]["styles"].append(
+        {"name": "label", "fontSize": "11px", "lineHeight": "16px",
+         "fontWeight": 500, "sample": "FOLLOWERS"})
+    return site
 
 
-class ValidatePasses(unittest.TestCase):
-    def test_product_prefix_and_css_match(self):
-        tmp, bh, site, root = make_tmp(
-            products=PRODUCT_TOKENS,
-            site_tokens=site_with_site_only_colours(),
-            css=CSS_MATCHING,
-            extensions={"color": SITE_ONLY},
-        )
-        try:
-            problems = check.validate(bh, site / "tokens.json", site / "site.css", root / "extensions.json")
-        finally:
-            tmp.cleanup()
-        self.assertEqual(problems, [])
+def stale_site_tokens():
+    """The site file before the #436 fix: ui 14/20 and caption 12/16."""
+    site = site_tokens()
+    for group in site["type"]["groups"]:
+        for style in group["styles"]:
+            if style["name"] == "ui":
+                style.update(fontSize="14px", lineHeight="20px")
+            if style["name"] == "caption":
+                style.update(fontSize="12px", lineHeight="16px")
+    return site
 
 
-class ValidateFails(unittest.TestCase):
-    def test_product_drift_fails(self):
-        drifted = copy.deepcopy(PRODUCT_TOKENS)
-        drifted["color"]["tokens"][0]["usage"] = "changed usage"
-        tmp, bh, site, root = make_tmp(
-            products=drifted,
-            site_tokens=site_with_site_only_colours(),
-            css=CSS_MATCHING,
-            extensions={"color": SITE_ONLY},
-        )
-        try:
-            problems = check.validate(bh, site / "tokens.json", site / "site.css", root / "extensions.json")
-        finally:
-            tmp.cleanup()
-        self.assertNotEqual(problems, [])
-        self.assertTrue(any("entry 0 differs" in p for p in problems))
-
-    def test_unnamed_site_only_colour_fails(self):
-        tokens = site_with_site_only_colours()
-        tokens["color"]["tokens"].append(
-            {"name": "rogue-colour", "value": "#BADA55", "usage": "x"}
-        )
-        tmp, bh, site, root = make_tmp(
-            products=PRODUCT_TOKENS,
-            site_tokens=tokens,
-            css=CSS_MATCHING,
-            extensions={"color": SITE_ONLY},
-        )
-        try:
-            problems = check.validate(bh, site / "tokens.json", site / "site.css", root / "extensions.json")
-        finally:
-            tmp.cleanup()
-        self.assertNotEqual(problems, [])
-        self.assertTrue(any("rogue-colour" in p for p in problems))
-
-    def test_missing_site_only_colour_fails(self):
-        tokens = site_with_site_only_colours()
-        tokens["color"]["tokens"] = [
-            t for t in tokens["color"]["tokens"] if t["name"] != "video-matte"
-        ]
-        tmp, bh, site, root = make_tmp(
-            products=PRODUCT_TOKENS,
-            site_tokens=tokens,
-            css=CSS_MATCHING,
-            extensions={"color": SITE_ONLY},
-        )
-        try:
-            problems = check.validate(bh, site / "tokens.json", site / "site.css", root / "extensions.json")
-        finally:
-            tmp.cleanup()
-        self.assertNotEqual(problems, [])
-        self.assertTrue(any("video-matte" in p for p in problems))
-
-    def test_css_mismatch_fails(self):
-        tmp, bh, site, root = make_tmp(
-            products=PRODUCT_TOKENS,
-            site_tokens=site_with_site_only_colours(),
-            css=CSS_MISMATCH,
-            extensions={"color": SITE_ONLY},
-        )
-        try:
-            problems = check.validate(bh, site / "tokens.json", site / "site.css", root / "extensions.json")
-        finally:
-            tmp.cleanup()
-        self.assertNotEqual(problems, [])
-        self.assertTrue(any(".ui" in p and "16px" in p for p in problems))
+CSS = (
+    ".ui { font-size: 15px; line-height: 22px; font-weight: 500; }\n"
+    ".caption { font-size: 13px; line-height: 18px; font-weight: 500; }\n"
+    ".label {\n"
+    "  font-family: var(--font-mono);\n"
+    "  font-size: 11px;\n"
+    "  line-height: 16px;\n"
+    "  font-weight: 500;\n"
+    "}\n"
+)
 
 
-class GenerateWrites(unittest.TestCase):
-    def test_generate_merges_product_and_extensions(self):
-        tmp, bh, site, root = make_tmp(
-            products=PRODUCT_TOKENS,
-            extensions={"color": SITE_ONLY},
-        )
-        try:
-            rc = check.generate(bh, site / "tokens.json", root / "extensions.json")
-            written = json.loads((site / "tokens.json").read_text(encoding="utf-8"))
-        finally:
-            tmp.cleanup()
-        self.assertEqual(rc, 0)
-        names = [t["name"] for t in written["color"]["tokens"]]
-        product_names = [t["name"] for t in PRODUCT_TOKENS["color"]["tokens"]]
-        self.assertEqual(names[:len(product_names)], product_names)
-        for n in SITE_ONLY:
-            self.assertIn(n, names)
+class CheckTokensTest(unittest.TestCase):
+    def test_in_sync_passes(self):
+        self.assertEqual(tokens.check_tokens(product_tokens(), site_tokens()), [])
+
+    def test_usage_prose_is_not_compared(self):
+        # The site rewords usage notes (Layer5 becomes Blowhorn); only name and
+        # value are compared, so a reworded token still passes.
+        site = site_tokens()
+        site["color"]["tokens"][0]["usage"] = "Something else entirely."
+        self.assertEqual(tokens.check_tokens(product_tokens(), site), [])
+
+    def test_stale_type_size_fails(self):
+        problems = tokens.check_tokens(product_tokens(), stale_site_tokens())
+        self.assertTrue(any("ui" in p and "15px" in p for p in problems), problems)
+        self.assertTrue(any("caption" in p and "13px" in p for p in problems), problems)
+
+    def test_changed_colour_value_fails(self):
+        site = site_tokens()
+        site["color"]["tokens"][0]["value"] = "#00B39E"
+        problems = tokens.check_tokens(product_tokens(), site)
+        self.assertEqual(len(problems), 1)
+        self.assertIn("teal", problems[0])
+
+    def test_missing_product_token_fails(self):
+        site = site_tokens()
+        del site["color"]["tokens"][1]
+        problems = tokens.check_tokens(product_tokens(), site)
+        self.assertTrue(any("ink" in p for p in problems), problems)
+
+    def test_reordered_tokens_fail(self):
+        site = site_tokens()
+        site["color"]["tokens"] = list(reversed(site["color"]["tokens"]))
+        problems = tokens.check_tokens(product_tokens(), site)
+        self.assertTrue(any("in order" in p for p in problems), problems)
+
+    def test_unlisted_site_only_colour_fails(self):
+        site = site_tokens()
+        site["color"]["tokens"].append(
+            {"name": "surprise", "value": "#123456", "usage": "Nowhere in the list."})
+        problems = tokens.check_tokens(product_tokens(), site)
+        self.assertTrue(any("surprise" in p for p in problems), problems)
+
+    def test_listed_site_only_colour_passes(self):
+        site = site_tokens()
+        site["color"]["tokens"].append(
+            {"name": "video-matte", "value": "#111111", "usage": "Video ground."})
+        self.assertEqual(tokens.check_tokens(product_tokens(), site), [])
+
+    def test_unlisted_site_only_style_fails(self):
+        site = site_tokens()
+        site["type"]["groups"][2]["styles"].append(
+            {"name": "footnote", "fontSize": "10px", "lineHeight": "14px", "fontWeight": 400})
+        problems = tokens.check_tokens(product_tokens(), site)
+        self.assertTrue(any("footnote" in p for p in problems), problems)
+
+    def test_product_label_is_not_compared(self):
+        # The product's Display label (weight 600) and the site's mono label
+        # (weight 500) share a name but are different styles.
+        site = site_tokens()
+        site["type"]["groups"][2]["styles"][1]["fontWeight"] = 400
+        self.assertEqual(tokens.check_tokens(product_tokens(), site), [])
+
+    def test_whole_group_drift_fails(self):
+        site = site_tokens()
+        site["spacing"] = {"space-1": "5px"}
+        problems = tokens.check_tokens(product_tokens(), site)
+        self.assertTrue(any(p.startswith("spacing:") for p in problems), problems)
 
 
-class NoBlowhornDir(unittest.TestCase):
-    def test_missing_blowhorn_dir_fails(self):
-        # argv[0] is the program name, so the missing directory is argv[1].
-        rc = check.main(["check_brand_tokens.py", "/nonexistent/blowhorn", "validate"])
-        self.assertEqual(rc, 2)
+class CheckCssTest(unittest.TestCase):
+    def test_matching_css_passes(self):
+        self.assertEqual(tokens.check_css(CSS, site_tokens()), [])
+
+    def test_stale_css_fails(self):
+        css = CSS.replace("15px", "14px").replace("22px", "20px")
+        problems = tokens.check_css(css, site_tokens())
+        self.assertTrue(any(".ui" in p and "15px" in p for p in problems), problems)
+
+    def test_missing_rule_fails(self):
+        problems = tokens.check_css("", site_tokens())
+        self.assertEqual(len(problems), 3)
+        self.assertTrue(all("no .ui rule" in p or "no .caption rule" in p or "no .label rule" in p
+                            for p in problems), problems)
 
 
-class MainEndToEnd(unittest.TestCase):
-    def test_main_validate_passes_with_valid_fixture(self):
-        tmp, bh, site, root = make_tmp(
-            products=PRODUCT_TOKENS,
-            site_tokens=site_with_site_only_colours(),
-            css=CSS_MATCHING,
-            extensions={"color": SITE_ONLY},
-        )
-        try:
-            check.EXTENSIONS_PATH = root / "extensions.json"
-            check.SITE_CSS_PATH = site / "site.css"
-            rc = check.main(
-                ["check_brand_tokens.py", str(bh), "validate", str(site / "tokens.json")]
-            )
-        finally:
-            check.EXTENSIONS_PATH = Path("data/brand-token-extensions.json")
-            check.SITE_CSS_PATH = Path("assets/css/site.css")
-            tmp.cleanup()
-        self.assertEqual(rc, 0)
+class MergeTokensTest(unittest.TestCase):
+    def test_write_regenerates_stale_file(self):
+        merged = tokens.merge_tokens(product_tokens(), stale_site_tokens())
+        self.assertEqual(tokens.check_tokens(product_tokens(), merged), [])
+        self.assertEqual(tokens.check_css(CSS, merged), [])
+        styles = tokens.styles_by_name(merged)
+        self.assertEqual(styles["ui"]["fontSize"], "15px")
+        self.assertEqual(styles["caption"]["lineHeight"], "18px")
 
-    def test_main_validate_fails_on_css_mismatch(self):
-        tmp, bh, site, root = make_tmp(
-            products=PRODUCT_TOKENS,
-            site_tokens=site_with_site_only_colours(),
-            css=CSS_MISMATCH,
-            extensions={"color": SITE_ONLY},
-        )
-        try:
-            check.EXTENSIONS_PATH = root / "extensions.json"
-            check.SITE_CSS_PATH = site / "site.css"
-            rc = check.main(
-                ["check_brand_tokens.py", str(bh), "validate", str(site / "tokens.json")]
-            )
-        finally:
-            check.EXTENSIONS_PATH = Path("data/brand-token-extensions.json")
-            check.SITE_CSS_PATH = Path("assets/css/site.css")
-            tmp.cleanup()
-        self.assertEqual(rc, 1)
+    def test_write_keeps_site_prose_and_site_only_entries(self):
+        merged = tokens.merge_tokens(product_tokens(), site_tokens())
+        self.assertEqual(merged["color"]["tokens"][0]["usage"],
+                         "Blowhorn teal, the primary brand fill.")
+        self.assertEqual(tokens.styles_by_name(merged)["h1"]["sample"], "Site sample")
+        self.assertEqual(tokens.styles_by_name(merged)["label"]["fontWeight"], 500)
+        self.assertEqual(merged["color"]["tokens"][0]["value"], "#00B39F")
+
+    def test_write_is_idempotent_on_an_in_sync_file(self):
+        site = site_tokens()
+        self.assertEqual(tokens.merge_tokens(product_tokens(), site), site)
+
+    def test_write_roundtrip_only_changes_drifted_lines(self):
+        # Regenerating a stale file must only change the drifted lines, and the
+        # result must pass the check.
+        merged = tokens.merge_tokens(product_tokens(), stale_site_tokens())
+        self.assertEqual(tokens.check_tokens(product_tokens(), merged), [])
+        before = tokens.dump_tokens(stale_site_tokens()).splitlines()
+        after = tokens.dump_tokens(merged).splitlines()
+        self.assertEqual(len(before), len(after))
+        changed = [line for a, b in zip(before, after) if a != b for line in (b,)]
+        self.assertEqual(len(changed), 4)
+        self.assertTrue(all("15px" in line or "22px" in line or "13px" in line or "18px" in line
+                            for line in changed), changed)
+
+
+class MainTest(unittest.TestCase):
+    def run_main(self, product, site, css, extra=()):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            product_path = root / "product.json"
+            site_path = root / "site.json"
+            css_path = root / "site.css"
+            product_path.write_text(json.dumps(product), encoding="utf-8")
+            site_path.write_text(json.dumps(site), encoding="utf-8")
+            css_path.write_text(css, encoding="utf-8")
+            return tokens.main(["--product", str(product_path), "--site", str(site_path),
+                                "--css", str(css_path), *extra])
+
+    def test_main_passes_when_in_sync(self):
+        self.assertEqual(self.run_main(product_tokens(), site_tokens(), CSS), 0)
+
+    def test_main_fails_when_stale(self):
+        self.assertEqual(self.run_main(product_tokens(), stale_site_tokens(), CSS), 1)
+
+    def test_main_write_fixes_a_stale_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            product_path = root / "product.json"
+            site_path = root / "site.json"
+            css_path = root / "site.css"
+            product_path.write_text(json.dumps(product_tokens()), encoding="utf-8")
+            site_path.write_text(json.dumps(stale_site_tokens()), encoding="utf-8")
+            css_path.write_text(CSS, encoding="utf-8")
+            self.assertEqual(tokens.main(["--product", str(product_path), "--site", str(site_path),
+                                         "--css", str(css_path), "--write"]), 0)
+            fixed = json.loads(site_path.read_text(encoding="utf-8"))
+            self.assertEqual(tokens.check_tokens(product_tokens(), fixed), [])
+
+    def test_main_skips_without_a_product_checkout(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            site_path = root / "site.json"
+            css_path = root / "site.css"
+            site_path.write_text(json.dumps(site_tokens()), encoding="utf-8")
+            css_path.write_text(CSS, encoding="utf-8")
+            env = {"BLOWHORN_DIR": str(root / "no-blowhorn"),
+                   "SOURCE_DIR": str(root / "no-product")}
+            with mock.patch.dict(os.environ, env):
+                self.assertEqual(tokens.main(["--site", str(site_path),
+                                             "--css", str(css_path)]), 0)
+
+    def test_main_write_fails_without_a_product_checkout(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            site_path = root / "site.json"
+            site_path.write_text(json.dumps(site_tokens()), encoding="utf-8")
+            env = {"BLOWHORN_DIR": str(root / "no-blowhorn"),
+                   "SOURCE_DIR": str(root / "no-product")}
+            with mock.patch.dict(os.environ, env):
+                self.assertEqual(tokens.main(["--site", str(site_path),
+                                             "--css", str(root / "site.css"),
+                                             "--write"]), 2)
 
 
 if __name__ == "__main__":
