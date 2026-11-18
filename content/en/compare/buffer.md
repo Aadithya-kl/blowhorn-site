@@ -141,7 +141,9 @@
   ],
   "featured": true,
   "video": {
-    "youtube_id": "TODO_YOUTUBE_ID",
+    "mp4": "assets/video/blowhorn-vs-buffer.mp4",
+    "webm": "assets/video/blowhorn-vs-buffer.webm",
+    "poster": "assets/video/blowhorn-vs-buffer-poster.webp",
     "title": "Blowhorn vs Buffer",
     "duration": "0:36",
     "page": "resources/videos/comparisons/blowhorn-vs-buffer/"

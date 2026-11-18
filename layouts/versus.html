@@ -42,7 +42,19 @@
             <h2 id="film-title" class="h2">{{ .title | default (printf "Blowhorn vs %s" $p.competitor) }}</h2>
             {{- with .duration }}<p class="muted">Duration {{ . }}</p>{{ end }}
           </div>
+          {{- $yt := strings.TrimSpace (.youtube_id | default "" | string) }}
+          {{- if and $yt (ne $yt "TODO_YOUTUBE_ID") }}
           {{ partial "youtube-embed.html" (dict "id" (.youtube_id | default "") "title" (.title | default $.Title) "duration" .duration "poster" .poster) }}
+          {{- else if or .mp4 .webm }}
+          <div class="vs-frame">
+            <video controls preload="metadata" playsinline{{ with .poster }} poster="{{ . | relURL }}"{{ end }}>
+              {{- with .webm }}<source src="{{ . | relURL }}" type="video/webm">{{ end }}
+              {{- with .mp4 }}<source src="{{ . | relURL }}" type="video/mp4">{{ end }}
+            </video>
+          </div>
+          {{- else }}
+          {{ partial "youtube-embed.html" (dict "id" (.youtube_id | default "") "title" (.title | default $.Title) "duration" .duration "poster" .poster) }}
+          {{- end }}
           {{- with .page }}<p class="ui"><a href="{{ . | relURL }}">Open the video page</a></p>{{ end }}
         </section>
         {{- end }}
