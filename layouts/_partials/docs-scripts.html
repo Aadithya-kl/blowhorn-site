@@ -1,0 +1,31 @@
+{{- /* Scripts for /docs/ pages: the offline search and the sidebar toggle,
+  bundled locally. Docsy's own scripts bundle is deliberately not used: it
+  pulls in Bootstrap's JavaScript, whose comments name documentation hosts,
+  and base.js, which only drives Docsy's navbar. jQuery and lunr load in the
+  head (layouts/_partials/docs-head.html). */ -}}
+{{- $jsSearch := resources.Get "js/offline-search.js" }}
+{{- $jsToggle := resources.Get "js/docs-toggle.js" }}
+{{- $jsCode := resources.Get "js/code-card.js" }}
+{{- $jsTabs := resources.Get "js/tabs.js" }}
+{{- $jsTable := resources.Get "js/action-table.js" }}
+{{- $jsCmp := resources.Get "js/cmp-table.js" }}
+{{- $js := slice $jsSearch $jsToggle $jsCode $jsTabs $jsTable $jsCmp | resources.Concat "js/docs.js" }}
+{{- if hugo.IsProduction }}{{ $js = $js | minify | fingerprint }}{{ end }}
+<script src="{{ $js.RelPermalink }}"{{ with $js.Data.Integrity }} integrity="{{ . }}" crossorigin="anonymous"{{ end }} defer></script>
+{{ partial "anchor-redirects.html" . }}
+{{- /* Mermaid diagrams: the bundle loads only on a page with a ```mermaid fence
+  (render-codeblock-mermaid.html sets hasMermaid while .Content renders, which
+  is before this partial runs). Dark mode follows the OS, as the rest of the
+  site does. securityLevel strict keeps diagram text from running HTML or JS. */ -}}
+{{- if .Page.Store.Get "hasMermaid" }}
+{{- $mermaid := resources.Get "js/vendor/mermaid.min.js" | fingerprint }}
+<script src="{{ $mermaid.RelPermalink }}" integrity="{{ $mermaid.Data.Integrity }}" crossorigin="anonymous"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  securityLevel: "strict",
+  theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default"
+});
+</script>
+{{- end }}
+{{- partial "docs-attribution.html" . }}

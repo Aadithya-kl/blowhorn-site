@@ -1,0 +1,167 @@
+# The internal build: `hugo --environment internal` (make site-internal-build).
+# Merged over hugo.toml; renders ONLY the /internal/ section. The public
+# content is not duplicated here: it goes stale in step with this build's
+# cadence, and the internal pages never linked to it. The shared codebase,
+# shell components and build pipeline are the economy; the content is not.
+# The entry point is /internal/; the root redirects there (below). Never
+# deploy this output to blowhorn.ai.
+
+# The "internal" segment (hugo.toml) includes only /internal/**. Not
+# ["public", "internal"]: public's excludes would drop /internal/.
+renderSegments = ["internal"]
+
+# "Edit this page" on internal pages (layouts/_partials/page-edit-link.html).
+# The pages are mounted from the private blowhorn repository, so the link
+# targets that repository, not this one: github_repo (site-level, the public
+# repository) is deliberately left alone, as the public header, footer and 404
+# link to its releases. These keys follow Docsy's repository-links naming
+# (github_repo, github_branch, path_base_for_github_subdir). A mounted file's
+# path is its absolute path in whichever clone the build runs in, so the
+# regex keeps from the repository-relative source folder (the hugo/ folders
+# in the mount table below) onward, wherever the clone sits.
+[params]
+  internal_edit_repo = "https://github.com/blowhorn-ai/blowhorn"
+  internal_edit_branch = "master"
+  [params.internal_edit_path_base]
+    from = '^.*?/((?:marketing/strategy|marketing/brand|internal/[a-z-]+)/hugo/.*|internal/(?:design|specs|plans|research)/.*)$'
+    to = '$1'
+
+# Only this environment mounts static-internal/ (see [module] below): its
+# index.html is the root redirect to /internal/, so the build's root is
+# not a dead end.
+
+# Hugo replaces module.imports per environment instead of merging, so the
+# base imports are repeated here (keep in step with hugo.toml).
+[module]
+  # The root redirect: static-internal/index.html lands at the output's
+  # root only in this environment (the base mounts in hugo.toml are kept;
+  # mounts merge across the environment config, imports do not).
+  [[module.mounts]]
+    source = "static-internal"
+    target = "static"
+  # Repeated from hugo.toml: with a second mount on the same target, the
+  # base static/ mount was dropped from this build, and with it the brand
+  # logo and favicons the internal header loads (/assets/brand/logo/,
+  # /favicon.ico). CNAME and the legal pages stay out.
+  [[module.mounts]]
+    source = "static/assets"
+    target = "static/assets"
+  [[module.mounts]]
+    source = "static/favicon.ico"
+    target = "static/favicon.ico"
+  # The private blowhorn clone. make site-internal sets
+  # HUGO_MODULE_REPLACEMENTS to BLOWHORN_DIR (default ../blowhorn); with no
+  # replacement Hugo would try to download the private repository and fail.
+  [[module.imports]]
+    path = "github.com/google/docsy"
+    disable = false
+  [[module.imports]]
+    path = "github.com/google/docsy/dependencies"
+    disable = false
+  [[module.imports]]
+    path = "github.com/blowhorn-ai/blowhorn"
+    ignoreConfig = true
+    # GTM strategy pages (Hugo markdown and page bundles).
+    [[module.imports.mounts]]
+      source = "marketing/strategy/hugo/strategy"
+      target = "content/internal/strategy"
+    # Break-even page, its report wrapper and the model's downloads.
+    [[module.imports.mounts]]
+      source = "marketing/strategy/hugo/finance"
+      target = "content/internal/finance"
+    [[module.imports.mounts]]
+      source = "marketing/strategy/finance/blowhorn-breakeven-model.xlsx"
+      target = "content/internal/finance/blowhorn-breakeven-model.xlsx"
+    [[module.imports.mounts]]
+      source = "marketing/strategy/finance/blowhorn-breakeven.html"
+      target = "assets/internal/finance/blowhorn-breakeven.html"
+    [[module.imports.mounts]]
+      source = "marketing/strategy/finance/build"
+      target = "assets/internal/finance/build"
+    # Data for /internal/strategy/compare/ (CSV: Hugo's data/ does not take
+    # CSV, so it mounts into assets and the shortcode unmarshals it).
+    [[module.imports.mounts]]
+      source = "marketing/capability-comparison/compare-assistants.csv"
+      target = "assets/internal/compare-assistants.csv"
+    # Data for /internal/strategy/persona-matrix/ (same pattern as the
+    # assistant comparison above).
+    [[module.imports.mounts]]
+      source = "marketing/capability-comparison/compare-personas.csv"
+      target = "assets/internal/compare-personas.csv"
+    # Data for /internal/strategy/segment-matrix/ (same pattern as the
+    # persona matrix above).
+    [[module.imports.mounts]]
+      source = "marketing/capability-comparison/compare-segments.csv"
+      target = "assets/internal/compare-segments.csv"
+    # Marketing asset catalog: the section page and the generated kind pages
+    # (make assets-catalog in blowhorn). The section page's weight places it
+    # after the other internal sections.
+    [[module.imports.mounts]]
+      source = "marketing/brand/hugo/assets"
+      target = "content/internal/assets"
+    # The asset index as a plain file, linked from the catalog for scripts.
+    [[module.imports.mounts]]
+      source = "marketing/assets.manifest.json"
+      target = "static/internal/marketing-assets/assets.manifest.json"
+    # Cast thumbnails for the catalog: the 640-wide webp files only, never the
+    # full-size originals or the 1280 webp.
+    [[module.imports.mounts]]
+      source = "marketing/cast"
+      target = "static/internal/marketing-assets/cast"
+      files = ["**/*-640.webp"]
+    # Feature index page and its data for /internal/features/ (same pattern
+    # as the persona matrix above: the YAML mounts into assets and the
+    # internal-features shortcode unmarshals it).
+    [[module.imports.mounts]]
+      source = "internal/features/hugo/features"
+      target = "content/internal/features"
+    [[module.imports.mounts]]
+      source = "internal/features/features.yaml"
+      target = "assets/internal/features.yaml"
+    # Core messaging page and its source file for /internal/messaging/ (the
+    # internal-markdown shortcode renders the file, so it is never copied).
+    [[module.imports.mounts]]
+      source = "marketing/brand/hugo/messaging"
+      target = "content/internal/messaging"
+    [[module.imports.mounts]]
+      source = "marketing/brand/core-messaging.md"
+      target = "assets/internal/core-messaging.md"
+    # Engineering research pages (Hugo markdown and page bundles).
+    [[module.imports.mounts]]
+      source = "internal/engineering/hugo/engineering"
+      target = "content/internal/engineering"
+    # The repository's own design documents, mounted as they are: each
+    # area's hugo/ folder carries only the section scaffold (_index.md),
+    # and the area folder itself mounts beside it with the scaffold's
+    # folder and the area's README (its GitHub index, not a site page)
+    # excluded. The documents do not move and are not copied; the build
+    # renders the files in internal/design, internal/specs,
+    # internal/plans and internal/research directly.
+    [[module.imports.mounts]]
+      source = "internal/design/hugo/design"
+      target = "content/internal/design"
+    [[module.imports.mounts]]
+      source = "internal/design"
+      target = "content/internal/design"
+      excludeFiles = ["hugo/**", "README.md"]
+    [[module.imports.mounts]]
+      source = "internal/specs/hugo/specs"
+      target = "content/internal/specs"
+    [[module.imports.mounts]]
+      source = "internal/specs"
+      target = "content/internal/specs"
+      excludeFiles = ["hugo/**", "README.md"]
+    [[module.imports.mounts]]
+      source = "internal/plans/hugo/plans"
+      target = "content/internal/plans"
+    [[module.imports.mounts]]
+      source = "internal/plans"
+      target = "content/internal/plans"
+      excludeFiles = ["hugo/**", "README.md"]
+    [[module.imports.mounts]]
+      source = "internal/research/hugo/research"
+      target = "content/internal/research"
+    [[module.imports.mounts]]
+      source = "internal/research"
+      target = "content/internal/research"
+      excludeFiles = ["hugo/**", "README.md"]

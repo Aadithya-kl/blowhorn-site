@@ -1,0 +1,184 @@
+{
+  "$schema": "../schemas/integrations.schema.json",
+  "headline": "One queue. Every network that matters.",
+  "lede": "One queue for every network your audience reads. LinkedIn, X, Reddit and Hacker News go through your own browser with the Blowhorn extension. Slack and Bluesky use their APIs. On GitHub, Blowhorn stars repositories and rallies reactions on issues and pull requests, it does not post.",
+  "clip": {
+    "label": "Every platform Blowhorn supports",
+    "description": "A 10-second loop. A row of platform logos slides by: LinkedIn, X, Reddit, Hacker News, Slack, Bluesky and GitHub, then YouTube, Instagram, TikTok and Facebook, which are coming soon. A cursor picks each supported platform in turn, and its card shows how Blowhorn reaches it and the actions it takes there.",
+    "width": 1920,
+    "height": 1080,
+    "light": { "webm": "assets/video/supported-platforms-light.webm", "mp4": "assets/video/supported-platforms-light.mp4", "poster": "assets/video/supported-platforms-light-poster.webp" },
+    "dark": { "webm": "assets/video/supported-platforms-dark.webm", "mp4": "assets/video/supported-platforms-dark.mp4", "poster": "assets/video/supported-platforms-dark-poster.webp" },
+    "source": "Layer5 shared drive, Marketing/Blowhorn/Blowhorn Marketing/2026-11-08 Supported platforms clip (HyperFrames and Rotato sources in source/)"
+  },
+  "major": {
+    "headline": "Write it once. Deploy to every front.",
+    "supporting": "You give the order. Major Blowhorn takes it to %s and the rest."
+  },
+  "catalogPath": "/integrations/",
+  "matrix": {
+    "path": "/integrations/actions/",
+    "docsPath": "/docs/reference/platforms/actions/",
+    "label": "Action matrix",
+    "headline": "Every order, every front.",
+    "lede": "Every action on every platform, in one grid. Hover a dot for what it does, click it for usage.",
+    "cta": "See every action on every platform",
+    "docsCta": "Sort and filter it in the docs",
+    "catalogCta": "All integrations",
+    "tally": "%d actions on %d platforms. %d more platforms coming soon.",
+    "exceptions": [
+      { "id": "coming-soon", "label": "Coming soon" },
+      { "id": "none", "label": "Not available" }
+    ]
+  },
+  "defaultTreatment": "category",
+  "treatments": [
+    {
+      "id": "category",
+      "label": "By type",
+      "kind": "category"
+    },
+    {
+      "id": "role",
+      "label": "By role",
+      "kind": "role"
+    },
+    {
+      "id": "constellation",
+      "label": "The map",
+      "kind": "constellation"
+    },
+    {
+      "id": "action",
+      "label": "By action",
+      "kind": "action"
+    }
+  ],
+  "categories": [
+    {
+      "id": "chrome",
+      "name": "Your browser",
+      "summary": "Blowhorn types and clicks in your own signed-in browser.",
+      "platforms": ["linkedin", "x", "reddit", "hacker-news"]
+    },
+    {
+      "id": "api",
+      "name": "Official APIs",
+      "summary": "Posted as you through the platform's own API, never a borrowed password.",
+      "platforms": ["slack", "bluesky"]
+    },
+    {
+      "id": "rally",
+      "name": "Rally, not posts",
+      "summary": "GitHub does not take a post. Blowhorn stars repositories and rallies reactions on issues and pull requests.",
+      "platforms": ["github"]
+    },
+    {
+      "id": "soon",
+      "name": "Coming soon",
+      "summary": "On the map. Not in the queue yet.",
+      "platforms": ["youtube", "instagram", "tiktok", "facebook"]
+    }
+  ],
+  "platforms": [
+    {
+      "id": "linkedin",
+      "status": "supported",
+      "viaLabel": "Your browser",
+      "posts": true,
+      "docs": "/docs/reference/platforms/linkedin/",
+      "exampleLink": "linkedin.com/feed/update/urn:li:activity:...",
+      "demoMeta": "via your browser, as you"
+    },
+    {
+      "id": "x",
+      "status": "supported",
+      "viaLabel": "Your browser",
+      "posts": true,
+      "docs": "/docs/reference/platforms/x/",
+      "exampleLink": "x.com/you/status/...",
+      "demoMeta": "via your browser, as you"
+    },
+    {
+      "id": "reddit",
+      "status": "supported",
+      "viaLabel": "Your browser",
+      "posts": true,
+      "docs": "/docs/reference/platforms/reddit/",
+      "exampleLink": "reddit.com/r/devops/comments/...",
+      "demoMeta": "via your browser, as you"
+    },
+    {
+      "id": "hacker-news",
+      "status": "supported",
+      "viaLabel": "Your browser",
+      "posts": true,
+      "docs": "/docs/reference/platforms/hacker-news/",
+      "exampleLink": "news.ycombinator.com/item?id=...",
+      "demoMeta": "via your browser, as you"
+    },
+    {
+      "id": "slack",
+      "status": "supported",
+      "viaLabel": "Slack API",
+      "posts": true,
+      "docs": "/docs/reference/platforms/slack/",
+      "exampleLink": "community.slack.com/archives/...",
+      "demoMeta": "via the Slack API, as you"
+    },
+    {
+      "id": "bluesky",
+      "status": "supported",
+      "viaLabel": "Bluesky API",
+      "posts": true,
+      "docs": "/docs/reference/platforms/bluesky/",
+      "exampleLink": "bsky.app/profile/you/post/...",
+      "demoMeta": "via the Bluesky API, as you"
+    },
+    {
+      "id": "github",
+      "status": "supported",
+      "viaLabel": "GitHub API",
+      "posts": false,
+      "docs": "/docs/reference/platforms/github/",
+      "exampleLink": "github.com/org/repo/issues/...",
+      "demoMeta": "via the GitHub API, as you"
+    },
+    {
+      "id": "youtube",
+      "name": "YouTube",
+      "status": "coming-soon",
+      "viaLabel": "Coming soon",
+      "posts": false,
+      "logo": "assets/platforms/youtube-simple-icons.svg",
+      "docs": "/docs/reference/platforms/youtube/"
+    },
+    {
+      "id": "instagram",
+      "name": "Instagram",
+      "status": "coming-soon",
+      "viaLabel": "Coming soon",
+      "posts": false,
+      "logo": "assets/platforms/instagram-simple-icons.svg",
+      "docs": "/docs/reference/platforms/instagram/"
+    },
+    {
+      "id": "tiktok",
+      "name": "TikTok",
+      "status": "coming-soon",
+      "viaLabel": "Coming soon",
+      "posts": false,
+      "logo": "assets/platforms/tiktok-simple-icons.svg",
+      "docs": "/docs/reference/platforms/tiktok/"
+    },
+    {
+      "id": "facebook",
+      "name": "Facebook",
+      "status": "coming-soon",
+      "viaLabel": "Coming soon",
+      "posts": false,
+      "logo": "assets/platforms/facebook-simple-icons.svg",
+      "docs": "/docs/reference/platforms/facebook/"
+    }
+  ]
+}
