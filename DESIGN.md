@@ -76,6 +76,13 @@ Don't:
 
 Live specimen: /brand/#cards.
 
+## Install call to action
+
+- Every install link says "Download" and comes from `layouts/_partials/download-button.html` (kind primary, secondary or text). The header's is always secondary.
+- A view has one teal primary (`.button-primary`) in its main content. A free check is a text link; a second action is an outline button.
+- `make check-install-cta` (in `make check`) fails a second primary or an old label. Docs are skipped; the home page is pending its rebuild (#418).
+- `/download/`: the Mac button is the only primary. The extension, the command and the bookmarklet are outline buttons. Windows is a plain line.
+
 ## Concision
 
 Say less, more clearly. Turn the verbosity dial down a notch from your first draft.
@@ -94,6 +101,7 @@ Say less, more clearly. Turn the verbosity dial down a notch from your first dra
 - [ ] Paragraphs stay within `--text-measure`; cards use `--card-pad` and `--grid-gap`
 - [ ] No coloured stripe on one edge of a card, callout, quote, table row or panel, and no hard offset shadow; no two cards in a row, and no card and the one above it, share a card variant, at any width the grid shows
 - [ ] Checked at 1280, 390 and 320 px, light and dark
+- [ ] One teal primary per view; install links come from `download-button.html` and say "Download"
 - [ ] Intros <= 2 sentences, card bodies <= ~30 words, one idea per sentence
 - [ ] No em dashes; no trailing periods on section titles
 
@@ -112,7 +120,7 @@ Rule (Lee, 12 Oct 2026): **anywhere the site shows a command a reader might run,
 
 The miniature product UI in the Product menu and the homepage "Ways in" section is one partial, `layouts/_partials/interface-art.html` (styles under "Interface art" in `assets/css/site.css`). It is drawn from the real surfaces, never invented:
 
-- **Desktop app** copies the console: lights at the top of the left rail (hidden-inset title bar, no URL bar), the Crowhorn and wordmark, "+ New activity", the five places (Home, Activity, Profiles, Performance, Safety) and the "on watch" status line, beside Activity's Upcoming list. Sources in the product repository: `desktop/src/renderer/console/ConsoleRail.tsx`, `places.ts` and `desktop/src/ui/PlatformIcon.tsx`. When the app's rail or vocabulary changes, update the art.
+- **Desktop app** copies the console: lights at the top of the left rail (hidden-inset title bar, no URL bar), the Crowhorn and wordmark, "+ New activity", the five places (Dashboard, Activity, Profiles, Performance, Posture) and the "on watch" status line, beside Activity's Upcoming list. Sources in the product repository: `desktop/src/renderer/console/ConsoleRail.tsx`, `places.ts` and `desktop/src/ui/PlatformIcon.tsx`. When the app's rail or vocabulary changes, update the art.
 - **Web app** and **Chrome extension** share a Chrome-on-Mac frame (`interface-art-browser.html`): lights at the far left of the tab strip, back/forward/reload, the omnibox, a bookmarks bar; the extension adds the pinned Blowhorn icon.
 - Platform marks are the app's monoline marks (`interface-art-mark.html`), not filled brand logos. App labels say "activity", never "post".
 - The menu's narrow rows draw the art at 92px; a container query in the same CSS keeps each piece legible there. Check both widths, light and dark.
