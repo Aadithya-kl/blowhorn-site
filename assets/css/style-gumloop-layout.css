@@ -1,0 +1,488 @@
+/* Style exploration: Gumloop layout, Blowhorn colours.
+   Copies the reference homepage layout and motion in Blowhorn tokens
+   only: no new colours anywhere, every fill reads an existing token.
+   Scopes: html[data-theme="signal"] is the homepage, .pricing-page is
+   the pricing page. Nothing here touches the docs or other pages. */
+
+/* Ambient field: flat token gradient on the homepage. */
+html[data-theme="signal"] {
+  --ambient-base: linear-gradient(180deg, var(--surface-raised) 0%, var(--surface) 40%, var(--surface-raised) 100%);
+}
+
+/* ---------- Type, copied from the reference measurements ---------- */
+html[data-theme="signal"] .home-signal .hero-copy .display-xl {
+  font-size: clamp(40px, 6vw, 48px);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  text-align: left;
+}
+html[data-theme="signal"] .home-signal .display {
+  font-size: 36px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+html[data-theme="signal"] .home-signal .card .h3,
+.pricing-page .card .h3 {
+  font-size: 20px;
+  line-height: 26px;
+}
+html[data-theme="signal"] .home-signal .body-lg,
+.pricing-page .body-lg {
+  font-size: 16px;
+  line-height: 24px;
+}
+.pricing-page .display {
+  font-size: 48px;
+  line-height: 1.05;
+}
+.pricing-page .h2 {
+  font-size: 36px;
+  line-height: 1.15;
+}
+.pricing-page .price-amount {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+/* ---------- Spacing: wide section gaps, 50px heading to content ---------- */
+html[data-theme="signal"] .home-signal .section {
+  padding-block: 120px;
+}
+@media (min-width: 900px) {
+  html[data-theme="signal"] .home-signal .section {
+    padding-block: 140px;
+  }
+}
+html[data-theme="signal"] .home-signal .section + .section {
+  border-top: 0;
+}
+html[data-theme="signal"] .home-signal .section-head {
+  margin-bottom: 50px;
+}
+html[data-theme="signal"] .home-signal .section-body {
+  margin-top: 0;
+}
+html[data-theme="signal"] .home-signal .grid {
+  gap: var(--space-6);
+}
+.pricing-page .pricing-section {
+  margin-top: 120px;
+}
+.pricing-page .pricing-hero + .pricing-plans {
+  margin-top: 50px;
+}
+.pricing-page .section-head {
+  margin-bottom: 50px;
+}
+
+/* ---------- Buttons: 36px tall, 8px corners, teal primary kept ---------- */
+html[data-theme="signal"] .home-signal .button,
+.pricing-page .button {
+  min-height: 36px;
+  padding: var(--space-2) var(--space-4);
+  border-radius: 8px;
+}
+
+/* ---------- Cards: flat, 1px border, 10px corners, no heavy shadow ---------- */
+html[data-theme="signal"] .home-signal .card,
+.pricing-page .card {
+  --card-border-color: var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: none;
+}
+
+/* ---------- Hero: left-aligned copy over a full-width container ---------- */
+html[data-theme="signal"] .home-signal .hero-grid {
+  display: block;
+  text-align: left;
+}
+html[data-theme="signal"] .home-signal .hero-copy {
+  align-items: flex-start;
+  text-align: left;
+}
+html[data-theme="signal"] .home-signal .hero-copy .display-xl {
+  max-width: 18ch;
+}
+html[data-theme="signal"] .home-signal .hero-actions {
+  justify-content: flex-start;
+}
+html[data-theme="signal"] .home-signal .hero-sub {
+  margin-inline: 0;
+  text-align: left;
+}
+html[data-theme="signal"] .home-signal .hero-film-cell {
+  margin-top: var(--space-8);
+}
+
+/* Full-width app-preview container, copied from the reference hero. */
+.gum-app-preview {
+  position: relative;
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8) var(--space-6) var(--space-16);
+  margin-top: var(--space-16);
+}
+.gum-app-preview .hero-visual {
+  margin-top: 0;
+}
+.gum-app-preview .hero-demo {
+  gap: var(--space-6);
+}
+.gum-app-preview .app {
+  background: var(--app-canvas);
+  border: 1px solid var(--app-line);
+  border-radius: var(--radius-lg);
+}
+
+/* Smaller chart card overlapping the container bottom-left corner. */
+.gum-chart-card {
+  position: absolute;
+  left: var(--space-6);
+  bottom: calc(-1 * var(--space-6));
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-6);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-6);
+}
+.gum-chart-figures {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  gap: 2px var(--space-4);
+  align-items: baseline;
+}
+.gum-chart-num {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+}
+.gum-chart-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin: 0;
+}
+.gum-chart-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 48px;
+}
+.gum-chart-bars span {
+  width: 10px;
+  border-radius: 3px 3px 0 0;
+}
+.gum-bar-a {
+  height: 18px;
+  background: var(--teal);
+}
+.gum-bar-b {
+  height: 28px;
+  background: var(--teal-bright);
+}
+.gum-bar-c {
+  height: 22px;
+  background: var(--mint);
+}
+.gum-bar-d {
+  height: 38px;
+  background: var(--yellow);
+}
+.gum-bar-e {
+  height: 48px;
+  background: var(--teal-deep);
+}
+@media (max-width: 640px) {
+  .gum-chart-card {
+    position: static;
+    margin-top: var(--space-6);
+  }
+}
+
+/* ---------- Blob cluster: animated colour-cycling dots ---------- */
+.gum-blobs {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  height: 28px;
+  margin-bottom: var(--space-4);
+}
+.gum-blob {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--teal);
+  animation: gum-blob-cycle 6s ease-in-out infinite;
+}
+.gum-blob-b {
+  background: var(--teal-bright);
+  animation-delay: -1.5s;
+}
+.gum-blob-c {
+  background: var(--mint);
+  animation-delay: -3s;
+}
+.gum-blob-d {
+  background: var(--yellow);
+  animation-delay: -4.5s;
+}
+@keyframes gum-blob-cycle {
+  0%, 100% {
+    background: var(--teal);
+    transform: translateY(0);
+  }
+  25% {
+    background: var(--teal-bright);
+  }
+  50% {
+    background: var(--mint);
+    transform: translateY(-6px);
+  }
+  75% {
+    background: var(--yellow);
+  }
+}
+.cta-signal .gum-blobs {
+  justify-content: center;
+  margin-bottom: var(--space-6);
+}
+
+/* ---------- Metric row: scroll-snap dashboard cards, mono numbers ---------- */
+.gum-metrics {
+  width: 100%;
+  max-width: var(--measure);
+  margin: var(--space-16) auto 0;
+  padding-inline: var(--gutter);
+}
+.gum-metrics-row {
+  display: flex;
+  gap: var(--space-6);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: var(--space-2);
+  scrollbar-width: none;
+}
+.gum-metrics-row::-webkit-scrollbar {
+  display: none;
+}
+.gum-metric {
+  flex: 0 0 min(320px, 82vw);
+  scroll-snap-align: start;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+}
+.gum-metric-num {
+  font-family: var(--font-mono);
+  font-size: 48px;
+  line-height: 1;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  margin: 0;
+}
+.gum-metric-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin: var(--space-3) 0 0;
+}
+.gum-metrics-nav {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+.gum-arrow {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.gum-arrow:hover {
+  background: var(--surface-raised);
+}
+
+/* ---------- Bento grid: trust cards as one bordered, hairline-divided box ---------- */
+#trust ul.grid-2 {
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+#trust ul.grid-2 > li {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--surface);
+  margin: 0;
+}
+#trust ul.grid-2 > li:first-child {
+  background: var(--surface-tint);
+}
+#trust ul.grid-2 > li + li {
+  border-top: 1px solid var(--line);
+}
+@media (min-width: 640px) {
+  #trust ul.grid-2 > li:first-child {
+    grid-column: 1 / -1;
+  }
+  #trust ul.grid-2 > li:nth-child(3) {
+    border-left: 1px solid var(--line);
+  }
+  #trust ul.grid-2 > li:nth-child(4) {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ---------- Timeline: the sound-wave list as a mono-dated timeline ---------- */
+.home-signal .wave-list {
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+  gap: 0;
+}
+.home-signal .wave-list li:not(.wave-more) {
+  position: relative;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: var(--space-4) var(--space-4) var(--space-4) 44px;
+}
+.home-signal .wave-list li:not(.wave-more)::before {
+  content: "";
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: var(--teal);
+}
+.home-signal .wave-list li:nth-child(2)::before {
+  background: var(--mint);
+}
+.home-signal .wave-list li:nth-child(3)::before {
+  background: var(--yellow);
+}
+.home-signal .wave-list li:nth-child(4)::before {
+  background: var(--teal-bright);
+}
+.home-signal .wave-list li:nth-child(5)::before {
+  background: var(--teal-deep);
+}
+.home-signal .wave-list time {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+/* ---------- Final CTA: large rounded panel, copied from the reference ---------- */
+.home-signal #download .cta-inner {
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  padding: var(--space-16) var(--space-8);
+}
+
+/* ---------- Pricing page: same layout language ---------- */
+.pricing-page .pricing-grid {
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--surface);
+}
+.pricing-page .pricing-grid > li {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  margin: 0;
+}
+.pricing-page .pricing-grid > li + li {
+  border-top: 1px solid var(--line);
+}
+@media (min-width: 640px) {
+  .pricing-page .pricing-grid > li:nth-child(2) {
+    border-top: 0;
+    border-left: 1px solid var(--line);
+  }
+  .pricing-page .pricing-grid > li:nth-child(3) {
+    border-top: 1px solid var(--line);
+  }
+  .pricing-page .pricing-grid > li:nth-child(4) {
+    border-top: 1px solid var(--line);
+    border-left: 1px solid var(--line);
+  }
+}
+@media (min-width: 1100px) {
+  .pricing-page .pricing-grid > li:nth-child(n+2) {
+    border-top: 0;
+    border-left: 1px solid var(--line);
+  }
+}
+.pricing-page .pricing-single {
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--surface);
+}
+.pricing-page .pricing-single > .plan {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.pricing-page .pricing-single > .pricing-coming {
+  padding: var(--space-8);
+  border-top: 1px solid var(--line);
+}
+@media (min-width: 820px) {
+  .pricing-page .pricing-single > .pricing-coming {
+    border-top: 0;
+    border-left: 1px solid var(--line);
+  }
+}
+.pricing-page .pricing-limits {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+.pricing-page .agent-faq details {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: none;
+}
+
+/* ---------- Motion off: everything stays visible and final ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .gum-blob {
+    animation: none;
+  }
+  .gum-metrics-row {
+    scroll-behavior: auto;
+  }
+}
