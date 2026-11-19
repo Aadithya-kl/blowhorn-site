@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://blowhorn.ai/schemas/integrations.schema.json",
   "title": "Integrations catalog and platforms section",
-  "description": "data/integrations.json: homepage platforms-section treatments and the map of networks. Supported name, logo and actions come from data/platforms/<id>.yaml via hugo.Data.platforms. Coming-soon rows keep their own name and logo. Hyphens never em dashes. GitHub must set posts to false.",
+  "description": "data/integrations.json: homepage platforms-section treatments and the map of networks. Name, logo and actions come from data/platforms/<id>.yaml via hugo.Data.platforms; a platform with no YAML keeps its own name and logo in this file. Hyphens never em dashes. GitHub must set posts to false.",
   "type": "object",
   "additionalProperties": false,
   "required": ["headline", "lede", "major", "catalogPath", "matrix", "defaultTreatment", "treatments", "categories", "platforms"],
@@ -107,7 +107,7 @@
       }
     },
     "matrix": {
-      "description": "Copy for the action matrix page (path) and the docs all-actions table (docsPath). Rows, columns and cells come from data/actions.json and data/platforms/<id>.yaml; never list actions or platforms here. Status is shown by exception: a listed action is supported and carries no label or check, so exceptions names only coming-soon (an icon on the platform, with this label as its accessible name and tooltip) and none (an empty cell, with this label as screen-reader text), in that order.",
+      "description": "Copy for the action matrix page (path) and the docs all-actions table (docsPath). Rows, columns and cells come from data/actions.json and data/platforms/<id>.yaml; never list actions or platforms here. Status is shown by exception: a listed action is supported and carries no label or check, so exceptions names only none (an empty cell, with this label as screen-reader text).",
       "type": "object",
       "additionalProperties": false,
       "required": ["path", "docsPath", "label", "headline", "lede", "cta", "docsCta", "catalogCta", "tally", "exceptions"],
@@ -126,18 +126,17 @@
         "docsCta": { "$ref": "#/definitions/copy" },
         "catalogCta": { "$ref": "#/definitions/copy" },
         "tally": {
-          "description": "Three %d, filled in order with live actions, supported platforms and coming-soon platforms from platform-counts.html.",
+          "description": "Two %d, filled in order with live actions and supported platforms from platform-counts.html.",
           "type": "string",
           "maxLength": 160,
-          "pattern": "^[^%]*%d[^%]*%d[^%]*%d[^%]*$",
+          "pattern": "^[^%]*%d[^%]*%d[^%]*$",
           "not": { "pattern": "\\u2014" }
         },
         "exceptions": {
           "type": "array",
-          "minItems": 2,
-          "maxItems": 2,
+          "minItems": 1,
+          "maxItems": 1,
           "items": [
-            { "allOf": [{ "$ref": "#/definitions/matrixStatus" }, { "properties": { "id": { "const": "coming-soon" } } }] },
             { "allOf": [{ "$ref": "#/definitions/matrixStatus" }, { "properties": { "id": { "const": "none" } } }] }
           ]
         }
@@ -148,7 +147,7 @@
       "additionalProperties": false,
       "required": ["id", "label"],
       "properties": {
-        "id": { "type": "string", "enum": ["coming-soon", "none"] },
+        "id": { "type": "string", "enum": ["none"] },
         "label": {
           "type": "string",
           "minLength": 1,
@@ -197,7 +196,7 @@
         "name": { "$ref": "#/definitions/copy" },
         "status": {
           "type": "string",
-          "enum": ["supported", "coming-soon"]
+          "enum": ["supported"]
         },
         "viaLabel": { "$ref": "#/definitions/copy" },
         "posts": {
@@ -232,29 +231,6 @@
           "then": {
             "properties": { "posts": { "const": false } },
             "required": ["posts"]
-          }
-        },
-        {
-          "if": {
-            "properties": { "status": { "const": "supported" } },
-            "required": ["status"]
-          },
-          "then": {
-            "not": {
-              "anyOf": [
-                { "required": ["name"] },
-                { "required": ["logo"] }
-              ]
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": { "status": { "const": "coming-soon" } },
-            "required": ["status"]
-          },
-          "then": {
-            "required": ["name", "logo"]
           }
         }
       ]

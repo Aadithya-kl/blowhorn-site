@@ -3,24 +3,23 @@
   layouts/_partials/action-matrix.html (data/actions.json plus
   data/platforms/<id>.yaml via data/integrations.json); copy from
   data/integrations.json matrix. Status by exception: a supported cell is a
-  plain dot, a cell the platform lacks is empty, and a coming-soon platform
-  carries one clock on its logo; labels from matrix.exceptions are
-  accessible names and tooltips only. Theme tokens only, so Reveille and
-  Signal both apply. Without JS each dot keeps a title tooltip; with
-  assets/js/action-matrix.js one shared tooltip follows hover and focus. */ -}}
+  plain dot, a cell the platform lacks is empty; labels from
+  matrix.exceptions are accessible names and tooltips only. Theme tokens
+  only, so Reveille and Signal both apply. Without JS each dot keeps a title
+  tooltip; with assets/js/action-matrix.js one shared tooltip follows hover
+  and focus. */ -}}
 {{ define "main" }}
     {{- $mx := partialCached "action-matrix.html" . "action-matrix" -}}
     {{- $copy := $mx.copy -}}
     {{- $counts := partial "platform-counts.html" . -}}
     {{- $cols := len $mx.platforms -}}
-    {{- $soon := index $mx.labels "coming-soon" -}}
     <main id="main" class="page matrix-page">
       <div class="wrap">
         <header class="page-head">
           <p class="label">{{ $copy.label }}</p>
           <h1 id="matrix-title" class="display">{{ $copy.headline }}</h1>
           <p class="body-lg muted">{{ $copy.lede }}</p>
-          <p class="matrix-tally ui">{{ printf $copy.tally $counts.activities $counts.platforms $counts.comingSoon }}</p>
+          <p class="matrix-tally ui">{{ printf $copy.tally $counts.activities $counts.platforms }}</p>
         </header>
 
         <div class="matrix-stage" data-action-matrix>
@@ -31,19 +30,17 @@
                 <colgroup>
                   <col class="matrix-col-action">
                   {{- range $mx.platforms }}
-                  <col class="matrix-col{{ if eq .status "coming-soon" }} is-soon{{ end }}">
+                  <col class="matrix-col">
                   {{- end }}
                 </colgroup>
                 <thead>
                   <tr class="matrix-heads">
                     <td class="matrix-corner"></td>
                     {{- range $mx.platforms }}
-                    {{- $isSoon := eq .status "coming-soon" }}
-                    <th scope="col" class="matrix-plat{{ if $isSoon }} is-soon{{ end }}" data-matrix-platform="{{ .id }}"{{ if $isSoon }} data-status="coming-soon"{{ end }}>
-                      <a href="{{ .docs | relURL }}" title="{{ .name }}{{ if $isSoon }}: {{ $soon }}{{ end }}">
+                    <th scope="col" class="matrix-plat" data-matrix-platform="{{ .id }}">
+                      <a href="{{ .docs | relURL }}" title="{{ .name }}">
                         <span class="logo-tile"><img src="{{ .logo | relURL }}" alt="" width="28" height="28"></span>
-                        {{- if $isSoon }}<span class="matrix-plat-flag">{{ partial "action-matrix-mark.html" .status }}</span>{{ end }}
-                        <span class="visually-hidden">{{ .name }}{{ if $isSoon }}, {{ $soon }}{{ end }}</span>
+                        <span class="visually-hidden">{{ .name }}</span>
                       </a>
                     </th>
                     {{- end }}

@@ -20,6 +20,13 @@ home page links to /integrations/, which holds the platform map. That section
 must ship JS that calls selectTab with defaultPlatTab when the URL has no
 matching hash, so JS enhancement cannot leave all four panels stacked.
 
+No platform-availability "Coming soon" label may return: the catalog, the
+action matrix, the docs platform pages and the docs all-actions table are
+scanned for it (check_platform_labels), and the showcase page's "Where it
+works" section is scanned too. Other "coming soon" copy stays out of scope:
+team invites, the Windows waitlist and /coming-soon/thanks/, the REST API,
+Risk Profile, and compare pages about a competitor.
+
 Usage: check_theme.py BUILD_DIR
 """
 
@@ -142,14 +149,13 @@ def counts():
     data = json.loads((ROOT / "data/integrations.json").read_text(encoding="utf-8"))
     platforms = 0
     activities = 0
-    soon = 0
     for item in data["platforms"]:
         if item["status"] == "supported":
             platforms += 1
-            activities += len(yaml_action_ids(item["id"]))
-        elif item["status"] == "coming-soon":
-            soon += 1
-    return platforms, activities, soon
+            yaml_path = ROOT / "data" / "platforms" / f"{item['id']}.yaml"
+            if yaml_path.is_file():
+                activities += len(yaml_action_ids(item["id"]))
+    return platforms, activities
 
 
 class AttrCollector(HTMLParser):
@@ -203,11 +209,10 @@ def parse(path: Path) -> AttrCollector:
 
 
 def check_counts(page: AttrCollector, want, label, problems, names=COUNT_ATTRS):
-    platforms, activities, soon = want
+    platforms, activities = want
     expected = {
         "platforms": str(platforms),
         "activities": str(activities),
-        "soon": str(soon),
     }
     for name, value in expected.items():
         if name not in names:
@@ -221,6 +226,55 @@ def check_counts(page: AttrCollector, want, label, problems, names=COUNT_ATTRS):
                 problems.append(
                     f"{label} data-count-{name} is {text!r}, want {value}"
                 )
+
+
+PLATFORM_LABEL_RE = re.compile(r"coming[ -]soon", re.I)
+# The action-example tabs carry out-of-scope "coming soon" placeholders
+# (the REST API note, "Screenshot coming soon"); strip them before
+# scanning, so the guard only sees platform-availability labels.
+TABS_SOON_RE = re.compile(r'<div class="tabs-soon">.*?</div>', re.S)
+
+
+def without_example_placeholders(html: str) -> str:
+    return TABS_SOON_RE.sub("", html)
+
+
+def check_platform_labels(build_dir: Path, root: Path) -> list[str]:
+    """Fail if a platform-availability "Coming soon" label returns on a
+    platform surface. Scoped to the pages that list platforms, so the
+    out-of-scope "coming soon" copy (team invites, the Windows waitlist,
+    the REST API, compare pages) does not trip it."""
+    problems: list[str] = []
+    data = json.loads((root / "data/integrations.json").read_text(encoding="utf-8"))
+    pages = [
+        "integrations/index.html",
+        "integrations/actions/index.html",
+        "docs/index.html",
+        "docs/reference/platforms/index.html",
+        "docs/reference/platforms/actions/index.html",
+    ]
+    for item in data["platforms"]:
+        pages.append(f"docs/reference/platforms/{item['id']}/index.html")
+    for rel in pages:
+        path = build_dir / rel
+        if not path.is_file():
+            problems.append(f"platform label guard: {rel} was not built")
+            continue
+        if PLATFORM_LABEL_RE.search(without_example_placeholders(path.read_text(encoding="utf-8"))):
+            problems.append(f"/{rel} shows a platform-availability 'Coming soon' label")
+    showcase = build_dir / "showcase/index.html"
+    if showcase.is_file():
+        html = showcase.read_text(encoding="utf-8")
+        match = re.search(
+            r'<section[^>]*aria-labelledby="works-title"[^>]*>(.*?)</section>',
+            html,
+            re.S,
+        )
+        if match is None:
+            problems.append("/showcase/index.html lost its Where it works section")
+        elif PLATFORM_LABEL_RE.search(match.group(1)):
+            problems.append("/showcase/index.html splits supported from coming-soon platforms")
+    return problems
 
 
 def main(root: Path) -> int:
@@ -296,6 +350,8 @@ def main(root: Path) -> int:
         if panels != 4:
             problems.append(f"/integrations/index.html has {panels} platform panels, want 4")
         problems.extend(platforms_default_problems())
+
+    problems.extend(check_platform_labels(root, ROOT))
 
     for item in problems:
         print(f"theme: {item}", file=sys.stderr)

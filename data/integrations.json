@@ -25,9 +25,8 @@
     "cta": "See every action on every platform",
     "docsCta": "Sort and filter it in the docs",
     "catalogCta": "All integrations",
-    "tally": "%d actions on %d platforms. %d more platforms coming soon.",
+    "tally": "%d actions on %d platforms.",
     "exceptions": [
-      { "id": "coming-soon", "label": "Coming soon" },
       { "id": "none", "label": "Not available" }
     ]
   },
@@ -59,7 +58,7 @@
       "id": "chrome",
       "name": "Your browser",
       "summary": "Blowhorn types and clicks in your own signed-in browser.",
-      "platforms": ["linkedin", "x", "reddit", "hacker-news"]
+      "platforms": ["linkedin", "x", "reddit", "hacker-news", "youtube", "instagram", "tiktok", "facebook"]
     },
     {
       "id": "api",
@@ -72,12 +71,6 @@
       "name": "Rally, not posts",
       "summary": "GitHub does not take a post. Blowhorn stars repositories and rallies reactions on issues and pull requests.",
       "platforms": ["github"]
-    },
-    {
-      "id": "soon",
-      "name": "Coming soon",
-      "summary": "On the map. Not in the queue yet.",
-      "platforms": ["youtube", "instagram", "tiktok", "facebook"]
     }
   ],
   "platforms": [
@@ -147,8 +140,8 @@
     {
       "id": "youtube",
       "name": "YouTube",
-      "status": "coming-soon",
-      "viaLabel": "Coming soon",
+      "status": "supported",
+      "viaLabel": "Your browser",
       "posts": false,
       "logo": "assets/platforms/youtube-simple-icons.svg",
       "docs": "/docs/reference/platforms/youtube/"
@@ -156,8 +149,8 @@
     {
       "id": "instagram",
       "name": "Instagram",
-      "status": "coming-soon",
-      "viaLabel": "Coming soon",
+      "status": "supported",
+      "viaLabel": "Your browser",
       "posts": false,
       "logo": "assets/platforms/instagram-simple-icons.svg",
       "docs": "/docs/reference/platforms/instagram/"
@@ -165,8 +158,8 @@
     {
       "id": "tiktok",
       "name": "TikTok",
-      "status": "coming-soon",
-      "viaLabel": "Coming soon",
+      "status": "supported",
+      "viaLabel": "Your browser",
       "posts": false,
       "logo": "assets/platforms/tiktok-simple-icons.svg",
       "docs": "/docs/reference/platforms/tiktok/"
@@ -174,8 +167,8 @@
     {
       "id": "facebook",
       "name": "Facebook",
-      "status": "coming-soon",
-      "viaLabel": "Coming soon",
+      "status": "supported",
+      "viaLabel": "Your browser",
       "posts": false,
       "logo": "assets/platforms/facebook-simple-icons.svg",
       "docs": "/docs/reference/platforms/facebook/"

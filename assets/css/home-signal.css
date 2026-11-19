@@ -1079,7 +1079,6 @@ html[data-theme="signal"] #platforms .logo-tile img[src*="github-invertocat-blac
 .constellation-item .platform:hover,
 .constellation-item .platform:focus-visible { transform: none; }
 .constellation-item .logo-tile { animation: constellation-spin 48s linear infinite reverse; }
-.constellation-item.is-soon { opacity: 0.55; }
 .constellation-item:nth-child(1) { --n: 0; }
 .constellation-item:nth-child(2) { --n: 1; }
 .constellation-item:nth-child(3) { --n: 2; }

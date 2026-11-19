@@ -29,21 +29,6 @@ Intro.
 - [All platforms](/docs/reference/platforms/)
 """
 
-COMING_SOON_PAGE = """---
-title: YouTube
----
-
-**Coming soon.**
-
-## Supported actions
-
-{{< supported-actions "youtube" >}}
-
-## Related
-
-- [All platforms](/docs/reference/platforms/)
-"""
-
 
 def write(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -58,8 +43,7 @@ class PlatformDocsCheckTest(unittest.TestCase):
         shutil.copytree(ROOT / "data/platforms", self.tmp / "data/platforms")
         for item in data["platforms"]:
             page = check.content_page(self.tmp, item["docs"])
-            body = COMING_SOON_PAGE if item["status"] == "coming-soon" else SUPPORTED_PAGE
-            body = body.replace("linkedin", item["id"]).replace("youtube", item["id"])
+            body = SUPPORTED_PAGE.replace("linkedin", item["id"])
             write(page, body)
         write(
             self.tmp / "content/en/docs/reference/platforms/_index.md",
@@ -154,8 +138,8 @@ class PlatformDocsCheckTest(unittest.TestCase):
         head = "".join(f'<th scope="col">{h}</th>' for h in cols)
         data = json.loads((self.tmp / "data/integrations.json").read_text(encoding="utf-8"))
         for item in data["platforms"]:
-            if item["status"] == "supported":
-                ids = check.yaml_action_ids(item["id"], self.tmp)
+            ids = check.yaml_action_ids(item["id"], self.tmp)
+            if ids:
                 rows = "".join(
                     f'<tr><th scope="row"><a href="#action-{a}">{a.title()}</a></th>'
                     '<td data-label="What it does">Does it.</td>'
@@ -172,8 +156,8 @@ class PlatformDocsCheckTest(unittest.TestCase):
                     after = examples
             else:
                 body = (
-                    '<tr><th scope="row">None yet</th>'
-                    '<td data-label="What it does">Coming soon.</td>'
+                    '<tr><th scope="row">None listed</th>'
+                    '<td data-label="What it does">Blowhorn lists no actions for this platform.</td>'
                     '<td data-label="Limits / notes">None</td></tr>'
                 )
                 after = ""
@@ -274,14 +258,18 @@ class PlatformDocsCheckTest(unittest.TestCase):
         problems = check.check_built(build, self.tmp)
         self.assertTrue(any("'Status' column" in p for p in problems), problems)
 
-    def test_built_html_coming_soon_icon_passes(self):
+    def test_built_html_none_listed_row_passes(self):
+        build = self.build_pages()
+        self.assertEqual(check.check_built(build, self.tmp), [])
+
+    def test_built_html_old_coming_soon_row_fails(self):
         build = self.build_pages()
         data = json.loads((self.tmp / "data/integrations.json").read_text(encoding="utf-8"))
-        soon = next(i for i in data["platforms"] if i["status"] == "coming-soon")
+        no_yaml = next(i for i in data["platforms"] if not check.yaml_action_ids(i["id"], self.tmp))
         write(
-            check.built_page(build, soon["docs"]),
+            check.built_page(build, no_yaml["docs"]),
             "<html><body>"
-            f'<section data-supported-actions="{soon["id"]}" aria-label="Supported actions">'
+            f'<section data-supported-actions="{no_yaml["id"]}" aria-label="Supported actions">'
             '<table class="supported-actions"><thead><tr>'
             + "".join(f'<th scope="col">{h}</th>' for h in check.REQUIRED_HEADERS)
             + '</tr></thead><tbody><tr><th scope="row">None yet <span role="img" '
@@ -291,7 +279,8 @@ class PlatformDocsCheckTest(unittest.TestCase):
             '<td data-label="Limits / notes">None</td></tr></tbody></table></section>'
             "</body></html>",
         )
-        self.assertEqual(check.check_built(build, self.tmp), [])
+        problems = check.check_built(build, self.tmp)
+        self.assertTrue(any("missing the None listed row" in p for p in problems), problems)
 
     def test_built_html_missing_column_fails(self):
         build = self.build_pages(headers=("Action", "What it does"))

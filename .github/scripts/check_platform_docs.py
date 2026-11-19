@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Fail if platform docs drift from the shared actions table.
 
-Every supported platform in data/integrations.json must have a docs page
+Every platform in data/integrations.json must have a docs page
 that calls {{< supported-actions "id" >}} and whose built HTML renders
 table.supported-actions from layouts/_partials/supported-actions.html.
+A platform with no data/platforms/<id>.yaml lists no actions, so its
+table holds one plain "None listed" row and no status icon.
 
 Every page under content/en/docs/reference/platforms/ (except the section
 index) must render that table and must not carry a hand-written action
@@ -39,7 +41,8 @@ EM_DASH = "\u2014"
 REQUIRED_HEADERS = ("Action", "What it does", "Limits / notes")
 FORBIDDEN_HEADERS = ("Example",)
 # A listed action is supported: no Supported label and no check mark in the
-# table. Exceptions show an icon with an accessible name, never a text label.
+# table. A platform with no actions listed yet shows one plain "None listed"
+# row, with no status icon and no label.
 SUPPORTED_TEXT_RE = re.compile(r"\bsupported\b", re.I)
 CHECK_MARKS = ("\u2713", "\u2714", "\u2705", "\u2611")
 CHECK_ICON_RE = re.compile(r"(?:check|tick)", re.I)
@@ -120,7 +123,8 @@ class ActionsTableParser(HTMLParser):
 
 def check_action_links(docs: str, html: str, action_ids: list[str] | None) -> list[str]:
     """Problems with the table's columns and its #action-<id> links.
-    action_ids: the platform's YAML action ids in order, or None (coming soon)."""
+    action_ids: the platform's YAML action ids in order, or None (no YAML,
+    so no actions listed yet)."""
     problems: list[str] = []
     page = ActionsTableParser()
     page.feed(html)
@@ -252,16 +256,8 @@ def check_source(root: Path) -> list[str]:
         pid = item["id"]
         docs = item.get("docs") or ""
         page = content_page(root, docs)
-        if item["status"] == "supported":
-            yaml_path = root / "data" / "platforms" / f"{pid}.yaml"
-            if not yaml_path.is_file():
-                problems.append(
-                    f"supported platform {pid} has no {rel(root, yaml_path)}"
-                )
-            if not page.is_file():
-                problems.append(f"supported platform {pid} has no docs page at {docs}")
-                continue
-        elif not page.is_file():
+        if not page.is_file():
+            problems.append(f"platform {pid} has no docs page at {docs}")
             continue
         seen.add(page.resolve())
         text = page.read_text(encoding="utf-8")
@@ -304,12 +300,10 @@ def check_built(build_dir: Path, root: Path) -> list[str]:
     for item in data["platforms"]:
         docs = item.get("docs") or ""
         html_path = built_page(build_dir, docs)
-        if item["status"] == "supported" and not html_path.is_file():
-            problems.append(
-                f"supported platform {item['id']} built page missing: {html_path}"
-            )
-            continue
         if not html_path.is_file():
+            problems.append(
+                f"platform {item['id']} built page missing: {html_path}"
+            )
             continue
         html = html_path.read_text(encoding="utf-8")
         marker = f'data-supported-actions="{item["id"]}"'
@@ -323,14 +317,14 @@ def check_built(build_dir: Path, root: Path) -> list[str]:
             problems.append(
                 f"{docs} has {tables} supported-actions tables, want 1"
             )
-        ids = yaml_action_ids(item["id"], root) if item["status"] == "supported" else None
+        ids = yaml_action_ids(item["id"], root) or None
         problems.extend(check_action_links(docs, html, ids))
         if EM_DASH in html:
             problems.append(f"{docs} contains an em dash")
-        if item["status"] == "supported" and 'id="examples"' not in html:
+        if ids and 'id="examples"' not in html:
             problems.append(f"{docs} lost the Examples heading from the shared table")
-        if item["status"] == "coming-soon" and not re.search(r">None yet\s*<", html):
-            problems.append(f"{docs} coming-soon table is missing the None yet row")
+        if not ids and not re.search(r">None listed\s*<", html):
+            problems.append(f"{docs} table is missing the None listed row")
     return problems
 
 

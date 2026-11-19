@@ -100,7 +100,7 @@
             {{- range site.Data.integrations.platforms }}
               {{- if eq .status "supported" }}{{ $named = $named | append (partial "integration-row.html" .).name }}{{ end }}
             {{- end }}
-            <p>Supported now: {{ delimit $named ", " }}. Coming soon: YouTube, Instagram, TikTok and Facebook.</p>
+            <p>Blowhorn works with {{ delimit $named ", " }}.</p>
             <p><a href="{{ (site.GetPage "/docs/reference/platforms").RelPermalink }}">All platforms and what each one does</a></p>
           </div>
         </div>

@@ -1,17 +1,12 @@
 ---
 title: "TikTok"
 linkTitle: "TikTok"
-description: "TikTok in Blowhorn: coming soon."
+description: "What Blowhorn can do on TikTok, and how each action behaves there."
 weight: 243
 ---
 
-**Coming soon.** TikTok isn't available in Blowhorn yet. When it is, Blowhorn
-will work on TikTok in your own signed-in Google Chrome, and this page will list what
-it can do there.
-
-## Notify me when it ships
-
-{{< signup-form kind="waitlist" topic="tiktok" >}}
+Blowhorn works on TikTok in your own signed-in Google Chrome,
+and this page lists what it can do there.
 
 <!-- BEGIN generated limits: release/scripts/capabilities_docs/build.py; do not edit -->
 

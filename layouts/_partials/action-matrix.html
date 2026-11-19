@@ -7,9 +7,9 @@
   actions through action-resolve.html, as the supported-actions table and
   the /integrations/ by-action filter do.
   Cell status: supported (the platform yaml lists the action, linked to
-  <docs>#action-<id>), coming-soon (the platform is coming soon), none (a
-  supported platform that doesn't list it). Status is shown by exception:
-  supported carries no label; coming-soon and none take their labels from
+  <docs>#action-<id>), none (the platform does not list it, including a
+  platform with no yaml yet). Status is shown by exception:
+  supported carries no label; none takes its label from
   data/integrations.json matrix.exceptions.
   Usage: partialCached "action-matrix.html" . "action-matrix"
   Returns dict: groups (each with actions, each with cells), platforms
@@ -22,13 +22,6 @@
 {{- range $m.exceptions }}{{ $labels = merge $labels (dict .id .label) }}{{ end -}}
 {{- $platforms := slice -}}
 {{- range site.Data.integrations.platforms }}{{ $platforms = $platforms | append (partial "integration-row.html" .) }}{{ end -}}
-{{- $nSupported := len (where $platforms "status" "supported") -}}
-{{- $nSoon := len (where $platforms "status" "coming-soon") -}}
-{{- if ne (add $nSupported $nSoon) (len $platforms) }}{{ errorf "action-matrix: a platform status is neither supported nor coming-soon" }}{{ end -}}
-{{- $seenSoon := false -}}
-{{- range $platforms }}
-  {{- if eq .status "coming-soon" }}{{ $seenSoon = true }}{{ else if $seenSoon }}{{ errorf "action-matrix: supported platform %q follows a coming-soon one; keep data/integrations.json platforms supported first" .id }}{{ end -}}
-{{- end -}}
 {{- $groupIds := slice -}}
 {{- range site.Data.actions.groups }}{{ $groupIds = $groupIds | append .id }}{{ end -}}
 {{- range site.Data.actions.actions }}
@@ -48,10 +41,7 @@
       {{- $href := "" -}}
       {{- $note := printf "%s on %s." (index $labels "none") $p.name -}}
       {{- $limits := "" -}}
-      {{- if eq $p.status "coming-soon" -}}
-        {{- $status = "coming-soon" -}}
-        {{- $note = printf "%s: %s." $p.name (index $labels "coming-soon") -}}
-      {{- else if $hit -}}
+      {{- if $hit -}}
         {{- $status = "supported" -}}
         {{- $href = printf "%s#%s" $p.docs $hit.slug -}}
         {{- $note = $hit.description -}}

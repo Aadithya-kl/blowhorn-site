@@ -1,8 +1,9 @@
-{{- /* Resolve one integrations.json platform row. Supported name, logo and
-  actions come from hugo.Data.platforms (data/platforms/<id>.yaml) plus
-  data/actions.json for display names. Coming-soon rows keep their own
-  name and logo. resolved is each action-resolve.html map (platform
-  behavior and limits), for the action matrix. */ -}}
+{{- /* Resolve one integrations.json platform row. Name, logo and actions
+  come from hugo.Data.platforms (data/platforms/<id>.yaml) plus
+  data/actions.json for display names. A platform with no YAML keeps its
+  own name and logo from the row and lists no actions. resolved is each
+  action-resolve.html map (platform behavior and limits), for the action
+  matrix. */ -}}
 {{- $row := . -}}
 {{- $yaml := index hugo.Data.platforms $row.id -}}
 {{- $name := $row.name -}}
@@ -11,8 +12,7 @@
 {{- $actionIds := slice -}}
 {{- $actionLinks := slice -}}
 {{- $resolved := slice -}}
-{{- if eq $row.status "supported" -}}
-  {{- if not $yaml }}{{ errorf "integration-row: no data/platforms/%s.yaml for supported platform" $row.id }}{{ end -}}
+{{- if $yaml -}}
   {{- $name = $yaml.name -}}
   {{- $logo = $yaml.logo -}}
   {{- range $yaml.actions }}
@@ -22,5 +22,7 @@
     {{- $actionLinks = $actionLinks | append (dict "id" $a.id "name" $a.name "slug" $a.slug) -}}
     {{- $resolved = $resolved | append $a -}}
   {{- end -}}
+{{- else if or (not $name) (not $logo) -}}
+  {{- errorf "integration-row: platform %q has no data/platforms/%s.yaml and no name or logo in data/integrations.json" $row.id $row.id -}}
 {{- end -}}
 {{- return dict "id" $row.id "status" $row.status "posts" $row.posts "docs" $row.docs "viaLabel" $row.viaLabel "exampleLink" $row.exampleLink "demoMeta" $row.demoMeta "name" $name "logo" $logo "actions" $actions "actionIds" $actionIds "actionLinks" $actionLinks "resolved" $resolved -}}

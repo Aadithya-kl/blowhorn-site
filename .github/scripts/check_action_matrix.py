@@ -10,21 +10,24 @@ Both views render from layouts/_partials/action-matrix.html:
 Expected cells come straight from the data: every action in data/actions.json
 (rows, in groups[] order, then vocabulary order) by every platform in
 data/integrations.json (columns, catalog order). A cell is supported when the
-platform's data/platforms/<id>.yaml lists the action, coming-soon when the
-platform is coming soon, and none otherwise.
+platform's data/platforms/<id>.yaml lists the action, and none otherwise;
+a platform with no YAML lists nothing, so every cell in its column is none.
 
 Status is shown by exception. A supported matrix cell is a link to
-<docs>#action-<id> holding only the neutral dot (mx-dot); coming-soon and none
-cells hold no link and no mark, only their matrix.exceptions label as
-screen-reader text; a coming-soon platform's column head carries the one
-clock (mx-soon). The docs table lists supported pairs only, with no status
-column, and a logo-only platform cell named by alt. Neither view may render
-the word "supported" or a check mark.
+<docs>#action-<id> holding only the neutral dot (mx-dot); none cells hold
+no link and no mark, only their matrix.exceptions label as screen-reader
+text. Column heads carry no status mark. The docs table lists supported
+pairs only, with no status column, and a logo-only platform cell named by
+alt. Neither view may render the word "supported" or a check mark. A
+platform-availability "Coming soon" label anywhere on the matrix, the docs
+table, the catalog, or the docs platform pages fails the build (see
+check_theme.py).
 
 --source checks the data alone (run by make check-schemas): every action's
 group is a groups[].id, every group holds an action, platform YAML uses only
-vocabulary ids, matrix exceptions are coming-soon then none, and supported
-platforms come before coming-soon ones.
+vocabulary ids, matrix exceptions are only none, every platform is
+supported, and a platform with a YAML does not repeat its name and logo in
+the data.
 
 With a build directory it also checks the built pages: the matrix and the
 table hold exactly the expected cells and rows with the expected status and
@@ -48,7 +51,7 @@ from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[2]
 EM_DASH = "\u2014"
-EXCEPTIONS = ("coming-soon", "none")
+EXCEPTIONS = ("none",)
 SUPPORTED_WORD_RE = re.compile(r"\bsupported\b", re.I)
 REGIONS = ("data-action-matrix", "data-action-table")
 SHORTCODE_RE = re.compile(r"\{\{<\s*all-actions\s*>\}\}")
@@ -103,17 +106,18 @@ def check_source(root: Path) -> list[str]:
         if ids != EXCEPTIONS:
             problems.append(f"matrix exceptions are {ids}, want {EXCEPTIONS}")
 
-    seen_soon = False
     for item in integrations["platforms"]:
-        if item["status"] == "coming-soon":
-            seen_soon = True
-        elif seen_soon:
+        if item["status"] != "supported":
             problems.append(
-                f"supported platform {item['id']} follows a coming-soon one; list supported platforms first"
+                f"platform {item['id']} is {item['status']!r}; every platform in "
+                "data/integrations.json is supported"
             )
         ids = yaml_action_ids(root, item["id"])
-        if item["status"] == "supported" and ids is None:
-            problems.append(f"supported platform {item['id']} has no data/platforms/{item['id']}.yaml")
+        if ids is not None and ("name" in item or "logo" in item):
+            problems.append(
+                f"platform {item['id']} repeats its name or logo in "
+                f"data/integrations.json; data/platforms/{item['id']}.yaml is the source"
+            )
         for aid in ids or []:
             if aid not in vocab:
                 problems.append(f"data/platforms/{item['id']}.yaml lists unknown action {aid!r}")
@@ -148,9 +152,7 @@ def expected(root: Path) -> dict:
             pid = item["id"]
             docs = item["docs"]
             listed = yaml_action_ids(root, pid) or []
-            if item["status"] == "coming-soon":
-                cell = ("coming-soon", None)
-            elif aid in listed:
+            if aid in listed:
                 cell = ("supported", f"{docs}#action-{aid}")
             else:
                 cell = ("none", None)
@@ -160,7 +162,6 @@ def expected(root: Path) -> dict:
     labels = {e["id"]: e["label"] for e in integrations.get("matrix", {}).get("exceptions", [])}
     return {
         "labels": labels,
-        "soon": [p["id"] for p in platforms if p["status"] == "coming-soon"],
         "names": {p["id"]: platform_name(root, p) for p in platforms},
         "supported_keys": [k for k in keys if cells[k][0] == "supported"],
         "groups": groups,
@@ -366,13 +367,8 @@ def check_built(build_dir: Path, root: Path) -> list[str]:
         if c.actions != want["actions"]:
             problems.append(f"{label} rows are {c.actions}, data says {want['actions']}")
         for pid, head in c.heads.items():
-            soon = pid in want["soon"]
-            if soon and (head["status"] != "coming-soon" or head["marks"] != ["mx-soon"]):
-                problems.append(f"{label} column {pid} is coming soon but lacks its one clock mark")
-            if not soon and (head["status"] or head["marks"]):
-                problems.append(f"{label} column {pid} carries a status mark, but it is supported")
-            if soon and labels.get("coming-soon") not in (head["title"] or ""):
-                problems.append(f"{label} column {pid} title does not name {labels.get('coming-soon')!r}")
+            if head["status"] or head["marks"]:
+                problems.append(f"{label} column {pid} carries a status mark, but no column takes one")
         problems.extend(compare_keys(label, want["keys"], [x["key"] for x in c.cells]))
         for cell in c.cells:
             key = cell["key"]
