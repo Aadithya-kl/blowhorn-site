@@ -119,10 +119,10 @@ class SourceTest(unittest.TestCase):
         self.assertEqual(check.check_source(ROOT), [])
         self.assertEqual(self.problems(), [])
 
-    def test_a_coming_soon_platform_gets_no_page(self):
+    def test_a_platform_without_yaml_gets_no_page(self):
         def fn(rec):
             rec["platform"] = "youtube"
-        self.assertNamed(self.mutate(fn), "'youtube' is 'coming-soon'")
+        self.assertNamed(self.mutate(fn), "data/platforms/youtube.yaml is missing")
 
     def test_an_activity_must_name_an_action_the_platform_lists(self):
         def fn(rec):

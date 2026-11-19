@@ -30,6 +30,8 @@ EM_DASH = "\u2014"
 
 def yaml_action_ids(platform_id: str, root: Path = ROOT) -> list[str]:
     path = root / "data" / "platforms" / f"{platform_id}.yaml"
+    if not path.is_file():
+        return []
     return [
         line.split("id:", 1)[1].strip()
         for line in path.read_text(encoding="utf-8").splitlines()

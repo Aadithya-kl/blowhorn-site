@@ -27,7 +27,7 @@ Blowhorn is a desktop app with a small browser extension. You write a post once,
 {{- range site.Data.integrations.platforms }}
   {{- if eq .status "supported" }}{{ $named = $named | append (partial "integration-row.html" .).name }}{{ end }}
 {{- end }}
-Supported now: {{ delimit $named ", " }}. Coming soon: YouTube, Instagram, TikTok and Facebook.
+Blowhorn works with {{ delimit $named ", " }}.
 
 ## See the code
 

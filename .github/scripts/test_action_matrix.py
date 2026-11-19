@@ -34,18 +34,12 @@ DOT = '<svg class="mx-mark mx-dot"><circle/></svg>'
 CLOCK = '<svg class="mx-mark mx-soon"><circle/></svg>'
 
 
-def render_matrix(want: dict, supported_mark: str = DOT, soon_mark: str = CLOCK) -> str:
+def render_matrix(want: dict, supported_mark: str = DOT) -> str:
     """Markup with the attributes layouts/action-matrix.html writes."""
     heads = []
     for p in want["platforms"]:
         name = want["names"][p]
-        if p in want["soon"]:
-            label = want["labels"]["coming-soon"]
-            heads.append(
-                f'<th data-matrix-platform="{p}" data-status="coming-soon"><a href="/x/" title="{name}: {label}">{soon_mark}</a></th>'
-            )
-        else:
-            heads.append(f'<th data-matrix-platform="{p}"><a href="/x/" title="{name}">logo</a></th>')
+        heads.append(f'<th data-matrix-platform="{p}"><a href="/x/" title="{name}">logo</a></th>')
     body = []
     actions_by_group: dict[str, list[str]] = {}
     data = json.loads((ROOT / "data/actions.json").read_text(encoding="utf-8"))
@@ -150,12 +144,22 @@ class ActionMatrixCheckTest(unittest.TestCase):
         self.assert_flags("group spare holds no action")
 
     def test_exception_order_fails(self):
-        self.edit_json("data/integrations.json", lambda d: d["matrix"]["exceptions"].reverse())
+        self.edit_json(
+            "data/integrations.json",
+            lambda d: d["matrix"]["exceptions"].append({"id": "coming-soon", "label": "Coming soon"}),
+        )
         self.assert_flags("matrix exceptions")
 
-    def test_supported_after_coming_soon_fails(self):
-        self.edit_json("data/integrations.json", lambda d: d["platforms"].reverse())
-        self.assert_flags("follows a coming-soon one")
+    def test_non_supported_status_fails(self):
+        self.edit_json("data/integrations.json", lambda d: d["platforms"][0].update(status="coming-soon"))
+        self.assert_flags("every platform in data/integrations.json is supported")
+
+    def test_yaml_platform_repeating_name_or_logo_fails(self):
+        self.edit_json(
+            "data/integrations.json",
+            lambda d: d["platforms"][0].update(name="LinkedIn", logo="assets/platforms/linkedin-in-bug.png"),
+        )
+        self.assert_flags("repeats its name or logo")
 
     def test_unknown_yaml_action_fails(self):
         path = self.root / "data/platforms/x.yaml"
@@ -201,12 +205,24 @@ class ActionMatrixCheckTest(unittest.TestCase):
         self.assertTrue(any("renders a check mark" in p for p in found), found)
         self.assertTrue(any("want only the neutral dot" in p for p in found), found)
 
-    def test_soon_column_without_clock_fails(self):
-        self.render(matrix_kw={"soon_mark": ""})
-        self.assert_flags("lacks its one clock mark")
+    def test_column_head_with_status_mark_fails(self):
+        page = check.built_file(self.build, self.matrix["path"])
+        text = page.read_text(encoding="utf-8")
+        head = '<th data-matrix-platform="youtube"><a href="/x/" title="YouTube">logo</a></th>'
+        self.assertIn(head, text)
+        page.write_text(
+            text.replace(
+                head,
+                '<th data-matrix-platform="youtube" data-status="coming-soon">'
+                '<a href="/x/" title="YouTube: Coming soon">' + CLOCK + "</a></th>",
+                1,
+            ),
+            encoding="utf-8",
+        )
+        self.assert_flags("carries a status mark")
 
     def test_exception_label_drift_fails(self):
-        self.edit_json("data/integrations.json", lambda d: d["matrix"]["exceptions"][1].update(label="Absent"))
+        self.edit_json("data/integrations.json", lambda d: d["matrix"]["exceptions"][0].update(label="Absent"))
         self.assert_flags("want the none label 'Absent'")
 
     def test_status_mark_in_docs_table_fails(self):
@@ -230,7 +246,7 @@ class ActionMatrixCheckTest(unittest.TestCase):
         want["cells"] = dict(want["cells"])
         want["cells"]["post:youtube"] = ("supported", "/docs/reference/platforms/youtube/")
         self.render(want)
-        self.assert_flags("post:youtube is 'supported', data says 'coming-soon'")
+        self.assert_flags("post:youtube is 'supported', data says 'none'")
 
     def test_dead_anchor_fails(self):
         target = check.built_file(self.build, "/docs/reference/platforms/linkedin/")

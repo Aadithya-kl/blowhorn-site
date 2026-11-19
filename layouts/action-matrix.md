@@ -5,7 +5,7 @@
 
 > {{ $copy.lede }}
 
-{{ printf $copy.tally $counts.activities $counts.platforms $counts.comingSoon }}
+{{ printf $copy.tally $counts.activities $counts.platforms }}
 {{ range $mx.groups }}
 ## {{ .name }}
 

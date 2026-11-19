@@ -22,10 +22,9 @@ column. You do not edit the page to add an example or to list the actions.
 `make check-platform-docs` fails a hand-written action list, a page that skips
 the shortcode, a dead `#action-<id>` link, an action name without one, or an
 Example column coming back. A listed action is supported, so the table shows
-no Supported label and no check mark (the check fails either); only an
-exception, such as a coming-soon platform, shows a status, as an icon with an
-accessible name and tooltip and no text label. A Status column with no
-exception in it fails too.
+no Supported label and no check mark (the check fails either); a platform
+with no actions listed yet shows one plain "None listed" row with no status
+icon. A Status column with no exception in it fails too.
 
 When every surface of an example is `placeholder`, its tabs open on
 `defaultSurface` (`cli`), which reads "Not in the CLI yet" with the CLI notes.

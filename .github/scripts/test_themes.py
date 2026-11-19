@@ -64,6 +64,8 @@ def write_tmp(payload):
 
 def yaml_action_ids(platform_id):
     yaml_path = ROOT / "data" / "platforms" / f"{platform_id}.yaml"
+    if not yaml_path.is_file():
+        return []
     return [
         line.split("id:", 1)[1].strip()
         for line in yaml_path.read_text(encoding="utf-8").splitlines()
@@ -273,6 +275,65 @@ class HeroDemoSchemaTest(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
         finally:
             tmp.unlink(missing_ok=True)
+class PlatformLabelGuardTest(unittest.TestCase):
+    """The theme check must fail a platform-availability "Coming soon"
+    label on a platform surface, and must not trip on the out-of-scope
+    "coming soon" copy in the action-example tabs."""
+
+    def setUp(self):
+        import shutil
+
+        import check_theme as check
+
+        self.check = check
+        self.tmp = Path(tempfile.mkdtemp())
+        self.root = self.tmp / "repo"
+        self.build = self.tmp / "public"
+        shutil.copytree(ROOT / "data", self.root / "data")
+        self.pages = [
+            "integrations/index.html",
+            "integrations/actions/index.html",
+            "docs/index.html",
+            "docs/reference/platforms/index.html",
+            "docs/reference/platforms/actions/index.html",
+        ]
+        data = json.loads((self.root / "data/integrations.json").read_text(encoding="utf-8"))
+        for item in data["platforms"]:
+            self.pages.append(f"docs/reference/platforms/{item['id']}/index.html")
+        for rel in self.pages:
+            path = self.build / rel
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("<html><body>Every platform.</body></html>", encoding="utf-8")
+
+    def tearDown(self):
+        import shutil
+
+        shutil.rmtree(self.tmp)
+
+    def problems(self):
+        return self.check.check_platform_labels(self.build, self.root)
+
+    def test_clean_platform_pages_pass(self):
+        self.assertEqual(self.problems(), [])
+
+    def test_returned_caption_fails(self):
+        page = self.build / "integrations/index.html"
+        page.write_text(
+            '<html><body><span class="caption">Coming soon</span></body></html>',
+            encoding="utf-8",
+        )
+        found = self.problems()
+        self.assertTrue(any("Coming soon" in p for p in found), found)
+
+    def test_example_tab_placeholder_passes(self):
+        page = self.build / "docs/reference/platforms/linkedin/index.html"
+        page.write_text(
+            '<html><body><div class="tabs-soon"><p class="ui">Coming soon</p>'
+            '<p class="caption muted">The Blowhorn REST API is coming soon.</p>'
+            "</div></body></html>",
+            encoding="utf-8",
+        )
+        self.assertEqual(self.problems(), [])
 
 
 if __name__ == "__main__":
