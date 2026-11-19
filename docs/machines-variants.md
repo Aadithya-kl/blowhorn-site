@@ -68,25 +68,52 @@ reuse the Reveille keyframes in `assets/css/site.css`: `army-enlist` (the
 enlist pop), `wave-pulse` (rings), `stage-bark` (the Major) and `army-shout`
 (his bubble).
 
+Every design has an "Enlist a computer" button (`data-enlist`) that never
+leaves the page: each click adds another computer to that design's fleet, to
+show visitors they can bring as many computers or teammates as they like
+(#143). Clicks keep adding up to 23 computers in all; at 23 the design says
+its ranks are full and the button gets `aria-disabled="true"`. The count that
+changes is `aria-live="polite"`, and Muster's Major also speaks through his
+bubble. A click during Muster's opening count-up stops the count-up, so it
+never writes over the clicked count.
+
+Muster grows its own formation. The other three share a recruit strip,
+`layouts/_partials/home/machines/recruits.html`, inside each panel: hidden
+until the first click, it is labelled "New recruits", notes "Bring your whole
+team. This preview shows up to 23." (the cap belongs to the preview, not the
+product), and `addRecruit()` clones its hidden template picture
+(`data-recruit-template`) into `data-enlisted-computers` on every click, with
+the army-enlist pop unless motion is reduced.
+`.github/scripts/test_machines_enlist.py` checks every design, with and
+without reduced motion, in `machines_harness.js`'s fake DOM.
+
 - **Muster:** recruits fall into the formation, the roll call fills, and the
-  strength counts up. The two Enlist buttons (the `+` tile and the roll call's
-  `+ Enlist`) add a recruit on the page, up to 23, and the Major answers in
-  his bubble. The "Enlist a computer" button still goes to the download page.
+  strength counts up. The three Enlist buttons ("Enlist a computer", the `+`
+  tile and the roll call's `+ Enlist`) add a recruit to the formation and a
+  row to the roll call, and the Major answers in his bubble.
 - **Battalion Map:** units ping in, reports run the dashed lines to HQ, HQ
-  rings, and the reports feed ticks a new report every 2.6 s.
+  rings, and the reports feed ticks a new report every 2.6 s. The first
+  Enlist turns `+ New unit` into a computer ("06 New computer"); every click
+  updates the card head ("A squad of 6, all live") and puts "New computer
+  NN, Reporting for duty" on top of the feed, which keeps 5 rows, and adds a
+  computer to the recruit strip.
 - **One Thunder:** dotted voice lines flow from every teammate and computer
   into the Major, rings leave the bullhorn, and each platform tile lights as
   the call lands. The logos themselves never move (Bluesky's and X's brand
-  rules).
+  rules). Enlist raises the "4 computers" chip and adds a computer to the
+  recruit strip; the voices and their lines stay as drawn.
 - **Call to Arms:** the four beats play once along the timeline when the
-  section comes into view; Replay plays them again.
+  section comes into view; Replay plays them again. Enlist raises beat 01's
+  "Computer 1 enlisted", replays its recruit's pop and adds a computer to the
+  recruit strip.
 
 The panel gets `is-armed` (start state) when the script runs and `is-live`
 once a quarter of it (or 40% of the screen) is in view. Looping motion
 pauses (`is-paused`) when the panel leaves the screen. Under
 `prefers-reduced-motion` nothing is armed: every design rests fully drawn,
-and Muster's Enlist buttons still work, without motion. Without JavaScript
-the static designs show, with no buttons that do nothing.
+and the Enlist buttons still add, without motion. Without JavaScript the
+static designs show the Download button where "Enlist a computer" would be
+(`data-machines-static`), with no buttons that do nothing.
 
 ## Adding a design
 
