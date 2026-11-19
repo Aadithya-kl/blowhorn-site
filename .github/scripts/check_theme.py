@@ -14,8 +14,9 @@ preview). A new home-signal.md or other theme-named page fails this check.
 
 Activity and platform counts in copy must match supported rows in
 data/integrations.json plus actions in data/platforms/<id>.yaml, and each
-figure must be wrapped in a data-count-* span. The home page shows the
-action count only and must not show a coming-soon count. The Signal platforms section
+figure must be wrapped in a data-count-* span. The home page and
+/integrations/ show the action count only and never a coming-soon count. The
+home page links to /integrations/, which holds the platform map. That section
 must ship JS that calls selectTab with defaultPlatTab when the URL has no
 matching hash, so JS enhancement cannot leave all four panels stacked.
 
@@ -257,10 +258,12 @@ def main(root: Path) -> int:
             problems.append("/index.html lost the Major card headline")
         if "Tab after tab. One post. Somebody call a medic." in html:
             problems.append("/index.html still uses the old Major card line")
-        panels = html.count('data-plat-panel="')
-        if panels != 4:
-            problems.append(f"/index.html has {panels} platform panels, want 4")
-        problems.extend(platforms_default_problems())
+        # The interactive platform map lives on /integrations/; the home
+        # page keeps the clip and links there.
+        if 'data-plat-panel="' in html:
+            problems.append("/index.html still carries the platform map; it lives on /integrations/")
+        if 'href="/integrations/"' not in html:
+            problems.append("/index.html does not link to /integrations/")
 
     # The preview is unpublished (build: render: never); check it only when built.
     reveille = root / "home-reveille/index.html"
@@ -285,7 +288,14 @@ def main(root: Path) -> int:
             problems.append("/integrations/index.html#integrations-title is gone")
         if "action-filter" not in page.ids:
             problems.append("/integrations/index.html#action-filter is gone")
-        check_counts(page, want_counts, "/integrations/index.html", problems)
+        html = catalog.read_text(encoding="utf-8")
+        check_counts(page, want_counts, "/integrations/index.html", problems, names=("activities",))
+        if page.counts["soon"]:
+            problems.append("/integrations/index.html shows a coming-soon count (data-count-soon)")
+        panels = html.count('data-plat-panel="')
+        if panels != 4:
+            problems.append(f"/integrations/index.html has {panels} platform panels, want 4")
+        problems.extend(platforms_default_problems())
 
     for item in problems:
         print(f"theme: {item}", file=sys.stderr)

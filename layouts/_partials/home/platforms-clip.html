@@ -8,7 +8,7 @@
   JavaScript, it rests on its poster with native controls. Called with the
   clip. */ -}}
 {{- $clip := . -}}
-<figure class="plat-clip" data-plat-clip aria-labelledby="plat-clip-title">
+<figure class="plat-clip" data-plat-clip data-plat-highlight="" aria-labelledby="plat-clip-title">
   <figcaption class="visually-hidden"><span id="plat-clip-title">{{ $clip.label }}</span>. {{ $clip.description }}</figcaption>
   {{- range $theme := slice "light" "dark" }}
   {{- with index $clip $theme }}

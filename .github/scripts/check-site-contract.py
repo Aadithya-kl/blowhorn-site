@@ -24,12 +24,12 @@ from pathlib import Path
 PAGES = {
     "index.html": [
         "glyph-menubar", "glyph-terminal", "glyph-clock", "glyph-extension",
-        "glyph-download", "main", "hero-title", "hero-art-title", "platforms", "platforms-title",
-        "plat-panel-category", "plat-panel-role", "plat-panel-constellation", "plat-panel-action", "how",
+        "glyph-download", "main", "hero-title", "hero-art-title", "platforms", "platforms-title", "how",
         "how-title", "teams", "teams-title", "trust", "trust-title", "download", "download-title", "pricing", "pricing-title",
     ],
     "integrations/index.html": [
-        "main", "integrations-title", "action-filter",
+        "main", "integrations-title", "action-filter", "platform-views",
+        "plat-panel-category", "plat-panel-role", "plat-panel-constellation", "plat-panel-action",
         "action-post", "action-comment", "action-reply", "action-amplify",
         "action-react", "action-follow", "action-unfollow", "action-accept",
         "action-withdraw", "action-find", "action-analytics",

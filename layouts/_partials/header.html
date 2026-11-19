@@ -1,6 +1,6 @@
 {{- /* The site header: lockup, primary navigation and the Download button.
   Three groups open a panel under the bar (Product, Solutions, Resources);
-  Compare and Pricing are plain links. The free Am I a Bot? check lives in
+  Integrations, Compare and Pricing are plain links. The free Am I a Bot? check lives in
   the Resources menu. Product is cards only, no intro copy. Below 1080px a
   Menu button opens the same groups as a sheet, and Download leaves the bar
   to close the sheet as its last item. Behaviour in assets/js/nav.js: click,
@@ -105,6 +105,7 @@
                 </div>
               </div>
             </li>
+            <li class="mm-item"><a class="mm-top" href="{{ "integrations/" | relURL }}">Integrations</a></li>
             <li class="mm-item"><a class="mm-top" href="{{ $compare.RelPermalink }}">Compare</a></li>
             <li class="mm-item">
               <button type="button" class="mm-trigger" aria-expanded="false" aria-controls="mm-resources">Resources<span class="mm-chev" aria-hidden="true"></span></button>
