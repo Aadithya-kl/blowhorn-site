@@ -1,7 +1,11 @@
 {{- /* Computers design 4, Call to Arms: the four-beat storyboard. The beats
   play once in sequence when the section comes into view, with a Replay
   button (assets/js/machines.js; "Call to Arms" in
-  assets/css/home-signal.css). Without JavaScript or under
+  assets/css/home-signal.css). "Enlist a computer" (shown only with
+  JavaScript) stays on the page: each click raises beat 01's count, replays
+  its recruit's pop and adds a computer to the recruit strip
+  (recruits.html), up to 23. Without JavaScript the Download button
+  shows in its place. Without JavaScript or under
   prefers-reduced-motion the four beats rest, Thunder highlighted. Copy and layout from the Figma
   concept in data/machines.json (id "call-to-arms"). */ -}}
 <div class="machines-panel" data-machines-only="call-to-arms">
@@ -9,7 +13,7 @@
     <li class="machines-card card-dispatch machines-beat">
       <p class="machines-beat-tag">01 · Enlist</p>
       <img src="{{ "assets/brand/cast/recruit-chick-macbook.webp" | relURL }}" alt="" width="480" height="270" loading="lazy">
-      <p class="machines-pill"><span class="machines-dot" aria-hidden="true"></span>Computer 1 enlisted</p>
+      <p class="machines-pill"><span class="machines-dot" aria-hidden="true"></span><span data-arms="count" aria-live="polite">Computer 1 enlisted</span></p>
       <p class="machines-beat-copy">Install Blowhorn. Your first computer enlists.</p>
     </li>
     <li class="machines-card card-stamp machines-beat">
@@ -36,8 +40,10 @@
     <span class="machines-tl-time">0.0 s</span><span class="machines-tl-time">1.2 s</span><span class="machines-tl-time">2.4 s</span><span class="machines-tl-time">3.6 s</span>
   </div>
   <div class="machines-actions">
-    <a class="button button-primary" href="{{ "download/" | relURL }}">Enlist a computer</a>
+    <button type="button" class="button button-primary" data-enlist hidden>Enlist a computer</button>
+    <span data-machines-static>{{ partial "download-button.html" (dict "kind" "primary") }}</span>
     <button type="button" class="button button-secondary" data-arms="replay" hidden>Replay</button>
     <p class="machines-note">Coordinated so the same post isn't sent from two computers.</p>
   </div>
+  {{ partial "home/machines/recruits.html" . }}
 </div>

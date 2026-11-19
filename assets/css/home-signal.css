@@ -556,6 +556,26 @@ button.machines-add:focus-visible, button.machines-pill:focus-visible { outline:
 .machines-panel.is-live .machines-report-list li { animation: machines-row-in 420ms ease-out var(--d, 0ms) both; }
 .machines-report-list li.is-new { opacity: 1; animation: machines-row-in 420ms ease-out both; }
 
+/* Enlist a computer (every design): the button shows only with JavaScript,
+   the Download fallback only without; what a click adds pops in. */
+.machines-panel .button[hidden], .machines-panel [data-machines-static][hidden] { display: none; }
+.machines-reports > [data-machines-static]:not([hidden]) { margin-top: auto; display: grid; }
+/* The recruit strip (home/machines/recruits.html): one 56 px computer per
+   Enlist click on Battalion Map, One Thunder and Call to Arms. */
+.machines-recruits { margin-top: var(--space-4); }
+.machines-recruits[hidden], .machines-recruits [data-recruit-template] { display: none; }
+.machines-recruits-label { font: 500 10.5px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-muted); margin: 0 0 var(--space-2); }
+.machines-recruits-row { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.machines-recruits-row img { width: 56px; height: 56px; object-fit: contain; display: block; }
+.machines-recruits .machines-note { margin-top: var(--space-2); }
+@media (prefers-reduced-motion: no-preference) {
+  .machines-recruits-row img.is-new,
+  .machines-panel .machines-node.is-new,
+  .machines-panel .machines-voice.is-new,
+  .machines-panel .machines-pill.is-new,
+  .machines-panel .machines-beat img.is-new { opacity: 1; animation: army-enlist 0.45s ease-out; }
+}
+
 /* One Thunder */
 @keyframes machines-flow { to { stroke-dashoffset: -20; } }
 /* One six-second loop, every part on the same clock (small --d staggers

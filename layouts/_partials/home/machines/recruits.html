@@ -1,0 +1,11 @@
+{{- /* The computers designs' recruit strip (Battalion Map, One Thunder, Call
+  to Arms; Muster grows its own formation). Hidden until the first "Enlist
+  a computer" click; assets/js/machines.js addRecruit() then shows it and
+  clones the template picture into [data-enlisted-computers], one per
+  click, up to the 23 cap. Without JavaScript it never shows. */ -}}
+<div class="machines-recruits" data-recruits hidden>
+  <p class="machines-recruits-label">New recruits</p>
+  <div class="machines-recruits-row" data-enlisted-computers></div>
+  <img data-recruit-template src="{{ "assets/brand/cast/recruit-chick-macbook.webp" | relURL }}" alt="New computer" width="480" height="270" loading="lazy" hidden>
+  <p class="machines-note">Bring your whole team. This preview shows up to 23.</p>
+</div>

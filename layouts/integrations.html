@@ -10,17 +10,19 @@
     {{- range $rows }}{{ $byId = merge $byId (dict .id .) }}{{ end -}}
     {{- $cats := site.Data.integrations.categories -}}
     {{- $actions := partial "action-index.html" $rows -}}
-    <main id="main" class="page integrations-page" data-action-filter>
+    <main id="main" class="page integrations-page">
       <div class="wrap">
         {{- $rally := index (where site.Data.integrations.categories "id" "rally") 0 -}}
         <header class="page-head">
           <p class="label">Integrations</p>
           <h1 id="integrations-title" class="display">Every network on the map</h1>
-          <p class="body-lg muted"><span data-count-platforms>{{ $counts.platforms }}</span> supported now, <span data-count-soon>{{ $counts.comingSoon }}</span> coming soon, <span data-count-activities>{{ $counts.activities }}</span> actions in the queue. Blowhorn posts as you through your own browser or a platform API. {{ $rally.summary }}</p>
+          <p class="body-lg muted"><span data-count-activities>{{ $counts.activities }}</span> actions across more platforms than any screen can show. Blowhorn posts as you through your own browser or a platform API. {{ $rally.summary }}</p>
           {{- with site.Data.integrations.matrix }}
           <p class="integrations-matrix-link"><a class="button button-secondary" href="{{ (strings.TrimPrefix "/" .path) | relURL }}" data-matrix-link>{{ .cta }}</a></p>
           {{- end }}
         </header>
+        {{- partial "integrations/platform-views.html" . }}
+        <div class="integrations-catalog" data-action-filter>
         <nav id="action-filter" class="action-filter" aria-label="Filter by action">
           <p class="label">By action</p>
           <div class="action-filter-picks">
@@ -79,10 +81,13 @@
           </ul>
         </section>
         {{- end }}
+        </div>
       </div>
     </main>
 {{ end }}
 
 {{ define "scripts" }}
     {{- partial "filter-script.html" "js/action-filter.js" }}
+    {{- $views := resources.Get "js/home-signal.js" | minify | fingerprint }}
+    <script src="{{ $views.RelPermalink }}" defer></script>
 {{ end }}

@@ -1,0 +1,127 @@
+/* Calm refresh (Lee, 19 Nov 2026). Loaded last in the site bundle
+   (brand-css.html), so it reads as one layer on top of site.css,
+   themes.css and cards.css. Existing brand tokens only; no new colours.
+
+   1. Background: light mode is a plain page, no multi-gradient field.
+      Dark mode keeps one soft teal glow that drifts slowly; it is still
+      under prefers-reduced-motion.
+   2. Cards: one quiet look for every card variant: the page's raised
+      surface, a hairline edge, a large radius and more room inside.
+      The content (art, icon, headline) carries the emphasis, not the fill.
+   3. Rhythm: more air between sections and under each section head, no
+      hairline dividers between sections, so each section's one message
+      stands on its own. */
+
+/* ---------- 1. Background ---------- */
+@media (prefers-color-scheme: light) {
+  html,
+  html[data-theme] {
+    --ambient-1: transparent;
+    --ambient-2: transparent;
+    --ambient-3: transparent;
+    --ambient-4: transparent;
+    --ambient-base: var(--surface);
+  }
+}
+body::before {
+  background: var(--ambient-base);
+}
+@media (prefers-color-scheme: dark) {
+  body::before {
+    inset: -25%;
+    background:
+      radial-gradient(38rem 30rem at 30% 22%, var(--ambient-1), transparent 70%),
+      radial-gradient(30rem 24rem at 72% 64%, var(--ambient-4), transparent 70%),
+      var(--ambient-base);
+  }
+}
+@media (prefers-color-scheme: dark) and (prefers-reduced-motion: no-preference) {
+  body::before { animation: calm-drift 48s ease-in-out infinite alternate; will-change: transform; }
+}
+@keyframes calm-drift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(4%, 3%, 0) scale(1.04); }
+  100% { transform: translate3d(-3%, 5%, 0) scale(1); }
+}
+
+/* ---------- 2. Cards ---------- */
+.card.card:is(.card-paper, .card-dispatch, .card-stamp, .card-field, .card-plain):not(.pricing-signal),
+.proof-card.proof-card:is(.card-paper, .card-dispatch, .card-stamp, .card-field, .card-plain),
+.machines-card.machines-card:is(.card-paper, .card-dispatch, .card-stamp, .card-field, .card-plain) {
+  --ink: inherit;
+  --ink-muted: inherit;
+  --ink-wordmark: inherit;
+  --link: inherit;
+  --link-hover: inherit;
+  --line: inherit;
+  --surface: inherit;
+  --surface-raised: inherit;
+  --surface-tint: inherit;
+  --glass-edge: inherit;
+  --glass-field: inherit;
+  --glass-fill: inherit;
+  --glass-fill-solid: inherit;
+  --glass-fill-strong: inherit;
+  --glass-rim: inherit;
+  --glass-sheen: inherit;
+  --glass-specular: inherit;
+  --card-bg: var(--surface-raised);
+  --card-ink: var(--ink);
+  --card-muted: var(--ink-muted);
+  --card-border-width: 1px;
+  --card-border-style: solid;
+  --card-border-color: color-mix(in srgb, var(--line) 70%, transparent);
+  --card-shadow: none;
+  --card-blur: none;
+  --card-chip: var(--surface);
+  --card-hover-border: var(--line-strong);
+  --card-hover-shadow: var(--glass-shadow);
+  border-radius: var(--radius-xl);
+}
+.card.card:is(.card-paper, .card-dispatch, .card-stamp, .card-field, .card-plain):not(.pricing-signal):is(:hover, :focus-visible) {
+  border-color: var(--card-hover-border);
+  box-shadow: var(--card-hover-shadow);
+}
+:is(.card, .proof-card, .machines-card).card-stamp .label {
+  padding: 0;
+  border: 0;
+  color: var(--ink-muted);
+}
+:is(.card, .proof-card, .machines-card).card-dispatch .label {
+  color: var(--ink-muted);
+}
+:is(.card, .proof-card, .machines-card).card-dispatch .label::before {
+  content: none;
+}
+.card > * + * { margin-top: var(--space-4); }
+
+/* ---------- 3. Rhythm ---------- */
+:root {
+  --section-y: 80px;
+  --head-gap: 40px;
+  --grid-gap: 24px;
+  --card-pad: 28px;
+}
+@media (min-width: 900px) {
+  :root {
+    --section-y: 136px;
+    --head-gap: 56px;
+    --grid-gap: 32px;
+    --card-pad: 36px;
+  }
+}
+.section + .section,
+.agent-section + .agent-section,
+.compare-section + .compare-section,
+.brand-section + .brand-section {
+  border-top: 0;
+  background-image: none;
+}
+.section-head .body-lg,
+.section-head > p:not(.label) {
+  max-width: 36rem;
+}
+.section-head-center .body-lg,
+.section-head-center > p:not(.label) {
+  margin-inline: auto;
+}

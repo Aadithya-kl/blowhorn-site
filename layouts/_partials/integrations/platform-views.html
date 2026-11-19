@@ -1,0 +1,128 @@
+{{- /* Platform views on /integrations/: the interactive map (by type, by
+  role, constellation, by action), moved here from the home page so the home
+  page stays light. Driven by data/integrations.json treatments; behaviour in
+  assets/js/home-signal.js (bindPlatforms on [data-platforms]). Supported
+  name/logo/actions come from hugo.Data.platforms plus data/actions.json.
+  By role: every role in data/roles.json, in weight order, highlights its own
+  platforms list; an id that is not a platform here fails the build. */ -}}
+{{- $data := site.Data.integrations -}}
+{{- $roles := sort site.Data.roles.roles "weight" -}}
+{{- $counts := partial "platform-counts.html" . -}}
+{{- $rows := slice -}}
+{{- range $data.platforms }}{{ $rows = $rows | append (partial "integration-row.html" .) }}{{ end -}}
+{{- $byId := dict -}}
+{{- range $rows }}{{ $byId = merge $byId (dict .id .) }}{{ end -}}
+{{- range $roles }}{{ $slug := .slug }}{{ range .platforms }}{{ if not (index $byId .) }}{{ errorf "data/roles.json role %q lists platform %q, which is not in data/integrations.json platforms" $slug . }}{{ end }}{{ end }}{{ end -}}
+{{- $actions := partial "action-index.html" $rows -}}
+      <section id="platform-views" class="section platforms-signal platform-views" aria-labelledby="platform-views-title" data-platforms>
+        <div class="section-head">
+          <h2 id="platform-views-title" class="h2">See the map your way</h2>
+          <p class="muted">By type, by role, by action, or all at once.</p>
+        </div>
+        <div class="plat-toolbar">
+          <div class="plat-tabs" role="tablist" aria-label="Compare how the map looks">
+            {{- range $i, $t := $data.treatments }}
+            <a class="plat-tab{{ if eq $t.id $data.defaultTreatment }} is-on{{ end }}" role="tab" id="plat-tab-{{ $t.id }}" href="#plat-panel-{{ $t.id }}" aria-selected="{{ if eq $t.id $data.defaultTreatment }}true{{ else }}false{{ end }}" aria-controls="plat-panel-{{ $t.id }}" data-plat-tab="{{ $t.id }}">{{ $t.label }}</a>
+            {{- end }}
+          </div>
+          <p class="plat-count caption" data-plat-count>More platforms than any screen can show.</p>
+        </div>
+
+        {{- range $data.treatments }}
+        <div class="plat-panel{{ if eq .id $data.defaultTreatment }} is-on{{ end }}" id="plat-panel-{{ .id }}" role="tabpanel" aria-labelledby="plat-tab-{{ .id }}" data-plat-panel="{{ .id }}">
+          {{- if eq .kind "category" }}
+          <ul class="plat-cats">
+            {{- range $data.categories }}
+            <li class="plat-cat">
+              <h3 class="h3">{{ .name }}</h3>
+              <p class="caption muted">{{ .summary }}</p>
+              <ul class="plat-row">
+                {{- range .platforms }}
+                {{- $p := index $byId . }}
+                <li>
+                  <a class="platform" href="{{ $p.docs | relURL }}">
+                    <span class="logo-tile"><img src="{{ $p.logo | relURL }}" alt="" width="28" height="28"></span>
+                    <span class="ui">{{ $p.name }}</span>
+                    <span class="caption">{{ $p.viaLabel }}</span>
+                  </a>
+                </li>
+                {{- end }}
+              </ul>
+            </li>
+            {{- end }}
+          </ul>
+          {{- else if eq .kind "role" }}
+          <div class="plat-roles">
+            <div class="plat-role-picks" role="group" aria-label="Highlight platforms by role">
+              {{- range $i, $role := $roles }}
+              <button type="button" class="plat-role{{ if eq $i 0 }} is-on{{ end }}" data-plat-role="{{ $role.slug }}" aria-pressed="{{ if eq $i 0 }}true{{ else }}false{{ end }}">{{ $role.name }}</button>
+              {{- end }}
+            </div>
+            <ul class="plat-row plat-row-roles">
+              {{- range $rows }}
+              {{- $p := . -}}
+              {{- $roleIds := slice -}}
+              {{- range $roles }}{{ if in .platforms $p.id }}{{ $roleIds = $roleIds | append .slug }}{{ end }}{{ end }}
+              <li data-plat-id="{{ $p.id }}" data-plat-roles="{{ delimit $roleIds " " }}">
+                <a class="platform" href="{{ $p.docs | relURL }}">
+                  <span class="logo-tile"><img src="{{ $p.logo | relURL }}" alt="" width="28" height="28"></span>
+                  <span class="ui">{{ $p.name }}</span>
+                  <span class="caption">{{ $p.viaLabel }}</span>
+                </a>
+              </li>
+              {{- end }}
+            </ul>
+          </div>
+          {{- else if eq .kind "constellation" }}
+          <div class="constellation" data-constellation>
+            <p class="constellation-count">
+              <span class="constellation-num" data-count-activities>{{ $counts.activities }}</span>
+              <span class="constellation-label">actions</span>
+              <span class="caption muted">across more platforms than any screen can show</span>
+            </p>
+            <p class="constellation-ctl">
+              <button type="button" class="constellation-pause" data-constellation-pause aria-pressed="false">Pause motion</button>
+            </p>
+            <ul class="constellation-orbit" data-constellation-total="{{ len $rows }}">
+              {{- range $i, $p := $rows }}
+              <li class="constellation-item" data-n="{{ $i }}">
+                <a class="platform" href="{{ $p.docs | relURL }}">
+                  <span class="logo-tile"><img src="{{ $p.logo | relURL }}" alt="" width="28" height="28"></span>
+                  <span class="visually-hidden">{{ $p.name }}</span>
+                </a>
+              </li>
+              {{- end }}
+            </ul>
+          </div>
+          {{- else if eq .kind "action" }}
+          <div class="plat-actions" data-action-filter>
+            <nav class="plat-action-picks" aria-label="Show platforms by action">
+              {{- range $actions }}
+              <a class="plat-action" href="#views-{{ .slug }}" data-action-chip="{{ .id }}">{{ .name }}</a>
+              {{- end }}
+            </nav>
+            {{- range $actions }}
+            {{- $act := . }}
+            <div class="action-group" id="views-{{ $act.slug }}" data-action-group="{{ $act.id }}">
+              <h3 id="views-{{ $act.slug }}-title" class="h3">{{ $act.name }}</h3>
+              <p class="caption muted">{{ $act.description }}</p>
+              <ul class="plat-row">
+                {{- range $act.platforms }}
+                <li>
+                  <a class="platform" href="{{ .docs | relURL }}#{{ $act.slug }}">
+                    <span class="logo-tile"><img src="{{ .logo | relURL }}" alt="" width="28" height="28"></span>
+                    <span class="ui">{{ .name }}</span>
+                    <span class="caption">{{ .viaLabel }}</span>
+                  </a>
+                </li>
+                {{- end }}
+              </ul>
+            </div>
+            {{- end }}
+          </div>
+          {{- else -}}
+            {{ errorf "integrations treatment kind %q is not category, role, constellation or action" .kind }}
+          {{- end }}
+        </div>
+        {{- end }}
+      </section>

@@ -30,6 +30,7 @@
 {{- end }}
 
 {{ define "scripts" }}
+    {{- partial "anchor-redirects.html" . }}
     {{- $theme := partial "theme.html" . -}}
     {{- if eq $theme.home "reveille" -}}
     {{- $army := resources.Get "js/army.js" | minify | fingerprint }}
