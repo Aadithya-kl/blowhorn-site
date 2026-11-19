@@ -15,6 +15,7 @@ import worker, {
   escHtml,
   safeHtml,
   pageResponse,
+  MAX_BODY_BYTES,
 } from './src/worker.js';
 
 function fakeDb() {
@@ -566,4 +567,193 @@ test('real SQLite schema: migrations apply, window index is used, and d1Db pruni
   // Future bucket must survive
   assert.equal(remaining[1].window, currentWindow + 1);
   assert.equal(remaining[1].count, 1);
+});
+
+test('oversized Content-Length on JSON POST returns 413 and stores nothing', async () => {
+  const db = fakeDb();
+  const handler = createHandler(db);
+  const req = new Request('https://api.blowhorn.ai/api/waitlist', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'content-length': '15000',
+    },
+    body: JSON.stringify({ email: 'oversized@example.com', topic: 'shorts' }),
+  });
+  const res = await handler(req);
+  assert.equal(res.status, 413);
+  assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+  assert.equal(res.headers.get('x-frame-options'), 'DENY');
+  assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+  const data = await res.json();
+  assert.equal(data.ok, false);
+  assert.equal(data.error, 'Payload too large.');
+  assert.equal(db.rows.size, 0);
+});
+
+test('oversized Content-Length on form POST returns 413 HTML error page and preserves safeBackLink', async () => {
+  const db = fakeDb();
+  const handler = createHandler(db);
+  const params = new URLSearchParams({ email: 'oversized@example.com', source_page: '/coming-soon/' });
+  const req = new Request('https://api.blowhorn.ai/api/waitlist', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      'content-length': '15000',
+    },
+    body: params.toString(),
+  });
+  const res = await handler(req);
+  assert.equal(res.status, 413);
+  assert.equal(res.headers.get('content-type'), 'text/html; charset=utf-8');
+  assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+  assert.equal(res.headers.get('x-frame-options'), 'DENY');
+  const html = await res.text();
+  assert.match(html, /<title>Payload too large<\/title>/);
+  assert.match(html, /Payload too large\./);
+  assert.match(html, /<a href="https:\/\/blowhorn\.ai">Go back<\/a>/);
+  assert.equal(db.rows.size, 0);
+});
+
+test('oversized raw body without Content-Length header returns 413', async () => {
+  const db = fakeDb();
+  const handler = createHandler(db);
+  const oversizedData = 'x'.repeat(MAX_BODY_BYTES + 1);
+  const req = new Request('https://api.blowhorn.ai/api/subscribe', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email: 'valid@example.com', remark: oversizedData }),
+  });
+  const res = await handler(req);
+  assert.equal(res.status, 413);
+  const data = await res.json();
+  assert.equal(data.ok, false);
+  assert.equal(data.error, 'Payload too large.');
+  assert.equal(db.rows.size, 0);
+});
+
+test('boundary payload at exactly MAX_BODY_BYTES passes size check to validation', async () => {
+  const db = fakeDb();
+  const handler = createHandler(db);
+
+  // Exact boundary: payload length equals MAX_BODY_BYTES
+  const base = JSON.stringify({ email: 'test@example.com', remark: '' });
+  const padLen = MAX_BODY_BYTES - new TextEncoder().encode(base).length;
+  const atLimitBody = JSON.stringify({ email: 'test@example.com', remark: 'a'.repeat(padLen) });
+  assert.equal(new TextEncoder().encode(atLimitBody).length, MAX_BODY_BYTES);
+
+  const reqAtLimit = new Request('https://api.blowhorn.ai/api/subscribe', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: atLimitBody,
+  });
+  const resAtLimit = await handler(reqAtLimit);
+  // Passes size check (not 413), fails field validation because remark is > 500 chars (400)
+  assert.equal(resAtLimit.status, 400);
+  const dataAtLimit = await resAtLimit.json();
+  assert.match(dataAtLimit.error, /remark is too long/);
+
+  // One byte over MAX_BODY_BYTES: rejected immediately by size check with 413
+  const overLimitBody = atLimitBody + ' ';
+  assert.equal(new TextEncoder().encode(overLimitBody).length, MAX_BODY_BYTES + 1);
+  const reqOverLimit = new Request('https://api.blowhorn.ai/api/subscribe', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: overLimitBody,
+  });
+  const resOverLimit = await handler(reqOverLimit);
+  assert.equal(resOverLimit.status, 413);
+  const dataOverLimit = await resOverLimit.json();
+  assert.equal(dataOverLimit.error, 'Payload too large.');
+});
+
+test('JSON array, primitive or malformed body returns 400 without crashing', async () => {
+  const db = fakeDb();
+  const handler = createHandler(db);
+
+  // Array body
+  const resArray = await handler(new Request('https://api.blowhorn.ai/api/subscribe', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(['not', 'an', 'object']),
+  }));
+  assert.equal(resArray.status, 400);
+  const dataArray = await resArray.json();
+  assert.equal(dataArray.error, 'Could not read the signup.');
+
+  // Primitive string body
+  const resString = await handler(new Request('https://api.blowhorn.ai/api/subscribe', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify('plain string'),
+  }));
+  assert.equal(resString.status, 400);
+
+  // Malformed JSON syntax
+  const resMalformed = await handler(new Request('https://api.blowhorn.ai/api/subscribe', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: '{invalid json',
+  }));
+  assert.equal(resMalformed.status, 400);
+});
+
+test('oversized payload on POST /api/unsubscribe returns 413', async () => {
+  const db = fakeDb();
+  const handler = createHandler(db);
+  const req = new Request('https://api.blowhorn.ai/api/unsubscribe', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      'content-length': '15000',
+    },
+    body: new URLSearchParams({ token: 'testtoken' }).toString(),
+  });
+  const res = await handler(req);
+  assert.equal(res.status, 413);
+});
+
+test('valid multipart form submission is parsed and redirects', async () => {
+  const db = fakeDb();
+  const handler = createHandler(db);
+  const fd = new FormData();
+  fd.append('email', 'multipart@example.com');
+  fd.append('topic', 'tiktok');
+  fd.append('remark', 'testing multipart');
+  const req = new Request('https://api.blowhorn.ai/api/waitlist', {
+    method: 'POST',
+    body: fd,
+  });
+  const res = await handler(req);
+  assert.equal(res.status, 303);
+  const row = await db.getSignup('multipart@example.com', 'waitlist', 'tiktok');
+  assert.ok(row);
+  assert.equal(row.remark, 'testing multipart');
+});
+
+test('oversized chunked multipart/form-data returns 413', async () => {
+  const db = fakeDb();
+  const handler = createHandler(db);
+  const fd = new FormData();
+  fd.append('email', 'oversized-multipart@example.com');
+  fd.append('remark', 'x'.repeat(MAX_BODY_BYTES + 1));
+  const rawReq = new Request('https://api.blowhorn.ai/api/waitlist', {
+    method: 'POST',
+    body: fd,
+  });
+  const text = await rawReq.text();
+  // Strip content-length to simulate a chunked transfer
+  const headers = new Headers(rawReq.headers);
+  headers.delete('content-length');
+  const req = new Request('https://api.blowhorn.ai/api/waitlist', {
+    method: 'POST',
+    headers,
+    body: text,
+  });
+  const res = await handler(req);
+  assert.equal(res.status, 413);
+  assert.equal(res.headers.get('content-type'), 'text/html; charset=utf-8');
+  const html = await res.text();
+  assert.match(html, /Payload too large/);
+  assert.equal(db.rows.size, 0);
 });
