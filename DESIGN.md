@@ -4,29 +4,31 @@ The brand-wide design language (principles, colour, type, liquid glass, platform
 
 ## Whitespace and rhythm
 
-Whitespace separates ideas. A title never touches its content, and sections never run together. On the site these rules live in one token block at the end of `assets/css/site.css` ("Whitespace and rhythm"); shared classes (`.section`, `.agent-section`, `.compare-section`, `.brand-section`, `.section-head`, `.page-head`, `.section-body`, `.grid`, `.card`) read the tokens, so spacing is structural, never a per-page patch.
+Whitespace separates ideas. A title never touches its content, and sections never run together. On the site these rules live in one token block at the end of `assets/css/site.css` ("Whitespace and rhythm"), with the current values set in `assets/css/calm.css`; shared classes (`.section`, `.agent-section`, `.compare-section`, `.brand-section`, `.section-head`, `.page-head`, `.section-body`, `.grid`, `.card`) read the tokens, so spacing is structural, never a per-page patch.
 
 | Token | Mobile | Desktop (>= 900px) | Use |
 |---|---|---|---|
-| `--section-y` | 64px | 112px | Section padding-block |
-| `--head-gap` | 32px | 40px | Section head (or bare h2) to its content, minimum |
+| `--section-y` | 80px | 136px | Section padding-block |
+| `--head-gap` | 40px | 56px | Section head (or bare h2) to its content, minimum |
 | `--eyebrow-gap` | 12px | 12px | Label to heading |
 | `--intro-gap` | 16px | 16px | Heading to its intro paragraph |
 | `--grid-gap` | 24px | 32px | Card grid gutters |
 | `--stack-gap` | 16px | 16px | Stacked items (FAQ, lists) |
-| `--card-pad` | 24px | 32px | Card padding |
+| `--card-pad` | 28px | 36px | Card padding |
 | `--text-measure` | 64ch | 64ch | Paragraph line length |
 
 Rules:
 
-- Never let a title touch its content: heading-to-content is at least `--head-gap` (32px mobile, 40px desktop). Wrap the title and intro in `.section-head`; whatever follows gets the gap automatically.
-- Separate sections with whitespace first (`--section-y` on both sides). Neighboring sections get a faded hairline divider; glass panels that are their own section float with half a section of air instead. Use background shifts only where a section is a distinct moment (CTA, the Major).
+- Never let a title touch its content: heading-to-content is at least `--head-gap` (40px mobile, 56px desktop). Wrap the title and intro in `.section-head`; whatever follows gets the gap automatically.
+- Separate sections with whitespace only (`--section-y` on both sides); no hairline divider between neighboring sections (calm refresh, 19 Nov 2026). Glass panels that are their own section float with half a section of air instead. Use background shifts only where a section is a distinct moment (CTA, the Major).
 - Keep paragraphs at or under `--text-measure` (about 60-68 characters). Section heads max out at 44rem.
 - Cards get `--card-pad` on every side and `--grid-gap` between them. Don't shrink either to fit more in; cut copy instead.
 - Never hard-code a margin or padding in px on a page template. Add or reuse a token.
 - Check 1280, 390 and 320 widths, light and dark, before merging.
 
 ## Cards
+
+**Calm look (Lee, 19 Nov 2026).** `assets/css/calm.css` renders every dealt card (`.card`, `.proof-card`, `.machines-card` with a variant class) in one quiet look: the raised surface, a hairline edge, a 24px radius, more padding, and on hover a stronger edge and the soft glass shadow. The variant classes are still dealt by the rules below, so the deal and its checks keep working, but the art, icon and headline carry the emphasis, not the fill. The light page has no ambient gradient field; dark mode keeps one slow teal glow. The rules below describe the variant system calm.css sits on.
 
 Two rules, from the owner's order of 2 Nov 2026:
 
