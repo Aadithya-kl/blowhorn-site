@@ -426,8 +426,12 @@ test-asset-catalog:
 test-image-lightbox:
 	node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test assets/js/image-lightbox.test.mjs
 
-## Run the unit tests for the check scripts in .github/scripts/, then the hero activity feed, download page, asset catalog and image lightbox tests.
-test-scripts: test-internal-worker test-activity-feed test-download test-asset-catalog test-image-lightbox
+## Unit tests for the home platforms clip highlight: which segment each time maps to, and that the highlight follows the film.
+test-platforms-clip:
+	node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test assets/js/platforms-clip.test.mjs
+
+## Run the unit tests for the check scripts in .github/scripts/, then the hero activity feed, download page, asset catalog, image lightbox and platforms clip tests.
+test-scripts: test-internal-worker test-activity-feed test-download test-asset-catalog test-image-lightbox test-platforms-clip
 	python3 -m unittest discover -s .github/scripts -p 'test_*.py'
 
 ## Mark a Copilot draft PR ready and approve pending runs for its current head (copilot-pr-handler.yml). Requires GH_TOKEN, GITHUB_REPOSITORY and PR_NUMBER.

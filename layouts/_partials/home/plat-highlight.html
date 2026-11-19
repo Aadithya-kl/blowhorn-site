@@ -1,0 +1,36 @@
+{{- /* Per-platform activity highlight for the home platforms clip
+  (blowhorn-site #652). A colour-coded strip under the clip, one row per
+  platform the film features, in film order (data/integrations.json order,
+  only platforms with a data/platforms/<id>.yaml). Each action chip is
+  coloured by its action group from data/actions.json, so a visitor sees at
+  a glance that platforms support different actions: Hacker News posts and
+  comments only, GitHub rallies and recons without posting, Bluesky does
+  all seven. Server-rendered, so it reads with JavaScript off and under
+  prefers-reduced-motion; with motion, assets/js/platforms-clip.js marks
+  the row the film is on (aria-current). Chip colours are brand tokens (see
+  assets/css/home-signal.css, plat-highlight). Only supported platforms
+  with an action list appear here; the film gives the other supported
+  platforms no card, and this strip follows the film. */ -}}
+{{- $platforms := .platforms -}}
+{{- $vocab := dict -}}
+{{- range site.Data.actions.actions }}{{ $vocab = merge $vocab (dict .id .) }}{{ end -}}
+<div class="plat-highlight">
+  <p class="plat-highlight-legend"><span class="plat-highlight-legend-label">Colour by action type:</span>
+    {{- range site.Data.actions.groups }}
+    <span class="plat-chip plat-chip-{{ .id }}">{{ .name }}</span>
+    {{- end }}
+  </p>
+  <ul class="plat-highlight-list">
+    {{- range $i, $p := $platforms }}
+    <li class="plat-highlight-row" data-plat="{{ $p.key }}" data-plat-index="{{ $i }}">
+      <span class="plat-highlight-name"><a href="{{ $p.docs | relURL }}">{{ $p.name }}</a></span>
+      <span class="plat-highlight-actions">
+        {{- range $p.actions }}
+        {{- $a := index $vocab .id -}}
+        <span class="plat-chip plat-chip-{{ $a.group }}">{{ $a.name }}</span>
+        {{- end }}
+      </span>
+    </li>
+    {{- end }}
+  </ul>
+</div>

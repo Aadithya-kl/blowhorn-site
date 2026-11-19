@@ -1031,6 +1031,31 @@ html[data-theme="signal"] #platforms .logo-tile img[src*="github-invertocat-blac
   background: var(--surface-raised);
 }
 .plat-clip-ctl { margin-top: var(--space-3); }
+/* The per-platform activity highlight (home/plat-highlight.html, #652):
+   a colour-coded strip under the clip, one row per platform the film
+   features, in film order. Each action chip is coloured by its action
+   group from data/actions.json, so the mix of colours on a row shows at a
+   glance what that platform supports. Colours are brand tokens only:
+   broadcast is teal, rally is yellow, ranks is charcoal, recon is the
+   teal tint; the legend names the four groups. With motion,
+   platforms-clip.js marks the row the film is on (aria-current) with a
+   tint wash; without JavaScript, or under prefers-reduced-motion, every
+   row reads alike. */
+.plat-highlight { margin-top: var(--space-4); text-align: left; }
+.plat-highlight-legend { margin: 0 0 var(--space-2); font: 500 13px/1.4 var(--font-sans); color: var(--ink-muted); }
+.plat-highlight-legend-label { margin-right: var(--space-2); }
+.plat-highlight-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); }
+.plat-highlight-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-3); padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); }
+.plat-highlight-row[aria-current="true"] { background: var(--surface-tint); }
+.plat-highlight-name { font: 600 14px/1.4 var(--font-sans); color: var(--ink); white-space: nowrap; }
+.plat-highlight-name a { color: inherit; text-decoration: none; }
+.plat-highlight-name a:hover { color: var(--link); }
+.plat-highlight-actions { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.plat-chip { display: inline-block; padding: 2px var(--space-2); border-radius: var(--radius-pill); font: 500 12px/1.6 var(--font-sans); white-space: nowrap; }
+.plat-chip-broadcast { background: var(--teal); color: var(--on-teal); }
+.plat-chip-rally { background: var(--yellow); color: var(--on-yellow); }
+.plat-chip-ranks { background: var(--charcoal); color: var(--white); }
+.plat-chip-recon { background: var(--surface-tint); color: var(--link); }
 .constellation-pause {
   height: 38px;
   padding: 0 14px;

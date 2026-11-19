@@ -52,4 +52,43 @@
     });
   }, { threshold: [0, 0.5] });
   Array.prototype.forEach.call(videos, function (v) { io.observe(v); });
+
+  // The per-platform highlight (home/plat-highlight.html, #652): one row
+  // per platform the film features, in film order, one 1.5-second segment
+  // each over the 10.5-second loop (verified from the film's frames: the
+  // cards run LinkedIn, X, Reddit, Hacker News, Slack, Bluesky, GitHub).
+  // The last half second crossfades back to the first platform, so it
+  // counts as segment 0. Marks the row the film is on with aria-current;
+  // the strip is server-rendered, so it reads alike with JavaScript off
+  // or under prefers-reduced-motion (this whole script returns early
+  // there). Only the playing video drives it: the hidden theme copy is
+  // paused, so its timeupdate never fires.
+  var SEGMENT_SECONDS = 1.5;
+  var SEGMENT_COUNT = 7;
+  var WRAP_AT = 10;
+  var rows = fig.querySelectorAll('[data-plat-index]');
+  var current = -1;
+  function segmentIndexForTime(t) {
+    if (!isFinite(t) || t < 0) return 0;
+    if (t >= WRAP_AT) return 0;
+    var i = Math.floor(t / SEGMENT_SECONDS);
+    return i >= SEGMENT_COUNT ? SEGMENT_COUNT - 1 : i;
+  }
+  function highlight(i) {
+    if (i === current) return;
+    current = i;
+    Array.prototype.forEach.call(rows, function (r, j) {
+      if (j === i) r.setAttribute('aria-current', 'true');
+      else r.removeAttribute('aria-current');
+    });
+  }
+  Array.prototype.forEach.call(videos, function (v) {
+    v.addEventListener('timeupdate', function () {
+      if (v.paused) return;
+      highlight(segmentIndexForTime(v.currentTime));
+    });
+  });
+  if (typeof globalThis !== 'undefined') {
+    globalThis.BlowhornPlatformsClip = { segmentIndexForTime: segmentIndexForTime };
+  }
 })();

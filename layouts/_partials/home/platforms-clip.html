@@ -5,11 +5,27 @@
   attribute: assets/js/platforms-clip.js removes the native controls, plays it
   from the start once about half of it is in view and pauses it when it
   leaves, and shows Pause motion. Under prefers-reduced-motion, or without
-  JavaScript, it rests on its poster with native controls. Called with the
-  clip. */ -}}
+  JavaScript, it rests on its poster with native controls. The
+  per-platform activity highlight (home/plat-highlight.html) sits under the
+  clip: one colour-coded row per platform the film features, in film order,
+  synced to the clip by platforms-clip.js. Called with the clip. */ -}}
 {{- $clip := . -}}
+{{- /* Platforms the film features, in film order: data/integrations.json
+  order, only those with a data/platforms/<id>.yaml. The figcaption names
+  the fewest and most actions so the differences are in the caption text;
+  the strip itself lists every platform's actions. */ -}}
+{{- $featured := slice -}}
+{{- range site.Data.integrations.platforms -}}
+  {{- with index site.Data.platforms .id }}{{ $featured = $featured | append . }}{{ end -}}
+{{- end -}}
+{{- $min := 99 -}}{{- $max := 0 -}}{{- $minName := "" -}}{{- $maxName := "" -}}
+{{- range $featured -}}
+  {{- $n := len .actions -}}
+  {{- if lt $n $min }}{{ $min = $n }}{{ $minName = .name }}{{ end -}}
+  {{- if gt $n $max }}{{ $max = $n }}{{ $maxName = .name }}{{ end -}}
+{{- end -}}
 <figure class="plat-clip" data-plat-clip data-plat-highlight="" aria-labelledby="plat-clip-title">
-  <figcaption class="visually-hidden"><span id="plat-clip-title">{{ $clip.label }}</span>. {{ $clip.description }}</figcaption>
+  <figcaption class="visually-hidden"><span id="plat-clip-title">{{ $clip.label }}</span>. {{ $clip.description }} Supported actions differ by platform, from {{ $min }} on {{ $minName }} to {{ $max }} on {{ $maxName }}.</figcaption>
   {{- range $theme := slice "light" "dark" }}
   {{- with index $clip $theme }}
   <video class="plat-clip-video logo-on-{{ $theme }}" controls muted loop playsinline preload="metadata" width="{{ $clip.width }}" height="{{ $clip.height }}" poster="{{ .poster | relURL }}" aria-labelledby="plat-clip-title">
@@ -18,5 +34,6 @@
   </video>
   {{- end }}
   {{- end }}
+  {{- partial "home/plat-highlight.html" (dict "platforms" $featured) }}
   <p class="plat-clip-ctl"><button type="button" class="constellation-pause" data-plat-clip-pause aria-pressed="false" hidden>Pause motion</button></p>
 </figure>
