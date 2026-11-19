@@ -27,7 +27,7 @@
               <a class="plat-tab{{ if eq $t.id $data.defaultTreatment }} is-on{{ end }}" role="tab" id="plat-tab-{{ $t.id }}" href="#plat-panel-{{ $t.id }}" aria-selected="{{ if eq $t.id $data.defaultTreatment }}true{{ else }}false{{ end }}" aria-controls="plat-panel-{{ $t.id }}" data-plat-tab="{{ $t.id }}">{{ $t.label }}</a>
               {{- end }}
             </div>
-            <p class="plat-count caption" data-plat-count><span data-count-platforms>{{ $counts.platforms }}</span> supported now<span class="muted"> · <span data-count-soon>{{ $counts.comingSoon }}</span> coming soon</span></p>
+            <p class="plat-count caption" data-plat-count>More platforms than any screen can show.</p>
           </div>
 
           {{- range $data.treatments }}
@@ -78,9 +78,9 @@
             {{- else if eq .kind "constellation" }}
             <div class="constellation" data-constellation>
               <p class="constellation-count">
-                <span class="constellation-num" data-count-platforms>{{ $counts.platforms }}</span>
-                <span class="constellation-label">supported platforms</span>
-                <span class="caption muted"><span data-count-soon>{{ $counts.comingSoon }}</span> more on the way · <span data-count-activities>{{ $counts.activities }}</span> actions</span>
+                <span class="constellation-num" data-count-activities>{{ $counts.activities }}</span>
+                <span class="constellation-label">actions</span>
+                <span class="caption muted">across more platforms than any screen can show</span>
               </p>
               <p class="constellation-ctl">
                 <button type="button" class="constellation-pause" data-constellation-pause aria-pressed="false">Pause motion</button>
