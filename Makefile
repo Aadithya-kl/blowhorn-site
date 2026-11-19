@@ -422,8 +422,12 @@ test-download:
 test-asset-catalog:
 	node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test assets/js/asset-catalog.test.mjs
 
-## Run the unit tests for the check scripts in .github/scripts/, then the hero activity feed, download page and asset catalog tests.
-test-scripts: test-internal-worker test-activity-feed test-download test-asset-catalog
+## Unit tests for the internal site's image lightbox: which clicks open it and which follow a link.
+test-image-lightbox:
+	node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test assets/js/image-lightbox.test.mjs
+
+## Run the unit tests for the check scripts in .github/scripts/, then the hero activity feed, download page, asset catalog and image lightbox tests.
+test-scripts: test-internal-worker test-activity-feed test-download test-asset-catalog test-image-lightbox
 	python3 -m unittest discover -s .github/scripts -p 'test_*.py'
 
 ## Mark a Copilot draft PR ready and approve pending runs for its current head (copilot-pr-handler.yml). Requires GH_TOKEN, GITHUB_REPOSITORY and PR_NUMBER.
@@ -611,6 +615,7 @@ clean:
 	test-internal-worker \
 	test-activity-feed \
 	test-download \
+	test-image-lightbox \
 	preview-internal \
 	check-blowhorn \
 	test-scripts \
