@@ -4,9 +4,14 @@
   bottom-left corner. The existing hero demo stays inside as the app
   mock; the film cell beside the copy is untouched, so the hero rotation
   keeps working. The chart card reuses the site's own counts and words
-  only, and its bars are sized by CSS classes, never inline styles. */ -}}
+  only, and its bars are sized by CSS classes, never inline styles.
+  The container only renders when the rotation includes the demo, and
+  carries data-hero-media-only="demo", so a film hero never shows it as
+  an empty grey box. */ -}}
 {{- $counts := partial "platform-counts.html" . -}}
-<div class="gum-app-preview">
+{{- $rot := partial "hero-rotation.html" . -}}
+{{- if in $rot.medias "demo" }}
+<div class="gum-app-preview" data-hero-media-only="demo">
   {{- partial "hero-demo.html" . }}
   <div class="gum-chart-card">
     <div class="gum-chart-figures">
@@ -18,3 +23,4 @@
     <div class="gum-chart-bars" aria-hidden="true"><span class="gum-bar-a"></span><span class="gum-bar-b"></span><span class="gum-bar-c"></span><span class="gum-bar-d"></span><span class="gum-bar-e"></span></div>
   </div>
 </div>
+{{- end }}

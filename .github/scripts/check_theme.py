@@ -14,7 +14,8 @@ preview). A new home-signal.md or other theme-named page fails this check.
 
 Activity and platform counts in copy must match supported rows in
 data/integrations.json plus actions in data/platforms/<id>.yaml, and each
-figure must be wrapped in a data-count-* span. The Signal platforms section
+figure must be wrapped in a data-count-* span. The home page shows the
+action count only and must not show a coming-soon count. The Signal platforms section
 must ship JS that calls selectTab with defaultPlatTab when the URL has no
 matching hash, so JS enhancement cannot leave all four panels stacked.
 
@@ -200,7 +201,7 @@ def parse(path: Path) -> AttrCollector:
     return collector
 
 
-def check_counts(page: AttrCollector, want, label, problems):
+def check_counts(page: AttrCollector, want, label, problems, names=COUNT_ATTRS):
     platforms, activities, soon = want
     expected = {
         "platforms": str(platforms),
@@ -208,6 +209,8 @@ def check_counts(page: AttrCollector, want, label, problems):
         "soon": str(soon),
     }
     for name, value in expected.items():
+        if name not in names:
+            continue
         found = page.counts[name]
         if not found:
             problems.append(f"{label} is missing data-count-{name}")
@@ -241,7 +244,11 @@ def main(root: Path) -> int:
             )
         if "Priced per voice, not per channel." not in html:
             problems.append("/index.html is missing the pricing headline")
-        check_counts(page, want_counts, "/index.html", problems)
+        # The home page never splits supported from planned platforms: it
+        # shows the action count only, and no coming-soon figure.
+        check_counts(page, want_counts, "/index.html", problems, names=("activities",))
+        if page.counts["soon"]:
+            problems.append("/index.html shows a coming-soon count (data-count-soon)")
         if 'data-demo-card="github"' in html:
             problems.append("/index.html demo posts to GitHub")
         if ">Say it once. Say it everywhere.<" in html:
