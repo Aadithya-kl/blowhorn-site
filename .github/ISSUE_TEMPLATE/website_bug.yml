@@ -20,10 +20,9 @@ assignees: ''
 <!-- Add screenshots, logs, or screen recordings to help explain your problem. -->
 
 ### Environment
-- **Component:** macOS Desktop App / Chrome Extension / Marketing Site (Hugo)
-- **Blowhorn Version / Release:** <!-- e.g. v1.37.0 or commit hash -->
-- **Host OS:** macOS / Linux / Windows
-- **Browser (if applicable):** Chrome / Safari / Firefox / Edge
+- **Affected Site Page(s):** 
+- **Your OS:** macOS / Linux / Windows
+- **Your Browser:** Chrome / Safari / Firefox / Edge
 
 <!-- Optional 
 #### To Reproduce
@@ -38,4 +37,4 @@ assignees: ''
 - 📚 [Blowhorn Documentation](https://blowhorn.ai/docs)
 - 🤝 [Contributing Guidelines](https://github.com/blowhorn-ai/blowhorn-site/blob/master/CONTRIBUTING.md)
 - 🛠 [Local Build & Check Strategy](https://github.com/blowhorn-ai/blowhorn-site#working-on-the-site) (`make site` / `make check`)
-- 🙋🏾🙋🏼 Questions: [Layer5 Community Slack](http://slack.layer5.io) (#websites)
+- 🙋🏾🙋🏼 Questions: [Layer5 Community Slack](http://slack.layer5.io) ([#websites](https://mesheryio.slack.com/archives/C015QJKUMPU))
