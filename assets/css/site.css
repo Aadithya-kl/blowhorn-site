@@ -3753,7 +3753,7 @@ a.docs-card.platform-card:hover::after, a.docs-card.platform-card:focus-visible:
 /* Agent pages: supported actions as one table, a row per platform and action,
    from data/platforms/*.yaml. */
 .agent-actions-wrap { margin-top: var(--space-6); overflow-x: auto; border-radius: var(--radius-md); }
-.agent-actions-table { width: 100%; min-width: 44rem; border-collapse: collapse; }
+.page .agent-actions-table { width: 100%; min-width: 44rem; max-width: none; border-collapse: collapse; }
 .agent-actions-table th, .agent-actions-table td { padding: var(--space-3) var(--space-4); text-align: left; vertical-align: top; }
 .agent-actions-table thead th { font-weight: 600; border-bottom: 1px solid var(--line-strong); }
 .agent-actions-table tr.agent-actions-first > * { border-top: 1px solid var(--line); }
