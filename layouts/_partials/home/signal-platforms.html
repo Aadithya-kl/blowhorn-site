@@ -3,12 +3,11 @@
   constellation, by action) lives on /integrations/ now
   (integrations/platform-views.html), so the home page stays light.
 
-  Hook for a later enhancement: data-plat-highlight on the clip figure marks
-  where a per-platform activity highlight would go (colour each platform by
-  which actions it supports). The clip is a pre-rendered video, so that needs
-  either a re-edit of the clip with colour passes per action, or an SVG/CSS
-  overlay synced to the video's timeline that reads actions from
-  data/platforms/<id>.yaml. */ -}}
+  Per-platform activity highlight: data-plat-highlight on the clip figure
+  marks the strip (home/plat-highlight.html) that colours each featured
+  platform's actions by group, synced to the clip by platforms-clip.js.
+  The clip is a pre-rendered video, so the strip is the overlay: it reads
+  actions from data/platforms/<id>.yaml and needs no re-edit of the film. */ -}}
 {{- $data := site.Data.integrations -}}
 {{- $counts := partial "platform-counts.html" . -}}
       <section id="platforms" class="section platforms-signal" aria-labelledby="platforms-title">
