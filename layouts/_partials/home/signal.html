@@ -8,7 +8,6 @@
         {{- $film := in $rot.medias "video" }}
         <div class="wrap hero-grid{{ if $film }} has-film{{ end }}">
           <div class="hero-copy">
-            {{- partial "home/gumloop-blobs.html" . }}
             <h1 id="hero-title" class="display-xl">
               {{- range $rot.heroes }}<span data-hero-only="{{ .id }}">{{ partial "hero-headline.html" .headline }}</span>{{ end -}}
             </h1>
@@ -32,10 +31,8 @@
           </div>
           {{- end }}
         </div>
-        {{- partial "home/gumloop-app-preview.html" . }}
+        {{- partial "hero-demo.html" . }}
       </section>
-
-      {{- partial "home/gumloop-metrics.html" . }}
 
       {{- partial "social-proof.html" (dict "slot" "ticker") }}
 
@@ -212,7 +209,6 @@
       <section id="download" class="section cta-signal" aria-labelledby="download-title">
         <div class="wrap cta-inner">
           {{- partial "social-proof.html" (dict "slot" "closing") }}
-          {{- partial "home/gumloop-blobs.html" . }}
           <img class="download-cta-icon" src="{{ "assets/brand/logo/blowhorn-app-icon.svg" | relURL }}" alt="" width="64" height="64" loading="lazy">
           <div class="section-head section-head-center">
             <p class="label">Download</p>
