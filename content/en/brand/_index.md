@@ -17,7 +17,7 @@ kits:
     size: 44 MB
   logos:
     url: /brand/blowhorn-logo-kit.zip
-    size: 2.4 MB
+    size: 2.2 MB
 # Logo tiles. `stage` is the ground the file is drawn for: light, dark, teal or charcoal.
 lockups:
   - name: Horizontal lockup
@@ -69,14 +69,6 @@ wordmarks:
   - name: Wordmark, on dark
     note: White, for dark grounds
     file: blowhorn-wordmark-white.svg
-    stage: dark
-  - name: Company lockup
-    note: The formal lockup, with the company mark
-    file: layer5-blowhorn-lockup.svg
-    stage: light
-  - name: Company lockup, on dark
-    note: The same, after hours
-    file: layer5-blowhorn-lockup-on-dark.svg
     stage: dark
   - name: One-color lockup, charcoal
     note: For teal and busy light grounds
