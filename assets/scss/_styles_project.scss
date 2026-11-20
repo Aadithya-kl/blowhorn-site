@@ -201,6 +201,12 @@
   color: var(--ink-wordmark);
 }
 
+// The quadrants heading opens the "Find your kind of page" section: it gets
+// the full section gap above it, not the default sibling rhythm.
+.docs-landing h2#quadrants {
+  margin-top: var(--space-12);
+}
+
 .docs-main .prose h2 {
   font-family: var(--font-display);
   font-weight: 700;
