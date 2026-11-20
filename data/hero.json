@@ -165,7 +165,7 @@
     },
     {
       "id": "no-begging",
-      "headline": "One message. Many ears. No group-chat begging.",
+      "headline": "Not a bot. It's you. No group-chat begging.",
       "subhead": "Blowhorn is a social media console. One message goes in, and it is broadcast, reposted, and amplified across your profiles and platforms.",
       "identification": "If this is you: you are tired of launch momentum depending on who happens to be online to repost you.",
       "differentiators": [2, 13],
@@ -198,7 +198,7 @@
     {
       "id": "too-small-for-demo",
       "headline": "Built by a small team, for teams too small for the enterprise demo.",
-      "subhead": "Blowhorn is a startup social media console for your computers. We know what launch week feels like, because we live it too. One message in, many ears out, no seat math.",
+      "subhead": "Blowhorn is a startup social media console for your computers. We know what launch week feels like, because we live it too. Your voice, at full volume, no seat math.",
       "identification": "If this is you: you are a 1 to 50 person technical company, and \"talk to sales\" is not a pricing plan.",
       "differentiators": [13],
       "note": "Issue #254, startup priced out. Not in the production rotation; reachable via ?hero=too-small-for-demo and the Easter egg hotkey."
