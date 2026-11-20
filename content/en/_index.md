@@ -1,5 +1,5 @@
 ---
-title: "Blowhorn: one message, many ears"
+title: "Blowhorn: not a bot, it's you"
 description: "Blowhorn is a social media console. Write one post, and it posts, reposts, and amplifies it across your LinkedIn, X, Reddit, Hacker News, Bluesky, GitHub, and Slack profiles, from your own browser, as you."
 theme: signal
 anchor_redirects:

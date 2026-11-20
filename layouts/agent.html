@@ -134,7 +134,7 @@
         </section>
 
         <section class="agent-section agent-cta glass" aria-labelledby="cta-title">
-          <h2 id="cta-title" class="h2">{{ $p.cta_title | default "One message out, many ears in" }}</h2>
+          <h2 id="cta-title" class="h2">{{ $p.cta_title | default "Not a bot. It's you." }}</h2>
           <p class="muted">Want the details before {{ $who }} does the talking? The docs cover setup, every command, and each platform.</p>
           <p class="actions"><a class="button button-secondary" href="{{ (site.GetPage "/docs").RelPermalink }}">Read the docs</a> <a class="button button-secondary" href="{{ with $platformsDocs }}{{ .RelPermalink }}{{ end }}">See every platform</a></p>
         </section>

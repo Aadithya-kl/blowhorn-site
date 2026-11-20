@@ -394,7 +394,7 @@ fonts:
     role: Display
     class: type-display
     weights: ExtraBold 800, Bold 700
-    sample: One message out, many ears in
+    sample: Not a bot. It's you.
     url: https://fonts.google.com/specimen/Bricolage+Grotesque
   - family: Instrument Sans
     role: Text and interface
