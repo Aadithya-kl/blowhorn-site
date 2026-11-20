@@ -1,0 +1,20 @@
+{{- /* A row of calls to action. Context: a slice of dicts, each either
+  a link (label, href, optional kind primary|secondary, default secondary)
+  or the Download partial (download: true, optional kind). href may include
+  a #fragment; path-only values go through relURL. */ -}}
+<p class="actions">
+{{- range . }}
+  {{- if .download -}}
+    {{ partial "download-button.html" (dict "kind" (.kind | default "primary")) }}
+  {{- else -}}
+    {{- $raw := .href -}}
+    {{- $frag := "" -}}
+    {{- if in $raw "#" -}}
+      {{- $parts := split $raw "#" -}}
+      {{- $raw = index $parts 0 -}}
+      {{- $frag = printf "#%s" (index $parts 1) -}}
+    {{- end -}}
+    <a class="button button-{{ .kind | default "secondary" }}" href="{{ $raw | relURL }}{{ $frag }}">{{ .label }}</a>
+  {{- end -}}
+{{- end }}
+</p>

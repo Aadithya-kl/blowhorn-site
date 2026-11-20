@@ -173,5 +173,22 @@
       "logo": "assets/platforms/facebook-simple-icons.svg",
       "docs": "/docs/reference/platforms/facebook/"
     }
-  ]
+  ],
+  "assistants": {
+    "id": "assistants",
+    "name": "AI assistants",
+    "summary": "Connect an assistant to ask about your Blowhorn schedule. Posting stays in the desktop app or CLI.",
+    "items": [
+      {
+        "id": "grok-bot",
+        "name": "Grok Bot",
+        "summary": "Ask Grok Bot about your Blowhorn schedule.",
+        "href": "/agents/grok-bot/",
+        "docs": "/docs/how-to/set-up/connect-mcp-client/#grok-bot",
+        "docsLabel": "Read the setup guide",
+        "logo": "grok"
+      }
+    ]
+  }
 }
+

@@ -53,9 +53,25 @@
   "title": "Blowhorn for Grok",
   "linkTitle": "Grok",
   "layout": "agent",
-  "lastmod": "2026-10-12",
+  "lastmod": "2026-11-20",
   "sitemap": {
     "changefreq": "monthly",
     "priority": 0.5
+  },
+  "related": {
+    "title": "Using Grok Bot?",
+    "body": "Connect Grok Bot to Blowhorn and ask in plain words what's going out, what already went out, and what's waiting.",
+    "actions": [
+      {
+        "label": "Meet Grok Bot",
+        "href": "/agents/grok-bot/",
+        "kind": "secondary"
+      },
+      {
+        "label": "Read the setup guide",
+        "href": "/docs/how-to/set-up/connect-mcp-client/#grok-bot",
+        "kind": "secondary"
+      }
+    ]
   }
 }
