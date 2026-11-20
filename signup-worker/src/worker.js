@@ -21,6 +21,7 @@ const TOKEN_RE = /^[A-Za-z0-9_-]+$/;
 const MAX_EMAIL = 254;
 const MAX_REMARK = 500;
 const MAX_SOURCE_PAGE = 500;
+export const MAX_BODY_BYTES = 10 * 1024;
 
 function randomToken() {
   const bytes = new Uint8Array(32);
@@ -156,10 +157,28 @@ export function safeBackLink(sourcePage) {
 }
 
 async function readFields(request) {
+  const clHeader = request.headers.get('content-length');
+  if (clHeader !== null) {
+    const cl = parseInt(clHeader, 10);
+    if (!isNaN(cl) && cl > MAX_BODY_BYTES) {
+      return { tooLarge: true };
+    }
+  }
+
   const type = request.headers.get('content-type') || '';
   if (type.includes('application/json')) {
-    const body = await request.json().catch(() => null);
-    if (!body || typeof body !== 'object') return null;
+    const text = await request.text().catch(() => null);
+    if (text === null) return null;
+    if (new TextEncoder().encode(text).length > MAX_BODY_BYTES) {
+      return { tooLarge: true };
+    }
+    let body;
+    try {
+      body = JSON.parse(text);
+    } catch {
+      return null;
+    }
+    if (!body || typeof body !== 'object' || Array.isArray(body)) return null;
     return {
       email: body.email,
       topic: body.topic,
@@ -169,16 +188,48 @@ async function readFields(request) {
       token: body.token,
     };
   }
-  const form = await request.formData().catch(() => null);
-  if (!form) return null;
-  return {
-    email: form.get('email'),
-    topic: form.get('topic'),
-    remark: form.get('remark'),
-    website: form.get('website'),
-    source_page: form.get('source_page'),
-    token: form.get('token'),
-  };
+
+  if (type.includes('application/x-www-form-urlencoded')) {
+    const text = await request.text().catch(() => null);
+    if (text === null) return null;
+    if (new TextEncoder().encode(text).length > MAX_BODY_BYTES) {
+      return { tooLarge: true };
+    }
+    const params = new URLSearchParams(text);
+    return {
+      email: params.get('email'),
+      topic: params.get('topic'),
+      remark: params.get('remark'),
+      website: params.get('website'),
+      source_page: params.get('source_page'),
+      token: params.get('token'),
+    };
+  }
+
+  if (type.includes('multipart/form-data')) {
+    const text = await request.text().catch(() => null);
+    if (text === null) return null;
+    if (new TextEncoder().encode(text).length > MAX_BODY_BYTES) {
+      return { tooLarge: true };
+    }
+    const tempReq = new Request('https://blowhorn.ai', {
+      method: 'POST',
+      headers: request.headers,
+      body: text,
+    });
+    const form = await tempReq.formData().catch(() => null);
+    if (!form) return null;
+    return {
+      email: form.get('email'),
+      topic: form.get('topic'),
+      remark: form.get('remark'),
+      website: form.get('website'),
+      source_page: form.get('source_page'),
+      token: form.get('token'),
+    };
+  }
+
+  return null;
 }
 
 function isFormPost(request) {
@@ -190,10 +241,11 @@ function fail(request, status, message, sourcePage) {
   if (isFormPost(request)) {
     const link = escHtml(safeBackLink(sourcePage));
     const safeMsg = escHtml(message);
+    const title = status === 413 ? 'Payload too large' : 'Something went wrong';
     return pageResponse(
       request,
       status,
-      'Something went wrong',
+      title,
       safeHtml(`${safeMsg} <a href="${link}">Go back</a> and try again.`),
     );
   }
@@ -302,6 +354,9 @@ export function createHandler(db) {
       let token = url.searchParams.get('token') || '';
       if (!token) {
         const fields = await readFields(request);
+        if (fields && fields.tooLarge) {
+          return fail(request, 413, 'Payload too large.', null);
+        }
         if (fields && typeof fields.token === 'string') {
           token = fields.token.trim();
         }
@@ -338,6 +393,9 @@ export function createHandler(db) {
 
     const kind = isWaitlist ? 'waitlist' : 'newsletter';
     const fields = await readFields(request);
+    if (fields && fields.tooLarge) {
+      return fail(request, 413, 'Payload too large.', null);
+    }
     if (!fields) return fail(request, 400, 'Could not read the signup.', null);
     // Honeypot: a filled trap field means a bot. Answer success without storing.
     if (typeof fields.website === 'string' && fields.website.trim() !== '') {
