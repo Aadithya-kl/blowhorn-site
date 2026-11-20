@@ -22,9 +22,12 @@ class AnalyticsTemplateTests(unittest.TestCase):
 
     def test_cookie_choices_control_analytics(self):
         footer = (ROOT / "layouts/_partials/footer.html").read_text()
+        shortcode = (ROOT / "layouts/shortcodes/cookie-preferences.html").read_text()
 
-        self.assertIn("data-consent-open", footer)
         self.assertIn('partial "consent.html"', footer)
+        self.assertNotIn("data-consent-open", footer)
+        self.assertIn("data-consent-open", shortcode)
+        self.assertIn('partial "analytics-enabled.html"', shortcode)
 
 
 if __name__ == "__main__":

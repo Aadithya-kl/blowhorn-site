@@ -1,0 +1,11 @@
+{{- /* Cookie preferences section for the Trust Center page: a short blurb
+  about consent plus the button that reopens the cookie notice
+  (layouts/_partials/consent.html). Gated on analytics-enabled, like the
+  notice itself, so deploy previews show neither the section nor a dead
+  button. The button's data-consent-open trigger is wired by
+  assets/js/consent.js. */ -}}
+{{- if partial "analytics-enabled.html" . }}
+<h2 id="cookie-preferences">Cookie preferences</h2>
+<p>This site sets cookies only for <a href="{{ (site.GetPage "/legal/privacy").RelPermalink }}#google-analytics">Google Analytics</a>, and only after you accept. Your choice is saved in your browser; change it here anytime.</p>
+<p><button type="button" class="button button-secondary" data-consent-open aria-controls="consent">Cookie preferences</button></p>
+{{- end }}
