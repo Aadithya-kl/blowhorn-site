@@ -2,7 +2,20 @@
 // unsubscribes and rate-limits, with an in-memory fake for the db adapter.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createHandler, THANKS_URL, safeBackLink, escHtml, safeHtml, pageResponse } from './src/worker.js';
+import { DatabaseSync } from 'node:sqlite';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+import worker, {
+  createHandler,
+  createScheduledHandler,
+  d1Db,
+  THANKS_URL,
+  safeBackLink,
+  escHtml,
+  safeHtml,
+  pageResponse,
+} from './src/worker.js';
 
 function fakeDb() {
   const rows = new Map();
@@ -11,6 +24,8 @@ function fakeDb() {
   const key = (email, kind, topic) => `${email}|${kind}|${topic ?? ''}`;
   return {
     rows,
+    byToken,
+    hits,
     async getSignup(email, kind, topic) {
       return rows.get(key(email, kind, topic)) || null;
     },
@@ -30,6 +45,15 @@ function fakeDb() {
       const next = (hits.get(k) || 0) + 1;
       hits.set(k, next);
       return next;
+    },
+    async pruneRateLimits(cutoff) {
+      for (const [k] of hits) {
+        const parts = k.split('|');
+        const win = Number(parts[1]);
+        if (win < cutoff) {
+          hits.delete(k);
+        }
+      }
     },
     async getByToken(token) {
       return byToken.get(token) || null;
@@ -378,4 +402,168 @@ test('signup responses include security headers for MIME, frame and referrer pro
   assert.equal(optionsRes.headers.get('x-content-type-options'), 'nosniff');
   assert.equal(optionsRes.headers.get('x-frame-options'), 'DENY');
   assert.equal(optionsRes.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+});
+
+test('rateHit does not delete expired rate limits during normal request handling', async () => {
+  const db = fakeDb();
+  // Manually pre-seed expired buckets in fakeDb
+  db.hits.set('203.0.113.10|100', 5);
+  db.hits.set('203.0.113.10|101', 12);
+
+  const handle = createHandler(db);
+  // Execute a normal request in a later minute window
+  const res = await handle(post('/api/subscribe', { email: 'fresh@example.com' }, { 'cf-connecting-ip': '203.0.113.10' }));
+  assert.equal(res.status, 200);
+
+  // Past buckets must still exist because rateHit no longer executes cleanup
+  assert.equal(db.hits.get('203.0.113.10|100'), 5);
+  assert.equal(db.hits.get('203.0.113.10|101'), 12);
+});
+
+test('scheduled cleanup prunes expired buckets while preserving active and future buckets', async () => {
+  const db = fakeDb();
+  const scheduledTime = 60000000; // window 1000 exactly
+  const currentWindow = Math.floor(scheduledTime / 60000); // 1000
+
+  // Pre-seed hits across past, current, and future windows
+  db.hits.set(`192.0.2.1|${currentWindow - 2}`, 10);
+  db.hits.set(`192.0.2.1|${currentWindow - 1}`, 15);
+  db.hits.set(`192.0.2.1|${currentWindow}`, 8);
+  db.hits.set(`192.0.2.1|${currentWindow + 1}`, 3);
+
+  const scheduledHandler = createScheduledHandler(db);
+  await scheduledHandler({ scheduledTime });
+
+  // Expired buckets (window < currentWindow) must be deleted
+  assert.equal(db.hits.has(`192.0.2.1|${currentWindow - 2}`), false);
+  assert.equal(db.hits.has(`192.0.2.1|${currentWindow - 1}`), false);
+
+  // Active bucket (window === currentWindow) must survive
+  assert.equal(db.hits.get(`192.0.2.1|${currentWindow}`), 8);
+
+  // Future bucket (window > currentWindow) must survive
+  assert.equal(db.hits.get(`192.0.2.1|${currentWindow + 1}`), 3);
+});
+
+test('scheduled cleanup falls back to clock when event scheduledTime is missing or invalid', async () => {
+  const db = fakeDb();
+  const simulatedNow = 120000000; // window 2000
+  const currentWindow = Math.floor(simulatedNow / 60000); // 2000
+
+  db.hits.set(`192.0.2.2|${currentWindow - 1}`, 4);
+  db.hits.set(`192.0.2.2|${currentWindow}`, 7);
+
+  const scheduledHandler = createScheduledHandler(db, () => simulatedNow);
+  // Pass empty event without scheduledTime
+  await scheduledHandler({});
+
+  assert.equal(db.hits.has(`192.0.2.2|${currentWindow - 1}`), false);
+  assert.equal(db.hits.get(`192.0.2.2|${currentWindow}`), 7);
+});
+
+test('worker.scheduled delegates to createScheduledHandler and binds env.SIGNUPS_DB', async () => {
+  let prunedCutoff = null;
+  const mockD1 = {
+    prepare(sql) {
+      return {
+        bind(cutoff) {
+          return {
+            async run() {
+              prunedCutoff = cutoff;
+              return { success: true };
+            },
+          };
+        },
+      };
+    },
+  };
+
+  const env = { SIGNUPS_DB: mockD1 };
+  const scheduledTime = 180000000; // window 3000
+  await worker.scheduled({ scheduledTime }, env);
+
+  assert.equal(prunedCutoff, 3000);
+});
+
+test('scheduled cleanup failure does not compromise normal request handling', async () => {
+  const failingDb = fakeDb();
+  failingDb.pruneRateLimits = async () => {
+    throw new Error('D1 transient failure');
+  };
+
+  const scheduledHandler = createScheduledHandler(failingDb);
+  await assert.rejects(
+    async () => {
+      await scheduledHandler({ scheduledTime: Date.now() });
+    },
+    /D1 transient failure/,
+  );
+
+  // Normal request handling remains fully operational
+  const handle = createHandler(failingDb);
+  const res = await handle(post('/api/subscribe', { email: 'user@example.com' }));
+  assert.equal(res.status, 200);
+  assert.deepEqual(await res.json(), { ok: true });
+});
+
+test('real SQLite schema: migrations apply, window index is used, and d1Db pruning preserves active bucket', async () => {
+  const sqlite = new DatabaseSync(':memory:');
+  const __dirname = dirname(fileURLToPath(import.meta.url));
+  const m1 = readFileSync(join(__dirname, 'migrations', '0001_init.sql'), 'utf8');
+  const m2 = readFileSync(join(__dirname, 'migrations', '0002_rate_limits_window_idx.sql'), 'utf8');
+
+  sqlite.exec(m1);
+  sqlite.exec(m2);
+
+  // Verify that DELETE query uses the secondary index on window
+  const queryPlan = sqlite.prepare('EXPLAIN QUERY PLAN DELETE FROM rate_limits WHERE window < 1000').all();
+  const planDetail = queryPlan.map((step) => step.detail).join(' ');
+  assert.match(planDetail, /USING INDEX idx_rate_limits_window/);
+
+  // Wrap DatabaseSync into the D1 interface expected by d1Db
+  const d1Shim = {
+    prepare(sql) {
+      const stmt = sqlite.prepare(sql);
+      return {
+        bind(...params) {
+          return {
+            first() {
+              return stmt.get(...params) || null;
+            },
+            run() {
+              stmt.run(...params);
+              return { success: true };
+            },
+            all() {
+              return { results: stmt.all(...params) };
+            },
+          };
+        },
+      };
+    },
+  };
+
+  const db = d1Db(d1Shim);
+  const currentWindow = 500;
+
+  // Record rate limits for expired, active, and future windows
+  await db.rateHit('192.0.2.1', currentWindow - 2);
+  await db.rateHit('192.0.2.1', currentWindow - 1);
+  await db.rateHit('192.0.2.1', currentWindow);
+  await db.rateHit('192.0.2.1', currentWindow); // count = 2
+  await db.rateHit('192.0.2.1', currentWindow + 1);
+
+  // Prune with cutoff equal to currentWindow
+  await db.pruneRateLimits(currentWindow);
+
+  const remaining = sqlite.prepare('SELECT window, count FROM rate_limits ORDER BY window ASC').all();
+  assert.equal(remaining.length, 2);
+
+  // Active bucket must survive with intact count
+  assert.equal(remaining[0].window, currentWindow);
+  assert.equal(remaining[0].count, 2);
+
+  // Future bucket must survive
+  assert.equal(remaining[1].window, currentWindow + 1);
+  assert.equal(remaining[1].count, 1);
 });
