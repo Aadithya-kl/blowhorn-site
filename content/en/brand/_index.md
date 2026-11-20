@@ -14,10 +14,10 @@ sitemap:
 kits:
   full:
     url: /brand/blowhorn-brand-kit.zip
-    size: 35 MB
+    size: 44 MB
   logos:
     url: /brand/blowhorn-logo-kit.zip
-    size: 2.0 MB
+    size: 2.4 MB
 # Logo tiles. `stage` is the ground the file is drawn for: light, dark, teal or charcoal.
 lockups:
   - name: Horizontal lockup
@@ -93,6 +93,8 @@ apps:
     file: blowhorn-app-icon-dark.svg
   - name: App icon, light
     file: blowhorn-app-icon-light.svg
+  - name: App icon, square, for app directories
+    file: blowhorn-app-icon-square.svg
 mascot:
   - name: Hat, facing left
     file: locked-6/major-6-hat-left
