@@ -12,9 +12,10 @@ and it serves tools only: no prompts, resources, or sampling.
 
 Sign in with OAuth when the client can. A client that supports MCP
 OAuth 2.1 needs only the URL. Dynamic client registration and PKCE are
-on. The resource is `https://mcp.blowhorn.ai/mcp` and the authorization
-server is `https://cloud.blowhorn.ai/hydra`. A client that cannot
-finish that sign-in sends a Blowhorn API token as
+on. The resource is `https://mcp.blowhorn.ai/mcp`. The authorization
+server is the one advertised in
+`https://mcp.blowhorn.ai/.well-known/oauth-protected-resource`. A
+client that cannot finish that sign-in sends a Blowhorn API token as
 `Authorization: Bearer <token>`. Create the token in
 [Get a Blowhorn API token](#get-a-blowhorn-api-token). Put no other
 secret in a client config.

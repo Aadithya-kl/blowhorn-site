@@ -548,7 +548,7 @@ the same way:
 | setting | Blowhorn's tab |
 | --- | --- |
 | `side_tab` (the default) | an inactive tab right after the tab you are on, in your window |
-| `own_window` | the selected tab of one window of Blowhorn's own, opened without focus in Chrome's normal window state at the size of the window you used last and 56 px to its right, so it sits mostly behind yours with an edge showing. It holds its own Blowhorn tab group, collapsed or open as above. Blowhorn closes it when a run ends, unless you put a tab of your own in it or Blowhorn is waiting for you in it, and makes a new one for the next run. If you close it first, it makes a new one too |
+| `own_window` | the selected tab of one window of Blowhorn's own, opened without focus in Chrome's normal window state at the size of the window you used last and 56 px to its right, so it sits mostly behind yours with an edge showing. It holds its own Blowhorn tab group, collapsed or open as above. Blowhorn closes it when a run ends, unless you put a tab of your own in it, and makes a new one for the next run. If you close it first, it makes a new one too |
 | `split_view` | a tab in a split view beside the tab you are on, in your window, on Chrome 155 or later. Your tab stays selected and the split tab is visible, so the page reads a real size and a real screen position. On an older Chrome, or when the split cannot be made, Blowhorn works in a window of its own instead, as `own_window` above |
 
 Either way nothing takes focus, your selected tab stays selected, and focus
@@ -557,6 +557,11 @@ placed off screen or opened as a popup. On a Mac a background tab reads its
 window's outer size as 0 x 0 (a Chrome behavior), which a page can notice;
 the selected tab of its own window can read a real size. `side_tab` stays the
 default.
+
+In every setting a run's end closes Blowhorn's tab and its tab group, whether the
+run finished, failed or was stopped; it waits while you are looking at that tab,
+and never closes your own tabs or the profile's last tab (see
+[Choose where Blowhorn works in Chrome](/docs/how-to/settings/where-blowhorn-works/)).
 
 **Keep that edge showing.** On a Mac, `own_window` reads a real size only
 while part of Blowhorn's window is visible on the current Space. When the window

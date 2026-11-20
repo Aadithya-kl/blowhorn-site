@@ -578,10 +578,11 @@ authorization server, and rewrites Cloud's `401` `WWW-Authenticate` so
 `resource_metadata` points at this origin.
 
 Connect with OAuth 2.1 (dynamic client registration and PKCE), or with
-a Blowhorn API token as `Authorization: Bearer <token>`. The authorization
-server is `https://cloud.blowhorn.ai/hydra`. The resource is
-`https://mcp.blowhorn.ai/mcp`. Create a token on the Tokens page of your
-Blowhorn account; the steps are in
+a Blowhorn API token as `Authorization: Bearer <token>`. The
+authorization server is the one advertised in
+`https://mcp.blowhorn.ai/.well-known/oauth-protected-resource`. The
+resource is `https://mcp.blowhorn.ai/mcp`. Create a token on the Tokens
+page of your Blowhorn account; the steps are in
 [Get a Blowhorn API token](/docs/how-to/set-up/connect-mcp-client/#get-a-blowhorn-api-token). The
 Blowhorn desktop app has no screen for creating one.
 [Arcade](/docs/how-to/set-up/connect-mcp-client/#arcade) registers this URL
