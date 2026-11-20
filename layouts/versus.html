@@ -18,7 +18,7 @@
     {{- $platLogos := dict -}}
     {{- range $id := union ($p.network_logos | default slice) ($p.logos | default slice) -}}
       {{- with index hugo.Data.platforms $id -}}
-        {{- $platLogos = merge $platLogos (dict $id (dict "src" .logo "alt" .name)) -}}
+        {{- $platLogos = merge $platLogos (dict $id (dict "src" .logo "alt" (replaceRE ` \(.*\)$` "" .name))) -}}
       {{- else -}}
         {{- errorf "versus: %s names platform %q, which has no data/platforms/%s.yaml" $.File.Path $id $id -}}
       {{- end -}}
