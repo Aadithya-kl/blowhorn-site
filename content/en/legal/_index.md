@@ -44,7 +44,6 @@ policies:
   - title: Terms of service
     summary: The agreement between you and us for the website, the app and the extension, from early access and downloads to acceptable use.
     url: /legal/terms/
-    status: Draft, pending legal review
   - title: Chrome extension permissions
     summary: Each permission the Blowhorn extension asks for, the sites it runs on, and why.
     url: /docs/reference/extension-permissions/
