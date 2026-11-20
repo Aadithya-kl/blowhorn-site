@@ -8,7 +8,7 @@ Whitespace separates ideas. A title never touches its content, and sections neve
 
 | Token | Mobile | Desktop (>= 900px) | Use |
 |---|---|---|---|
-| `--section-y` | 80px | 136px | Section padding-block |
+| `--section-y` | 80px | 136px | Section padding-block (`.agent-section`, `.compare-section`, `.brand-section`; never plain `.section`) |
 | `--head-gap` | 40px | 56px | Section head (or bare h2) to its content, minimum |
 | `--eyebrow-gap` | 12px | 12px | Label to heading |
 | `--intro-gap` | 16px | 16px | Heading to its intro paragraph |
@@ -20,6 +20,7 @@ Whitespace separates ideas. A title never touches its content, and sections neve
 Rules:
 
 - Never let a title touch its content: heading-to-content is at least `--head-gap` (40px mobile, 56px desktop). Wrap the title and intro in `.section-head`; whatever follows gets the gap automatically.
+- Plain `.section` (home, integrations, demo, showcase) has no block padding: a `.section` that follows other content gets one `--head-gap` of top margin instead (20 Nov 2026, the padding left too much whitespace).
 - Separate sections with whitespace only (`--section-y` on both sides); no hairline divider between neighboring sections (calm refresh, 19 Nov 2026). Glass panels that are their own section float with half a section of air instead. Use background shifts only where a section is a distinct moment (CTA, the Major).
 - Keep paragraphs at or under `--text-measure` (about 60-68 characters). Section heads max out at 44rem.
 - Cards get `--card-pad` on every side and `--grid-gap` between them. Don't shrink either to fit more in; cut copy instead.
