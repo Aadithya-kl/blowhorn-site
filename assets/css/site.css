@@ -347,14 +347,10 @@ pre code { background: none; padding: 0; overflow-wrap: normal; }
   padding-inline: var(--gutter);
 }
 
-.section { padding-block: var(--space-12); }
 .section + .section { border-top: var(--stroke-hairline) solid var(--line); }
 .section-head { max-width: 40rem; }
 .section-head > * + * { margin-top: var(--space-3); }
 .section-body { margin-top: var(--space-8); }
-@media (min-width: 900px) {
-  .section { padding-block: var(--space-16); }
-}
 
 /* ---------- Buttons ---------- */
 .button {
@@ -2701,21 +2697,26 @@ body { background: var(--surface); }
   }
 }
 
-/* Sections: generous block padding, a soft divider between neighbors. */
-.section,
+/* Sections: generous block padding, a soft divider between neighbors.
+   Plain .section has no block padding (20 Nov 2026): it added too much
+   whitespace between stacked sections. */
 .compare-section,
 .brand-section,
 .agent-page .agent-section,
 .page .agent-section { padding-block: var(--section-y); margin-top: 0; }
+/* Section separation: a plain .section that follows other content gets one
+   head gap of air, so it never touches the block before it. */
+* + .section { margin-top: var(--head-gap); }
 
 /* In-page section anchors (#platforms, #how, #trust, #download, ...): html
    scroll-padding-top already clears the sticky header (--header-h is 72px). Pull back by the section's own block padding so
    the label lands just under the bar after --section-y grew. */
 section[id],
-.section[id],
 .compare-section[id] {
   scroll-margin-top: calc(0px - var(--section-y));
 }
+/* No block padding to pull back over, so the anchor lands at the section top. */
+.section[id],
 .brand-section[id] {
   scroll-margin-top: 0;
 }
