@@ -105,7 +105,8 @@ lists actions), YouTube's change is the model:
 
 The docs pages themselves arrive by the docs sync, never by hand.
 `check_theme.py` fails any sentence of site copy that still calls a listed
-platform coming soon.
+platform coming soon, and any data or front matter record, such as a compare
+row, that names the platform in one field and says "Coming soon" in another.
 
 ## Tabs shortcode
 

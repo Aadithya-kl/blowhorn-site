@@ -380,6 +380,52 @@ class PlatformSoonCopyTest(unittest.TestCase):
         self.assertEqual(len(found), 1, found)
         self.assertIn("content/en/compare/acme.md", found[0])
 
+    def test_compare_hub_row_split_across_fields_fails(self):
+        # The compare hub's Networks row before YouTube shipped: the platforms
+        # are the row's feature and the status is its Blowhorn cell.
+        self.write(
+            "content/en/compare/_index.md",
+            "---\n"
+            "title: Compare\n"
+            "rows:\n"
+            "  - feature: Instagram, TikTok, Facebook and YouTube\n"
+            '    blowhorn: { level: partial, text: "Coming soon" }\n'
+            '    schedulers: { level: yes, text: "Yes" }\n'
+            "  - feature: Posts with every laptop closed\n"
+            '    blowhorn: { level: partial, text: "As long as one computer is awake" }\n'
+            "---\n\nBody.\n",
+        )
+        found = self.check.check_platform_soon_copy(self.root)
+        self.assertEqual(len(found), 1, found)
+        self.assertIn("YouTube", found[0])
+
+    def test_faq_answer_split_from_its_question_fails(self):
+        self.write(
+            "content/en/ai/mcp.md",
+            '{"faq": [{"q": "Does it post to YouTube?", "a": "Coming soon. Today, use the CLI."}]}\n',
+        )
+        found = self.check.check_platform_soon_copy(self.root)
+        self.assertEqual(len(found), 1, found)
+        self.assertIn("content/en/ai/mcp.md", found[0])
+
+    def test_bare_soon_row_without_a_platform_passes(self):
+        self.write(
+            "content/en/compare/_index.md",
+            "---\n"
+            "intro: Works on LinkedIn, X and YouTube.\n"
+            "rows:\n"
+            "  - feature: Team invites\n"
+            '    blowhorn: { level: partial, text: "Coming soon" }\n'
+            "  - feature: LinkedIn, X and YouTube\n"
+            '    blowhorn: { level: yes, text: "Yes" }\n'
+            "---\n",
+        )
+        self.write(
+            "content/en/ai/mcp.md",
+            '{"faq": [{"q": "Can I npx it?", "a": "Coming soon. Today, use the CLI on LinkedIn."}]}\n',
+        )
+        self.assertEqual(self.check.check_platform_soon_copy(self.root), [])
+
     def test_data_faq_fails(self):
         faq = self.root / "data/solutions.json"
         faq.write_text(

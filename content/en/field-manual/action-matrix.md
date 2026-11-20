@@ -7,7 +7,7 @@ description: Every action Blowhorn takes on each platform, and whether that plat
 lead: "One table, every platform. What Blowhorn can do, and how each platform's own rules grade it. Read the notes before you charge."
 layout: field-manual
 weight: 1
-checked: 13 October 2026
+checked: 20 November 2026
 lastmod: 2026-11-20
 # Supported actions come from the product's capability list and the public
 # Platforms reference (/docs/reference/platforms/). Each risk grade cites the
