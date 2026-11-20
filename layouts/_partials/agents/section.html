@@ -1,0 +1,154 @@
+{{- /* One section of an agent page (layout agent.html). Context: dict with
+  page (the page), name (section id), who, and platformsDocs.
+  Sections with no data are skipped so a page can omit wire, commands, FAQ
+  or the platforms table without a blank heading. */ -}}
+{{- $page := .page -}}
+{{- $p := $page.Params -}}
+{{- $who := .who -}}
+{{- $platformsDocs := .platformsDocs -}}
+{{- if eq .name "steps" }}
+        <section class="agent-section" aria-labelledby="how-title">
+          <div class="section-head">
+            <h2 id="how-title" class="h2">{{ $p.steps_title | default "How it works" }}</h2>
+          </div>
+          <ol class="agent-steps grid grid-3">
+            {{- /* steps: optional per-page override of the three default steps. */}}
+            {{- with $p.steps }}
+            {{- range $i, $st := . }}
+            <li class="card {{ partial "card-variant.html" (dict "i" $i "grid" "grid-3" "n" (len $p.steps)) }}"><span class="agent-step-n">{{ add $i 1 }}</span><h3 class="h3">{{ $st.t }}</h3><p>{{ $st.b }}</p></li>
+            {{- end }}
+            {{- else }}
+            <li class="card card-field"><span class="agent-step-n">1</span><h3 class="h3">Install Blowhorn</h3><p>Blowhorn for your computer and the Blowhorn browser extension. Your posts go out from your own signed-in browser.</p></li>
+            <li class="card card-plain"><span class="agent-step-n">2</span><h3 class="h3">{{ $p.wire_title }}</h3><p>{{ $p.hook }}. A few lines and {{ $p.tool }} knows the commands.</p></li>
+            <li class="card card-stamp"><span class="agent-step-n">3</span><h3 class="h3">Say what you want</h3><p>{{ $p.tool }} turns it into blowhorn commands. You approve what publishes.</p></li>
+            {{- end }}
+          </ol>
+        </section>
+{{- else if and (eq .name "wire") $p.wire_code }}
+        <section class="agent-section agent-wire" aria-labelledby="setup-title">
+          <div class="section-head">
+            <h2 id="setup-title" class="h2">{{ $p.wire_title }}</h2>
+            <p class="muted">{{ $p.wire_body }}</p>
+          </div>
+          <div class="grid {{ if $p.extra_file }}grid-2{{ end }}">
+            {{ partial "code-card.html" (dict "code" $p.wire_code "title" $p.wire_file "lang" $p.wire_lang "prompt" (eq $p.wire_lang "bash")) }}
+            {{- with $p.extra_file }}
+            {{ partial "code-card.html" (dict "code" $p.extra_code "title" . "lang" $p.extra_lang "prompt" (eq $p.extra_lang "bash")) }}
+            {{- end }}
+          </div>
+          {{- with $p.wire_note }}
+          <p class="muted">{{ . | markdownify }}</p>
+          {{- end }}
+        </section>
+{{- else if and (eq .name "prompts") $p.prompts }}
+        <section class="agent-section" aria-labelledby="prompts-title">
+          <div class="section-head">
+            <h2 id="prompts-title" class="h2">Try saying</h2>
+          </div>
+          <ul class="agent-prompts">
+            {{- range $q := $p.prompts }}
+            <li class="bubble-row">
+              <span class="bubble-avatar" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" focusable="false"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span>
+              {{ partial "bubble.html" (dict "text" (printf "\"%s\"" $q) "lead" "You say: " "variant" "mint" "tail" "left") }}
+            </li>
+            {{- end }}
+          </ul>
+        </section>
+{{- else if and (eq .name "commands") $p.commands }}
+        <section class="agent-section" aria-labelledby="commands-title">
+          <div class="section-head">
+            <h2 id="commands-title" class="h2">{{ if $p.commands_title }}{{ $p.commands_title }}{{ else if eq $page.File.ContentBaseName "cli" }}A few commands{{ else }}What {{ $p.tool }} runs{{ end }}</h2>
+          </div>
+          {{ partial "code-card.html" (dict "code" $p.commands "title" ($p.commands_file | default "terminal") "lang" ($p.commands_lang | default "bash") "prompt" (ne $p.commands_prompt false)) }}
+        </section>
+{{- else if and (eq .name "uses") $p.uses }}
+        <section class="agent-section" aria-labelledby="uses-title">
+          <div class="section-head">
+            <h2 id="uses-title" class="h2">{{ $p.uses_title | default "Where it pays off" }}</h2>
+          </div>
+          <div class="grid grid-3">
+            {{- range $i, $u := $p.uses }}
+            <div class="card {{ partial "card-variant.html" (dict "i" $i "grid" "grid-3" "n" (len $p.uses)) }}"><h3 class="h3">{{ .t }}</h3><p>{{ .b }}</p></div>
+            {{- end }}
+          </div>
+        </section>
+{{- else if and (eq .name "note") $p.note }}
+        <section class="agent-section" aria-labelledby="note-title">
+          <div class="section-head">
+            <h2 id="note-title" class="h2">{{ $p.note.t }}</h2>
+            <p class="muted">{{ $p.note.b | markdownify }}</p>
+          </div>
+        </section>
+{{- else if and (eq .name "related") $p.related }}
+        <section class="agent-section" aria-labelledby="related-title">
+          <div class="section-head">
+            <h2 id="related-title" class="h2">{{ $p.related.title }}</h2>
+            {{- with $p.related.body }}
+            <p class="muted">{{ . | markdownify }}</p>
+            {{- end }}
+          </div>
+          {{ partial "agents/actions.html" $p.related.actions }}
+        </section>
+{{- else if and (eq .name "major") $p.major }}
+        {{ partial "major-says.html" (dict "line" $p.major) }}
+{{- else if and (eq .name "faq") $p.faq }}
+        <section class="agent-section" aria-labelledby="faq-title">
+          <div class="section-head">
+            <h2 id="faq-title" class="h2">Frequently Asked Questions</h2>
+          </div>
+          <div class="agent-faq">
+            {{- range $i, $f := $p.faq }}
+            <details class="card {{ partial "card-variant.html" (dict "i" $i "grid" "stack" "n" (len $p.faq) "variants" (slice "card-field" "card-plain")) }}"><summary class="ui">{{ .q }}</summary><p>{{ .a | markdownify }}</p></details>
+            {{- end }}
+          </div>
+        </section>
+{{- else if and (eq .name "platforms") (ne $p.show_platforms false) }}
+        {{- /* Supported actions per platform: the same data/platforms/*.yaml the
+          platform docs pages render, so the two always agree. */}}
+        <section class="agent-section agent-platforms" aria-labelledby="platforms-title">
+          <div class="section-head">
+            <h2 id="platforms-title" class="h2">What {{ $who }} can do on each platform</h2>
+            <p class="muted">Every action below is a blowhorn command {{ $who }} can run for you. Each platform's <a href="{{ with $platformsDocs }}{{ .RelPermalink }}{{ end }}">docs page</a> has the details.</p>
+          </div>
+          <div class="agent-actions-wrap card-plain">
+          <table class="agent-actions-table">
+            <thead><tr><th scope="col">Platform</th><th scope="col">Action</th><th scope="col">How it behaves</th><th scope="col">Limits</th></tr></thead>
+            <tbody>
+          {{- range sort hugo.Data.platforms "weight" }}
+            {{- $pl := . }}
+            {{- range $i, $a := .actions }}
+              {{- $act := partial "action-resolve.html" $a -}}
+              <tr{{ if eq $i 0 }} class="agent-actions-first"{{ end }}>
+                {{- if eq $i 0 }}
+                <th scope="rowgroup" rowspan="{{ len $pl.actions }}" class="agent-actions-platform"><a href="{{ $pl.docs | relURL }}"><span class="logo-tile"><img src="{{ $pl.logo | relURL }}" alt="" width="28" height="28"></span><span>{{ $pl.name }}</span></a></th>
+                {{- end }}
+                <td class="agent-actions-name"><a href="{{ $pl.docs | relURL }}#{{ $act.slug }}">{{ $act.name }}</a></td>
+                <td>{{ $act.description }}</td>
+                <td class="muted">{{ with $act.limits }}{{ . }}{{ else }}None{{ end }}</td>
+              </tr>
+            {{- end }}
+          {{- end }}
+            </tbody>
+          </table>
+          </div>
+        </section>
+{{- else if eq .name "cta" }}
+        <section class="agent-section agent-cta glass" aria-labelledby="cta-title">
+          <h2 id="cta-title" class="h2">{{ $p.cta_title | default "One message out, many ears in" }}</h2>
+          {{- if $p.cta_body }}
+          <p class="muted">{{ $p.cta_body | markdownify }}</p>
+          {{- else if not $p.cta_actions }}
+          <p class="muted">Want the details before {{ $who }} does the talking? The docs cover setup, every command, and each platform.</p>
+          {{- end }}
+          {{- with $p.cta_actions }}
+          {{ partial "agents/actions.html" . }}
+          {{- else }}
+          {{ partial "agents/actions.html" (slice (dict "label" "Read the docs" "href" "/docs/" "kind" "secondary") (dict "label" "See every platform" "href" "/docs/reference/platforms/" "kind" "secondary")) }}
+          {{- end }}
+        </section>
+{{- else if eq .name "others" }}
+        <section class="agent-section" aria-labelledby="more-title">
+          <div class="section-head"><h2 id="more-title" class="h2">{{ $p.more_title | default "More agents" }}</h2></div>
+          {{ partial "agents/others.html" $page }}
+        </section>
+{{- end -}}
