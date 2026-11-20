@@ -1,9 +1,9 @@
-{{- /* One footer for every page, reduced to three rows: the tagline with the
-  social links and the newsletter, one link row (Docs, Pricing, Brand, Trust
-  Center and Status), and a legal bar with the copyright and a short
-  trademark note. The header carries every other destination, so the footer
-  repeats none of them. The 404 page keeps only the legal bar, with the
-  Status link. Cookie preferences live on the Trust Center page. */ -}}
+{{- /* One footer for every page, reduced to three rows: the logo (linked
+  home), tagline and social links beside the newsletter, one link row (Docs,
+  Pricing, Brand, Trust Center and Status), and a legal bar with the copyright
+  and a short trademark note. The header carries every other destination, so
+  the footer repeats none of them. The 404 page keeps only the legal bar, with
+  the Status link. Cookie preferences live on the Trust Center page. */ -}}
 {{- $status := `<a class="status-link" href="https://layer5.statuspage.io" target="_blank" rel="noreferrer">Status <span class="pulse-icon" aria-hidden="true"></span></a>` -}}
 <footer class="site-footer">
       <div class="wrap">
@@ -11,6 +11,10 @@
         <div class="footer-panel glass">
           <div class="footer-top">
             <div class="footer-brand">
+              <a class="footer-logo" href="{{ "" | relURL }}" aria-label="Blowhorn home">
+                <img class="logo-on-light" src="{{ "assets/brand/logo/blowhorn-lockup-horizontal.svg" | relURL }}" alt="Blowhorn" width="128" height="32">
+                <img class="logo-on-dark" src="{{ "assets/brand/logo/blowhorn-lockup-horizontal-on-dark.svg" | relURL }}" alt="" width="128" height="32">
+              </a>
               <p class="footer-tagline">Your voice, at full volume.</p>
               {{- with site.Data.social_links.links }}
               <nav class="footer-social" aria-label="Blowhorn on social media">
