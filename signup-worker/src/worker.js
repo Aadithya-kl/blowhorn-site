@@ -55,7 +55,6 @@ export function d1Db(db) {
         .run();
     },
     async rateHit(ip, window) {
-      await db.prepare('DELETE FROM rate_limits WHERE window < ?1').bind(window).run();
       const res = await db
         .prepare(
           'INSERT INTO rate_limits (ip, window, count) VALUES (?1, ?2, 1) ON CONFLICT (ip, window) DO UPDATE SET count = count + 1 RETURNING count',
@@ -63,6 +62,9 @@ export function d1Db(db) {
         .bind(ip, window)
         .all();
       return res.results && res.results[0] ? res.results[0].count : 1;
+    },
+    async pruneRateLimits(cutoff) {
+      await db.prepare('DELETE FROM rate_limits WHERE window < ?1').bind(cutoff).run();
     },
     async getByToken(token) {
       return db.prepare('SELECT * FROM signups WHERE token = ?1').bind(token).first();
@@ -373,8 +375,21 @@ export function createHandler(db) {
   };
 }
 
+export function createScheduledHandler(db, clock = () => Date.now()) {
+  return async function handleScheduled(event) {
+    const timestamp = typeof event?.scheduledTime === 'number' && event.scheduledTime > 0
+      ? event.scheduledTime
+      : clock();
+    const currentWindow = Math.floor(timestamp / 60000);
+    await db.pruneRateLimits(currentWindow);
+  };
+}
+
 export default {
   fetch(request, env) {
     return createHandler(d1Db(env.SIGNUPS_DB))(request);
+  },
+  scheduled(event, env) {
+    return createScheduledHandler(d1Db(env.SIGNUPS_DB))(event);
   },
 };
