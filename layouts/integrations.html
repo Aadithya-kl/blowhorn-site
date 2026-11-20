@@ -82,6 +82,40 @@
         </section>
         {{- end }}
         </div>
+        {{- with site.Data.integrations.assistants }}
+        <section class="section" aria-labelledby="cat-{{ .id }}">
+          <div class="section-head">
+            <h2 id="cat-{{ .id }}" class="h2">{{ .name }}</h2>
+            <p class="muted">{{ .summary }}</p>
+          </div>
+          {{- $deal := partial "card-deal.html" (dict "n" (len .items) "grid" "grid-3") }}
+          <ul class="grid grid-3 section-body" data-card-deal="{{ delimit $deal " " }}">
+            {{- range $i, $item := .items }}
+            <li class="card integration-card {{ index $deal $i }}">
+              <a class="integration-card-main" href="{{ $item.href | relURL }}">
+                {{- with $item.logo }}{{ with resources.Get (printf "agents/%s.svg" .) }}
+                <span class="logo-tile"><img src="{{ .RelPermalink }}" alt="" width="28" height="28"></span>
+                {{- end }}{{ end }}
+                <h3 class="h3">{{ $item.name }}</h3>
+                <p>{{ $item.summary }}</p>
+              </a>
+              {{- with $item.docs }}
+              {{- $raw := . -}}
+              {{- $frag := "" -}}
+              {{- if in $raw "#" -}}
+                {{- $parts := split $raw "#" -}}
+                {{- $raw = index $parts 0 -}}
+                {{- $frag = printf "#%s" (index $parts 1) -}}
+              {{- end }}
+              <ul class="integration-actions">
+                <li><a href="{{ $raw | relURL }}{{ $frag }}">{{ $item.docsLabel | default "Read the setup guide" }}</a></li>
+              </ul>
+              {{- end }}
+            </li>
+            {{- end }}
+          </ul>
+        </section>
+        {{- end }}
       </div>
     </main>
 {{ end }}

@@ -33,7 +33,7 @@
   "extra_file": ".cursor/mcp.json",
   "extra_lang": "json",
   "extra_code": "{\n  \"mcpServers\": {\n    \"blowhorn\": {\n      \"command\": \"/Users/you/.local/bin/blowhorn-mcp\"\n    }\n  }\n}",
-  "wire_note": "Claude Desktop takes the same command in its config file. New to this? [Connect an assistant and send your first post](/docs/tutorials/first-mcp-connection/) walks through it. [Connect an AI assistant over MCP](/docs/how-to/set-up/connect-mcp-client/) has the steps for every client, including [Claude Code](/docs/how-to/set-up/connect-mcp-client/#claude-code), [Claude Desktop](/docs/how-to/set-up/connect-mcp-client/#claude-desktop), [Cursor](/docs/how-to/set-up/connect-mcp-client/#cursor) and [VS Code](/docs/how-to/set-up/connect-mcp-client/#vs-code-with-github-copilot). [Source and listings](https://github.com/blowhorn-ai/blowhorn-mcp): the launcher, plugin manifests and listing files live in the public blowhorn-mcp repo. Risky tools, the ones that uninstall Blowhorn, rebuild or reinstall the app, remove or take over a background service, or sign you out, are [hidden by default](/docs/how-to/set-up/connect-mcp-client/#hidden-tools); that section shows how to serve one by name.",
+  "wire_note": "Claude Desktop takes the same command in its config file. New to this? [Connect an assistant and send your first post](/docs/tutorials/first-mcp-connection/) walks through it. [Connect an AI assistant over MCP](/docs/how-to/set-up/connect-mcp-client/) has the steps for every client, including [Claude Code](/docs/how-to/set-up/connect-mcp-client/#claude-code), [Claude Desktop](/docs/how-to/set-up/connect-mcp-client/#claude-desktop), [Cursor](/docs/how-to/set-up/connect-mcp-client/#cursor), [VS Code](/docs/how-to/set-up/connect-mcp-client/#vs-code-with-github-copilot), [Grok](/docs/how-to/set-up/connect-mcp-client/#grok) and [Grok Bot](/docs/how-to/set-up/connect-mcp-client/#grok-bot). Grok Bot also has a [product page](/agents/grok-bot/). [Source and listings](https://github.com/blowhorn-ai/blowhorn-mcp): the launcher, plugin manifests and listing files live in the public blowhorn-mcp repo. Risky tools, the ones that uninstall Blowhorn, rebuild or reinstall the app, remove or take over a background service, or sign you out, are [hidden by default](/docs/how-to/set-up/connect-mcp-client/#hidden-tools); that section shows how to serve one by name.",
   "prompts": [
     "Draft a release post from my personal profile for Tuesday at 9:00 and queue it. Dry run first, show me what would be queued, and wait for my go before you confirm.",
     "Someone asked whether the new release works offline. Draft a reply from my company profile that answers that one question. Show me the dry run and wait for my go.",
@@ -62,7 +62,7 @@
   "faq": [
     {
       "q": "Does it run in the cloud?",
-      "a": "No. It runs on your own computer, through the blowhorn-mcp command the app writes. A hosted server is coming soon; it is design only today."
+      "a": "The local server runs on your own computer, through the blowhorn-mcp command the app writes. Grok Bot connects to the hosted server at https://mcp.blowhorn.ai/mcp as a custom connector, and signs in with OAuth. [Set up Grok Bot](/docs/how-to/set-up/connect-mcp-client/#grok-bot)."
     },
     {
       "q": "Can I npx it?",
@@ -86,7 +86,7 @@
     },
     {
       "q": "Which assistants can use it?",
-      "a": "Any MCP client that can start a local command: Claude Code, Claude Desktop, Cursor and VS Code, for example. [Connect an AI assistant over MCP](/docs/how-to/set-up/connect-mcp-client/) has the steps for each, and the [first-connection tutorial](/docs/tutorials/first-mcp-connection/) takes you through your first post."
+      "a": "Any MCP client that can start a local command: Claude Code, Claude Desktop, Cursor and VS Code, for example. [Connect an AI assistant over MCP](/docs/how-to/set-up/connect-mcp-client/) has the steps for each, and the [first-connection tutorial](/docs/tutorials/first-mcp-connection/) takes you through your first post. Grok Bot connects to the [hosted server](/docs/how-to/set-up/connect-mcp-client/#grok-bot)."
     }
   ],
   "cta_title": "Rehearse first, then give the order",
@@ -95,7 +95,7 @@
   "status": "Available now",
   "label": "AI native",
   "layout": "agent",
-  "lastmod": "2026-10-30",
+  "lastmod": "2026-11-20",
   "sitemap": {
     "changefreq": "monthly",
     "priority": 0.5

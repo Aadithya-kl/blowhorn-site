@@ -46,9 +46,60 @@
       "minItems": 1,
       "uniqueItems": true,
       "items": { "$ref": "#/definitions/platform" }
-    }
+    },
+    "assistants": { "$ref": "#/definitions/assistants" }
   },
   "definitions": {
+    "assistants": {
+      "description": "Optional AI assistant entries on /integrations/, distinct from social platforms. Copy is hyphenated, never an em dash.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "summary", "items"],
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "name": { "$ref": "#/definitions/copy" },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "not": { "pattern": "\u2014" }
+        },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/assistant" }
+        }
+      }
+    },
+    "assistant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "summary", "href"],
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "name": { "$ref": "#/definitions/copy" },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "not": { "pattern": "\u2014" }
+        },
+        "href": {
+          "type": "string",
+          "pattern": "^/[-a-z0-9/]+/$"
+        },
+        "docs": {
+          "type": "string",
+          "pattern": "^/docs/.+"
+        },
+        "docsLabel": { "$ref": "#/definitions/copy" },
+        "logo": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "maxLength": 40
+        }
+      }
+    },
     "clipFiles": {
       "description": "One theme's copy of the clip, paths under static/.",
       "type": "object",
