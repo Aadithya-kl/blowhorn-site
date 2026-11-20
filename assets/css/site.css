@@ -1457,8 +1457,7 @@ html[data-hero-art="fan"] .platforms-fan { display: none; }
   align-items: center;
   gap: var(--space-2) var(--space-6);
 }
-.footer-links a,
-.footer-links .footer-consent {
+.footer-links a {
   font-size: 14px;
   line-height: 20px;
   font-weight: 500;
@@ -1466,8 +1465,7 @@ html[data-hero-art="fan"] .platforms-fan { display: none; }
   text-decoration: none;
   white-space: nowrap;
 }
-.footer-links a:hover,
-.footer-links .footer-consent:hover { color: var(--link); }
+.footer-links a:hover { color: var(--link); }
 .footer-bottom {
   margin-top: var(--space-6);
   padding-inline: var(--space-2);
@@ -3857,16 +3855,6 @@ a.docs-card.platform-card[href$="/facebook/"]::before { background-image: url(".
 }
 .consent-close:hover { background: var(--surface-raised); color: var(--ink); }
 .consent-close svg { fill: none; stroke: currentColor; stroke-width: var(--stroke-icon); stroke-linecap: round; }
-.footer-consent {
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  color: inherit;
-  text-decoration: none;
-  cursor: pointer;
-}
-.footer-consent:hover { color: var(--link); }
 @media (prefers-reduced-motion: no-preference) {
   .consent:not([hidden]) { animation: consent-in 200ms ease-out; }
   @keyframes consent-in {

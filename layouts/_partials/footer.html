@@ -1,11 +1,10 @@
 {{- /* One footer for every page, reduced to three rows: the tagline with the
   social links and the newsletter, one link row (Docs, Pricing, Brand, Trust
-  Center, Status and the cookie preferences), and a legal bar with the
-  copyright and a short trademark note. The header carries every other
-  destination, so the footer repeats none of them. The 404 page keeps only
-  the legal bar, with the Status link and the cookie preferences. */ -}}
+  Center and Status), and a legal bar with the copyright and a short
+  trademark note. The header carries every other destination, so the footer
+  repeats none of them. The 404 page keeps only the legal bar, with the
+  Status link. Cookie preferences live on the Trust Center page. */ -}}
 {{- $status := `<a class="status-link" href="https://layer5.statuspage.io" target="_blank" rel="noreferrer">Status <span class="pulse-icon" aria-hidden="true"></span></a>` -}}
-{{- $consent := partial "analytics-enabled.html" . -}}
 <footer class="site-footer">
       <div class="wrap">
         {{- if ne .Kind "404" }}
@@ -34,9 +33,6 @@
               <li><a href="{{ (site.GetPage "/brand").RelPermalink }}">Brand</a></li>
               <li><a href="{{ "trust-center/" | relURL }}">Trust Center</a></li>
               <li>{{ $status | safeHTML }}</li>
-              {{- if $consent }}
-              <li><button type="button" class="footer-consent" data-consent-open aria-controls="consent">Cookie preferences</button></li>
-              {{- end }}
             </ul>
           </nav>
         </div>
@@ -47,9 +43,6 @@
           <span>All product names are trademarks of their respective owners. Blowhorn is not affiliated with or endorsed by them.</span>
           {{- else }}
           {{ $status | safeHTML }}
-          {{- if $consent }}
-          <button type="button" class="footer-consent" data-consent-open aria-controls="consent">Cookie preferences</button>
-          {{- end }}
           {{- end }}
         </div>
       </div>
