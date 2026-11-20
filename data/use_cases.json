@@ -42,7 +42,7 @@
         },
         {
           "t": "One complete picture",
-          "b": "Run history and analytics from every computer in one place. Analytics cover LinkedIn, X and Bluesky."
+          "b": "Run history and analytics from every computer in one place. Analytics cover LinkedIn, X, Bluesky and YouTube."
         }
       ],
       "prompt": "Queue the launch post for Tuesday 9:00, have every profile amplify it, then --dry-run the whole wave.",
@@ -54,7 +54,7 @@
         },
         {
           "q": "How does it post?",
-          "a": "LinkedIn, X, Reddit and Hacker News: Blowhorn types in your own browser, signed in as you. Slack, Bluesky and GitHub go through their APIs. The desktop app and the Python CLI share the same queue."
+          "a": "LinkedIn, X, Reddit, Hacker News and YouTube: Blowhorn types in your own browser, signed in as you. Slack, Bluesky and GitHub go through their APIs. The desktop app and the Python CLI share the same queue."
         },
         {
           "q": "Will the same post go out twice?",

@@ -336,5 +336,73 @@ class PlatformLabelGuardTest(unittest.TestCase):
         self.assertEqual(self.problems(), [])
 
 
+class PlatformSoonCopyTest(unittest.TestCase):
+    """The site's own copy must never call a listed platform coming soon,
+    while "coming soon" copy that names no platform stays allowed and the
+    synced docs are left to the built-page guard."""
+
+    def setUp(self):
+        import shutil
+
+        import check_theme as check
+
+        self.check = check
+        self.tmp = Path(tempfile.mkdtemp())
+        self.root = self.tmp / "repo"
+        shutil.copytree(ROOT / "data", self.root / "data")
+        (self.root / "content/en/compare").mkdir(parents=True)
+        (self.root / "content/en/docs").mkdir(parents=True)
+
+    def tearDown(self):
+        import shutil
+
+        shutil.rmtree(self.tmp)
+
+    def write(self, rel, text):
+        path = self.root / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    def test_checked_in_copy_passes(self):
+        self.assertEqual(self.check.check_platform_soon_copy(ROOT), [])
+
+    def test_names_come_from_yaml_and_catalog(self):
+        names = self.check.platform_names(ROOT)
+        for name in ("YouTube", "Instagram", "X (Twitter)", "X", "Hacker News"):
+            self.assertIn(name, names)
+
+    def test_compare_networks_row_fails(self):
+        self.write(
+            "content/en/compare/acme.md",
+            '{"rows":[{"f":"Networks","b":"LinkedIn, X. Instagram and YouTube coming soon"}]}\n',
+        )
+        found = self.check.check_platform_soon_copy(self.root)
+        self.assertEqual(len(found), 1, found)
+        self.assertIn("content/en/compare/acme.md", found[0])
+
+    def test_data_faq_fails(self):
+        faq = self.root / "data/solutions.json"
+        faq.write_text(
+            faq.read_text(encoding="utf-8").replace(
+                '"solutions"', '"note": "TikTok is Coming soon.", "solutions"', 1
+            ),
+            encoding="utf-8",
+        )
+        found = self.check.check_platform_soon_copy(self.root)
+        self.assertTrue(any("data/solutions.json" in p for p in found), found)
+
+    def test_soon_copy_without_a_platform_passes(self):
+        self.write(
+            "content/en/compare/acme.md",
+            '{"rows":[{"b":"Sound wave from every profile. Team invites coming soon"}]}\n',
+        )
+        self.write("content/en/download.md", "Blowhorn for Windows, coming soon.\n")
+        self.assertEqual(self.check.check_platform_soon_copy(self.root), [])
+
+    def test_synced_docs_are_not_scanned(self):
+        self.write("content/en/docs/reference/platforms/tiktok.md", "TikTok is coming soon.\n")
+        self.assertEqual(self.check.check_platform_soon_copy(self.root), [])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -5,7 +5,7 @@
   "description": "Waalaxy makes LinkedIn and email prospecting approachable for small teams, fully in the cloud. Blowhorn keeps actions in your own browser and adds publishing and amplification across many networks.",
   "layout": "versus",
   "weight": 23,
-  "lastmod": "2026-10-12",
+  "lastmod": "2026-11-20",
   "competitor": "Waalaxy",
   "mark": "Wx",
   "site_url": "https://www.waalaxy.com/",
@@ -19,7 +19,7 @@
   "us": [
     "You want careful LinkedIn hygiene, not volume prospecting",
     "No vendor server should log in as you; Blowhorn acts from your own signed-in browser",
-    "You also speak on X, Reddit, Hacker News, GitHub, Bluesky and Slack, and want your people amplifying"
+    "You also speak on X, Reddit, Hacker News, GitHub, Bluesky, Slack and YouTube, and want your people amplifying"
   ],
   "price_them": "Pro €19, Advanced €49, Business €69 per user per month",
   "price_src": "https://www.waalaxy.com/pricing",
@@ -32,7 +32,7 @@
     {
       "f": "Where it acts",
       "t": "Waalaxy's cloud",
-      "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit and Hacker News; the platform's API for GitHub, Bluesky and Slack"
+      "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit, Hacker News and YouTube; the platform's API for GitHub, Bluesky and Slack"
     },
     {
       "f": "LinkedIn outreach",
@@ -42,7 +42,7 @@
     {
       "f": "Networks",
       "t": "LinkedIn (plus email)",
-      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack. Instagram, TikTok, Facebook and YouTube coming soon"
+      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube"
     },
     {
       "f": "Amplify one post",

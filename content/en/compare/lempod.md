@@ -5,7 +5,7 @@
   "description": "Lempod runs LinkedIn engagement pods where members automatically like and comment on each other's posts, with AI-generated comment options. Blowhorn takes a different path: people who know you, in your own words.",
   "layout": "versus",
   "weight": 62,
-  "lastmod": "2026-10-12",
+  "lastmod": "2026-11-20",
   "competitor": "Lempod",
   "mark": "Lp",
   "site_url": "https://lempod.com/",
@@ -19,7 +19,7 @@
   "us": [
     "You want people who actually know you to show up, not a reciprocal exchange with strangers",
     "You want to write your own words, not AI-generated comments",
-    "You also speak on X, Reddit, Hacker News, GitHub, Bluesky and Slack"
+    "You also speak on X, Reddit, Hacker News, GitHub, Bluesky, Slack and YouTube"
   ],
   "price_them": "Paid plans; see Lempod's pricing page",
   "price_src": "https://lempod.com/",
@@ -42,7 +42,7 @@
     {
       "f": "Networks",
       "t": "LinkedIn",
-      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack. Instagram, TikTok, Facebook and YouTube coming soon"
+      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube"
     },
     {
       "f": "Bought engagement",

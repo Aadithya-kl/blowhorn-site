@@ -5,7 +5,7 @@
   "description": "mokumokuren is a thoughtful local tool where you send the final post yourself, across X, Bluesky, Threads, mixi2 and Substack. Blowhorn shares the 'your computer, your sessions' belief and adds LinkedIn, Reddit, Hacker News, GitHub, Slack, scheduling and a fleet.",
   "layout": "versus",
   "weight": 40,
-  "lastmod": "2026-10-13",
+  "lastmod": "2026-11-20",
   "competitor": "mokumokuren",
   "mark": "Mk",
   "site_url": "https://docs-mokumokuren.imakita3gyo.com/en/",
@@ -32,7 +32,7 @@
     {
       "f": "Networks",
       "t": "X, Bluesky, Threads, mixi2, Substack",
-      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack. Instagram, TikTok, Facebook and YouTube coming soon"
+      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube"
     },
     {
       "f": "Scheduling",

@@ -23,9 +23,13 @@ matching hash, so JS enhancement cannot leave all four panels stacked.
 No platform-availability "Coming soon" label may return: the catalog, the
 action matrix, the docs platform pages and the docs all-actions table are
 scanned for it (check_platform_labels), and the showcase page's "Where it
-works" section is scanned too. Other "coming soon" copy stays out of scope:
-team invites, the Windows waitlist and /coming-soon/thanks/, the REST API,
-Risk Profile, and compare pages about a competitor.
+works" section is scanned too. The site's own copy is scanned at the source
+as well (check_platform_soon_copy): no sentence in content/en/ outside the
+synced docs, or in data/, may name a platform data/integrations.json lists
+and call it coming soon, so a compare page's Networks row or an FAQ answer
+cannot keep one after the platform ships. Other "coming soon" copy stays out
+of scope: team invites, the Windows waitlist and /coming-soon/thanks/, the
+REST API and Risk Profile, which name no platform.
 
 Usage: check_theme.py BUILD_DIR
 """
@@ -277,6 +281,61 @@ def check_platform_labels(build_dir: Path, root: Path) -> list[str]:
     return problems
 
 
+# One sentence of copy: JSON strings end at a quote, Markdown at a line
+# break, prose at a full stop.
+SENTENCE_SPLIT_RE = re.compile(r'(?<=[.!?])\s+|["\n]')
+
+
+def platform_names(root: Path) -> list[str]:
+    """Every name a listed platform goes by in copy: its YAML or catalog
+    name, and that name without a parenthetical ("X (Twitter)" is also X)."""
+    data = json.loads((root / "data/integrations.json").read_text(encoding="utf-8"))
+    names: set[str] = set()
+    for item in data["platforms"]:
+        name = item.get("name")
+        yaml_path = root / "data" / "platforms" / f"{item['id']}.yaml"
+        if yaml_path.is_file():
+            for line in yaml_path.read_text(encoding="utf-8").splitlines():
+                if line.startswith("name:"):
+                    name = line.split(":", 1)[1].strip().strip("\"'")
+                    break
+        if not name:
+            continue
+        names.add(name)
+        names.add(re.sub(r"\s*\(.*?\)", "", name).strip())
+    return sorted(names)
+
+
+def check_platform_soon_copy(root: Path) -> list[str]:
+    """Fail a sentence of site copy that names a listed platform and calls
+    it coming soon. Scans content/en/ (the synced docs are the product's
+    and are guarded on the built pages by check_platform_labels) and every
+    JSON and YAML file under data/."""
+    names = platform_names(root)
+    name_res = [re.compile(rf"(?<![\w-]){re.escape(n)}(?![\w-])") for n in names]
+    content = root / "content" / "en"
+    docs = content / "docs"
+    files = [
+        path
+        for path in sorted(content.rglob("*.md"))
+        if docs not in path.parents
+    ]
+    data = root / "data"
+    files += sorted(data.rglob("*.json")) + sorted(data.rglob("*.yaml"))
+    problems: list[str] = []
+    for path in files:
+        text = path.read_text(encoding="utf-8")
+        for sentence in SENTENCE_SPLIT_RE.split(text):
+            if not PLATFORM_LABEL_RE.search(sentence):
+                continue
+            if any(rx.search(sentence) for rx in name_res):
+                rel = path.relative_to(root)
+                problems.append(
+                    f"{rel} calls a listed platform coming soon: {sentence.strip()[:160]!r}"
+                )
+    return problems
+
+
 def main(root: Path) -> int:
     problems = []
     want_theme = expected_home_theme()
@@ -352,6 +411,7 @@ def main(root: Path) -> int:
         problems.extend(platforms_default_problems())
 
     problems.extend(check_platform_labels(root, ROOT))
+    problems.extend(check_platform_soon_copy(ROOT))
 
     for item in problems:
         print(f"theme: {item}", file=sys.stderr)

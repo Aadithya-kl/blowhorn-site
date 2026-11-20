@@ -5,7 +5,7 @@
   "description": "Podawaa is a LinkedIn engagement exchange: members like and comment on each other's posts, with AI comments and paid private options. Blowhorn sells no engagement and focuses on real people who know you.",
   "layout": "versus",
   "weight": 63,
-  "lastmod": "2026-10-12",
+  "lastmod": "2026-11-20",
   "competitor": "Podawaa",
   "mark": "Pw",
   "site_url": "https://www.podawaa.com/",
@@ -19,7 +19,7 @@
   "us": [
     "You want people who actually know you to show up, not a reciprocal exchange with strangers",
     "You want to write your own words, not AI-generated comments",
-    "You also speak on X, Reddit, Hacker News, GitHub, Bluesky and Slack"
+    "You also speak on X, Reddit, Hacker News, GitHub, Bluesky, Slack and YouTube"
   ],
   "price_them": "Free plan; paid plans from €29 per month",
   "price_src": "https://www.podawaa.com/",
@@ -42,7 +42,7 @@
     {
       "f": "Networks",
       "t": "LinkedIn",
-      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack. Instagram, TikTok, Facebook and YouTube coming soon"
+      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube"
     },
     {
       "f": "Bought engagement",

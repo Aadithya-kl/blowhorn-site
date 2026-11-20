@@ -5,7 +5,7 @@
   "description": "SocialBee is a tidy category-based scheduler for small businesses and agencies. Blowhorn is for technical teams who need real people amplifying on developer networks.",
   "layout": "versus",
   "weight": 15,
-  "lastmod": "2026-10-13",
+  "lastmod": "2026-11-20",
   "competitor": "SocialBee",
   "mark": "SB",
   "site_url": "https://socialbee.com/",
@@ -27,7 +27,7 @@
     {
       "f": "Where it acts",
       "t": "SocialBee's cloud",
-      "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit and Hacker News; the platform's API for GitHub, Bluesky and Slack"
+      "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit, Hacker News and YouTube; the platform's API for GitHub, Bluesky and Slack"
     },
     {
       "f": "Evergreen category queues",

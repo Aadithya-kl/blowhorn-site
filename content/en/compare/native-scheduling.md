@@ -5,7 +5,7 @@
   "description": "LinkedIn and X let you schedule posts for free, one network and one profile at a time. Blowhorn puts every network and every profile you run in one queue, and lets your profiles amplify each post.",
   "layout": "versus",
   "weight": 90,
-  "lastmod": "2026-10-13",
+  "lastmod": "2026-11-20",
   "competitor": "native scheduling",
   "mark": "Nt",
   "site_url": "https://www.linkedin.com/help/linkedin/answer/a1524001",
@@ -17,7 +17,7 @@
     "You don't need anyone to amplify your posts"
   ],
   "us": [
-    "You post the same news across LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky and Slack",
+    "You post the same news across LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack and YouTube",
     "You run several profiles and want them to amplify each other",
     "You want one place to see LinkedIn, X and Bluesky results"
   ],
@@ -36,7 +36,7 @@
     {
       "f": "Networks",
       "t": "One at a time, inside each app",
-      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack. Instagram, TikTok, Facebook and YouTube coming soon"
+      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube"
     },
     {
       "f": "Profiles",

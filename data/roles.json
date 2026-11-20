@@ -6,7 +6,7 @@
       "name": "DevRel",
       "weight": 10,
       "headline": "Ship the release. Announce it everywhere, as you.",
-      "lead": "LinkedIn, X, Reddit, Hacker News, Bluesky, GitHub and Slack in one queue, posted from your own browser, signed in as you. Your agent drafts and dry-runs; you hold the switch.",
+      "lead": "LinkedIn, X, Reddit, Hacker News, Bluesky, GitHub, Slack and YouTube in one queue, posted from your own browser, signed in as you. Your agent drafts and dry-runs; you hold the switch.",
       "platforms": [
         "linkedin",
         "x",
@@ -14,7 +14,8 @@
         "hacker-news",
         "slack",
         "bluesky",
-        "github"
+        "github",
+        "youtube"
       ],
       "description": "Blowhorn for developer relations: one queue for the networks developers use, including Hacker News and GitHub, posted as you from your own browser.",
       "art": {
@@ -165,7 +166,7 @@
         },
         {
           "t": "One complete picture",
-          "b": "Run history and analytics from every computer in one place. Analytics cover LinkedIn, X and Bluesky."
+          "b": "Run history and analytics from every computer in one place. Analytics cover LinkedIn, X, Bluesky and YouTube."
         }
       ],
       "agent": {
@@ -345,7 +346,7 @@
       "name": "Open source maintainers",
       "weight": 40,
       "headline": "Your release deserves more than a post and a prayer.",
-      "lead": "Publish and amplify project milestones across project and maintainer profiles on GitHub, Slack, Hacker News, Reddit, LinkedIn, X and Bluesky, from one queue.",
+      "lead": "Publish and amplify project milestones across project and maintainer profiles on GitHub, Slack, Hacker News, Reddit, LinkedIn, X, Bluesky and YouTube, from one queue.",
       "platforms": [
         "linkedin",
         "x",
@@ -353,7 +354,8 @@
         "hacker-news",
         "slack",
         "bluesky",
-        "github"
+        "github",
+        "youtube"
       ],
       "description": "Blowhorn for open source maintainers: announce releases and milestones on GitHub, Slack, Hacker News and every social network from one queue, as yourself.",
       "art": {
@@ -493,7 +495,7 @@
         },
         {
           "t": "Every channel in one queue",
-          "b": "LinkedIn, X, Reddit, Hacker News, Bluesky, GitHub and Slack from one queue."
+          "b": "LinkedIn, X, Reddit, Hacker News, Bluesky, GitHub, Slack and YouTube from one queue."
         },
         {
           "t": "Coordinated, with one pause",
@@ -536,7 +538,7 @@
         },
         {
           "q": "Discord or Mastodon?",
-          "a": "Not today. Blowhorn ships LinkedIn, X, Reddit, Hacker News, Bluesky, GitHub and Slack."
+          "a": "Not today. Blowhorn ships LinkedIn, X, Reddit, Hacker News, Bluesky, GitHub, Slack and YouTube."
         }
       ],
       "related": [
@@ -677,7 +679,7 @@
       "name": "Social media managers",
       "weight": 70,
       "headline": "Every channel the company speaks on, from one desk.",
-      "lead": "LinkedIn, X, Reddit, Hacker News, Bluesky, GitHub and Slack in one queue, posted as the company and as you, from your own browser. Your agent drafts and dry-runs; you hold the switch.",
+      "lead": "LinkedIn, X, Reddit, Hacker News, Bluesky, GitHub, Slack and YouTube in one queue, posted as the company and as you, from your own browser. Your agent drafts and dry-runs; you hold the switch.",
       "platforms": [
         "linkedin",
         "x",
@@ -685,9 +687,10 @@
         "hacker-news",
         "bluesky",
         "github",
-        "slack"
+        "slack",
+        "youtube"
       ],
-      "description": "Blowhorn for social media managers: one queue for LinkedIn, X, Reddit, Hacker News, Bluesky, GitHub and Slack, posted as the company and as you.",
+      "description": "Blowhorn for social media managers: one queue for LinkedIn, X, Reddit, Hacker News, Bluesky, GitHub, Slack and YouTube, posted as the company and as you.",
       "art": {
         "src": "assets/brand/cast/mouse-marine-base.webp",
         "alt": "Mouse Marine, a mallard in a green beret holding a cursor spear, riding a gold trackball on a small tank"
@@ -709,7 +712,7 @@
       "gets": [
         {
           "t": "One queue for every channel",
-          "b": "LinkedIn, X, Reddit, Hacker News, Bluesky, GitHub and Slack from one queue, posted as the company and as you."
+          "b": "LinkedIn, X, Reddit, Hacker News, Bluesky, GitHub, Slack and YouTube from one queue, posted as the company and as you."
         },
         {
           "t": "Many profiles, one desk",
@@ -752,7 +755,7 @@
         },
         {
           "q": "What about Instagram, TikTok, Facebook and YouTube?",
-          "a": "Blowhorn works on them in your own browser, signed in as you, like LinkedIn, X, Reddit and Hacker News."
+          "a": "YouTube is supported: in your own browser, signed in as you, Blowhorn uploads videos, posts on your channel's Posts tab, and comments, replies and likes. The Instagram, TikTok and Facebook platform pages list no actions."
         },
         {
           "q": "Can my team amplify the launch?",

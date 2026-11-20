@@ -64,11 +64,11 @@
         },
         {
           "q": "How does it post to each network?",
-          "a": "LinkedIn, X, Reddit and Hacker News: Blowhorn types in your own browser, signed in as you. Slack, Bluesky and GitHub go through their APIs."
+          "a": "LinkedIn, X, Reddit, Hacker News and YouTube: Blowhorn types in your own browser, signed in as you. Slack, Bluesky and GitHub go through their APIs."
         },
         {
           "q": "What about Instagram, TikTok, Facebook and YouTube?",
-          "a": "Blowhorn works on them in your own browser, signed in as you."
+          "a": "YouTube is supported: in your own browser, signed in as you, Blowhorn uploads videos, posts on your channel's Posts tab, and comments, replies and likes. The Instagram, TikTok and Facebook platform pages list no actions."
         }
       ],
       "related": [
@@ -350,7 +350,7 @@
         },
         {
           "q": "What about Instagram, TikTok, Facebook and YouTube?",
-          "a": "Blowhorn works on them in your own browser, signed in as you."
+          "a": "YouTube is supported: in your own browser, signed in as you, Blowhorn uploads videos, posts on your channel's Posts tab, and comments, replies and likes. The Instagram, TikTok and Facebook platform pages list no actions."
         }
       ],
       "related": [
