@@ -1746,6 +1746,8 @@ body { background: var(--surface); }
 }
 .brand-showcase img { width: min(100%, 260px); }
 .brand-showcase figcaption { display: grid; justify-items: center; gap: var(--space-2); text-align: center; }
+/* The lead slogan in two colours (layouts/_partials/slogan.html): the ink, then brand green. */
+.slogan-b { color: var(--link); } /* Teal Deep on light, Teal Bright on dark */
 .brand-tagline {
   font-family: var(--font-display);
   font-weight: 800;
