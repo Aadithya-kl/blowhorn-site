@@ -64,8 +64,8 @@ matrix:
     message: { risk: care, text: "Each workspace sets its own rules. Hypothesis: one message per channel" }
   - platform: YouTube
     page: /field-manual/youtube
-    via: Your browser, through the extension
-    post: { risk: safe, text: "Your own video, private unless you choose. Capped at 3 uploads a day [10]" }
+    via: Your browser, through the extension; after Data API consent, uploads, comments, replies and likes go through YouTube's official API
+    post: { risk: care, text: "Your own video, private unless you choose, but YouTube bans automated access. Capped at 3 uploads a day [10]" }
     comment: { risk: care, text: "No high-volume or repetitive comments; only in a run you start [16]" }
     amplify: { risk: risky, text: "Likes from many profiles artificially increase a metric [17]" }
   - platform: Facebook, Instagram, TikTok, Threads, Mastodon

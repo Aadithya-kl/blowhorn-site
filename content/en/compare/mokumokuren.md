@@ -32,7 +32,7 @@
     {
       "f": "Networks",
       "t": "X, Bluesky, Threads, mixi2, Substack",
-      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube"
+      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube and more"
     },
     {
       "f": "Scheduling",

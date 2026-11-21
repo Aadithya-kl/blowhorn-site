@@ -32,7 +32,7 @@
     {
       "f": "Networks",
       "t": "13 incl. Instagram, TikTok, Telegram, WordPress, LinkedIn, X, Bluesky",
-      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, YouTube, Slack message via API"
+      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, YouTube, Slack message via API and more"
     },
     {
       "f": "Recycling and bulk scheduling",
@@ -88,7 +88,7 @@
     "Own-device custody: your browser sessions stay on your own computers, not in a vendor cloud"
   ],
   "loses": [
-    "Publer schedules and recycles across 13 channels, including Telegram and WordPress. Blowhorn covers eight networks",
+    "Publer schedules and recycles across 13 channels, including Telegram and WordPress. Blowhorn covers more networks than a count can hold",
     "Publer starts free and self-serve, with no sales call. Blowhorn is free during early access, with no published long-term price",
     "Publer's bulk scheduling and RSS automations save hours at volume. Blowhorn is built for a few posts that matter, not high-volume scheduling"
   ],

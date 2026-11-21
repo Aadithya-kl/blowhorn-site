@@ -85,7 +85,7 @@
   "loses": [
     "Metricool's analytics, client reports and ads reporting are deeper. Blowhorn analytics cover LinkedIn, X, Bluesky and YouTube only",
     "Metricool's per-brand inbox for Facebook, Instagram and YouTube is the only unified inbox in this comparison. Blowhorn does not run a care desk",
-    "Metricool schedules across consumer networks and reports for many brands. Blowhorn covers eight networks, for small technical teams"
+    "Metricool schedules across consumer networks and reports for many brands. Blowhorn covers more networks than a count can hold, for small technical teams"
   ],
   "network_logos": [
     "linkedin",

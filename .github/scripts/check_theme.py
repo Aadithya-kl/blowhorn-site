@@ -33,6 +33,10 @@ platform ships. Other "coming soon" copy stays out
 of scope: team invites, the Windows waitlist and /coming-soon/thanks/, the
 REST API and Risk Profile, which name no platform.
 
+Blowhorn's networks are never counted either (check_countable_network_copy):
+"eight networks" or "seven fronts" in site copy fails, so a new platform
+never leaves a stale count.
+
 Usage: check_theme.py BUILD_DIR
 """
 
@@ -399,6 +403,53 @@ def check_platform_soon_copy(root: Path) -> list[str]:
     return problems
 
 
+NUMBER_WORDS = (
+    "two three four five six seven eight nine ten eleven twelve thirteen "
+    "fourteen fifteen sixteen"
+).split()
+# Blowhorn's networks are never counted: "seven networks", "8 fronts" go stale
+# the day a platform ships. "seven tabs" and "all seven" are not matches.
+COUNTED_NETWORKS_RE = re.compile(
+    rf"\b(?:{'|'.join(NUMBER_WORDS)}|\d+)\s+(?:networks|fronts)\b", re.I
+)
+
+
+# Counts that are not Blowhorn's: a competitor's own figure, and the demo
+# page's four-act scene. Each is (path, phrase).
+COUNTED_NETWORKS_ALLOWED = {
+    ("content/en/compare/blotato.md", "9 networks"),
+    ("content/en/compare/publer.md", "13 networks"),
+    ("content/en/compare/buffer.md", "four networks"),
+    ("layouts/demo.html", "four fronts"),
+}
+
+
+def check_countable_network_copy(root: Path) -> list[str]:
+    """Fail marketing copy that counts networks ("eight networks", "seven
+    fronts"). Scans content/en/ outside the synced docs, data/*.json and
+    *.yaml, and layouts/."""
+    content = root / "content" / "en"
+    docs = content / "docs"
+    files = [p for p in sorted(content.rglob("*.md")) if docs not in p.parents]
+    data = root / "data"
+    files += sorted(data.rglob("*.json")) + sorted(data.rglob("*.yaml"))
+    files += sorted((root / "layouts").rglob("*.html"))
+    problems: list[str] = []
+    for path in files:
+        text = path.read_text(encoding="utf-8")
+        rel = path.relative_to(root).as_posix()
+        for m in COUNTED_NETWORKS_RE.finditer(text):
+            if (rel, m.group(0).lower()) in COUNTED_NETWORKS_ALLOWED:
+                continue
+            line = text.count("\n", 0, m.start()) + 1
+            problems.append(
+                f"{rel}:{line} counts networks ({m.group(0)!r}); "
+                "never count them, say 'every network you post on' or 'and more' "
+                "(docs/action-examples.md)"
+            )
+    return problems
+
+
 def main(root: Path) -> int:
     problems = []
     want_theme = expected_home_theme()
@@ -475,6 +526,7 @@ def main(root: Path) -> int:
 
     problems.extend(check_platform_labels(root, ROOT))
     problems.extend(check_platform_soon_copy(ROOT))
+    problems.extend(check_countable_network_copy(ROOT))
 
     for item in problems:
         print(f"theme: {item}", file=sys.stderr)

@@ -47,7 +47,7 @@
       "t": "30-plus actions: sequences, messages, follow-ups, endorsements, visits, data export"
     },
     {
-      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube",
+      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube and more",
       "f": "Networks",
       "t": "LinkedIn, including Sales Navigator, Recruiter and Talent"
     },
@@ -69,7 +69,7 @@
   ],
   "wins": [
     "As many of your computers as you like share one queue, and any awake computer covers the schedule",
-    "One post amplified by every profile in your account, across eight networks, not one",
+    "One post amplified by every profile in your account, across every network you post on, not one",
     "Dry run and check the queue before anything goes out, and stand down one activity, one computer or the whole fleet with one switch"
   ],
   "loses": [

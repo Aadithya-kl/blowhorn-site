@@ -75,7 +75,7 @@ troops:
     id: 'general'
     img: 'assets/brand/cast/general-base.webp'
     alt: 'The General, an old gray billy goat with a white beard and a coral cap band, holding a bugle to his ear and leaning on his cane'
-    v: 'The old goat who promoted Major after the Blowhard incident, and he has been half deaf ever since. Now he holds a bugle to his ear and trusts only the numbers: real likes, replies and follows from LinkedIn, X and Bluesky, all in one report. He has never smiled. He came close once, at a reply count.'
+    v: 'The old goat who promoted Major after the Blowhard incident, and he has been half deaf ever since. Now he holds a bugle to his ear and trusts only the numbers: real likes, replies and follows from LinkedIn, X, Bluesky and YouTube, all in one report. He has never smiled. He came close once, at a reply count.'
     links:
       - t: "What the numbers mean"
         u: '/docs/explanation/analytics/'

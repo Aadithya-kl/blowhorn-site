@@ -80,6 +80,7 @@
                 {{- range . -}}
                   {{- with index $platLogos . }}<li><img src="{{ .src | relURL }}" alt="{{ .alt }}" width="28" height="28" loading="lazy"></li>{{ end -}}
                 {{- end }}
+                <li class="versus-more ui">+ many more</li>
               </ul>
               {{- end }}
               <p class="ui">{{ partial "download-button.html" (dict "kind" "text") }}</p>
@@ -152,10 +153,11 @@
           </div>
           {{- with $p.logos }}
           <div class="section-head">
-            <h3 class="h3">Networks Blowhorn posts on today</h3>
+            <h3 class="h3">Some of the networks Blowhorn posts on</h3>
           </div>
           <ul class="versus-logos">
             {{- range . }}{{ with index $platLogos . }}<li><span class="logo-tile"><img src="{{ .src | relURL }}" alt="" width="28" height="28" loading="lazy"></span><span class="ui">{{ .alt }}</span></li>{{ end }}{{ end }}
+            <li class="versus-more ui">+ many more</li>
           </ul>
           {{- end }}
         </section>

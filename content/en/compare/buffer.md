@@ -17,7 +17,7 @@
     "You want a free plan to start, and per-channel pricing that grows one channel at a time"
   ],
   "us": [
-    "Your audience lives on LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack and YouTube",
+    "Your audience lives on LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube and more",
     "One post should be amplified by your founders, your team and your supporters, as themselves, not just published once",
     "You want posting to happen from your own browser, on your own computers, at a human pace, under rules you set",
     "You run one person, a local practice, a whole enterprise, or several client brands from one shared queue"
@@ -33,7 +33,7 @@
     {
       "f": "Networks",
       "t": "Many, incl. Instagram, TikTok, Threads, Pinterest, Mastodon, Facebook, YouTube, LinkedIn, X and Bluesky",
-      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack and YouTube"
+      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube and more"
     },
     {
       "f": "Amplify one post across many people",

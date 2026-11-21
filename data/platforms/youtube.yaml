@@ -6,10 +6,10 @@ name: YouTube
 weight: 8
 logo: assets/platforms/youtube-simple-icons.svg
 docs: /docs/reference/platforms/youtube/
-reach: Your own signed-in browser, through the Blowhorn extension, once you turn on YouTube
+reach: Your own signed-in browser, through the Blowhorn extension, once you turn on YouTube; after YouTube Data API consent, YouTube's official API
 actions:
   - id: post
-    behavior: Uploads a video through YouTube Studio with its title, description and visibility (private unless you choose unlisted or public), or as a Short. With Community set to yes, it publishes a post on your channel's Posts tab instead.
+    behavior: Uploads a video through YouTube Studio in your signed-in browser by default (after YouTube Data API consent, through YouTube's official API) with its title, description and visibility (private unless you choose unlisted or public), or as a Short. With Community set to yes, it publishes a post on your channel's Posts tab instead, always in the signed-in browser.
     limits: At most 3 uploads and 2 Posts tab posts per profile a day. A Short longer than 3 minutes or wider than it is tall is refused before anything opens. Check each upload in YouTube Studio.
   - id: comment
     behavior: Comments on the YouTube video you point it at.

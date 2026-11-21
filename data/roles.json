@@ -6,7 +6,7 @@
       "name": "DevRel",
       "weight": 10,
       "headline": "Ship the release. Announce it everywhere, as you.",
-      "lead": "LinkedIn, X, Reddit, Hacker News, Bluesky, GitHub, Slack and YouTube in one queue, posted from your own browser, signed in as you. Your agent drafts and dry-runs; you hold the switch.",
+      "lead": "LinkedIn, X, Reddit, Hacker News, Bluesky, GitHub, Slack, YouTube and more in one queue, posted from your own browser, signed in as you. Your agent drafts and dry-runs; you hold the switch.",
       "platforms": [
         "linkedin",
         "x",
@@ -25,7 +25,7 @@
       "pains": [
         {
           "t": "Seven tabs per post",
-          "b": "Every release means seven composers and seven sign-ins, and the schedulers still skip Hacker News and GitHub."
+          "b": "Every release means a composer and a sign-in for every network, and the schedulers still skip Hacker News and GitHub."
         },
         {
           "t": "Tools that want your logins",
@@ -346,7 +346,7 @@
       "name": "Open source maintainers",
       "weight": 40,
       "headline": "Your release deserves more than a post and a prayer.",
-      "lead": "Publish and amplify project milestones across project and maintainer profiles on GitHub, Slack, Hacker News, Reddit, LinkedIn, X, Bluesky and YouTube, from one queue.",
+      "lead": "Publish and amplify project milestones across project and maintainer profiles on GitHub, Slack, Hacker News, Reddit, LinkedIn, X, Bluesky, YouTube and more, from one queue.",
       "platforms": [
         "linkedin",
         "x",
@@ -495,7 +495,7 @@
         },
         {
           "t": "Every channel in one queue",
-          "b": "LinkedIn, X, Reddit, Hacker News, Bluesky, GitHub, Slack and YouTube from one queue."
+          "b": "LinkedIn, X, Reddit, Hacker News, Bluesky, GitHub, Slack, YouTube and more from one queue."
         },
         {
           "t": "Coordinated, with one pause",
@@ -538,7 +538,7 @@
         },
         {
           "q": "Discord or Mastodon?",
-          "a": "Not today. Blowhorn ships LinkedIn, X, Reddit, Hacker News, Bluesky, GitHub, Slack and YouTube."
+          "a": "Not today. Blowhorn ships LinkedIn, X, Reddit, Hacker News, Bluesky, GitHub, Slack, YouTube and more."
         }
       ],
       "related": [
@@ -679,7 +679,7 @@
       "name": "Social media managers",
       "weight": 70,
       "headline": "Every channel the company speaks on, from one desk.",
-      "lead": "LinkedIn, X, Reddit, Hacker News, Bluesky, GitHub, Slack and YouTube in one queue, posted as the company and as you, from your own browser. Your agent drafts and dry-runs; you hold the switch.",
+      "lead": "LinkedIn, X, Reddit, Hacker News, Bluesky, GitHub, Slack, YouTube and more in one queue, posted as the company and as you, from your own browser. Your agent drafts and dry-runs; you hold the switch.",
       "platforms": [
         "linkedin",
         "x",
@@ -690,15 +690,15 @@
         "slack",
         "youtube"
       ],
-      "description": "Blowhorn for social media managers: one queue for LinkedIn, X, Reddit, Hacker News, Bluesky, GitHub, Slack and YouTube, posted as the company and as you.",
+      "description": "Blowhorn for social media managers: one queue for LinkedIn, X, Reddit, Hacker News, Bluesky, GitHub, Slack, YouTube and more, posted as the company and as you.",
       "art": {
         "src": "assets/brand/cast/mouse-marine-base.webp",
         "alt": "Mouse Marine, a mallard in a green beret holding a cursor spear, riding a gold trackball on a small tank"
       },
       "pains": [
         {
-          "t": "Seven composers before breakfast",
-          "b": "Every day starts with seven sign-ins and seven composers, and the schedulers still skip Hacker News and GitHub."
+          "t": "A composer for every network before breakfast",
+          "b": "Every day starts with a sign-in and a composer for every network, and the schedulers still skip Hacker News and GitHub."
         },
         {
           "t": "The company voice, split across tools",
@@ -712,7 +712,7 @@
       "gets": [
         {
           "t": "One queue for every channel",
-          "b": "LinkedIn, X, Reddit, Hacker News, Bluesky, GitHub, Slack and YouTube from one queue, posted as the company and as you."
+          "b": "LinkedIn, X, Reddit, Hacker News, Bluesky, GitHub, Slack, YouTube and more from one queue, posted as the company and as you."
         },
         {
           "t": "Many profiles, one desk",
@@ -743,7 +743,7 @@
         ]
       },
       "prompt": "",
-      "major": "Seven fronts, one desk, and the words stay yours, soldier.",
+      "major": "A front on every network, one desk, and the words stay yours, soldier.",
       "faq": [
         {
           "q": "Do I post as the company or as myself?",
@@ -755,7 +755,7 @@
         },
         {
           "q": "What about Instagram, TikTok, Facebook and YouTube?",
-          "a": "YouTube is supported: in your own browser, signed in as you, Blowhorn uploads videos, posts on your channel's Posts tab, and comments, replies and likes. The Instagram, TikTok and Facebook platform pages list no actions."
+          "a": "YouTube is supported. Blowhorn works in your own signed-in browser; with YouTube Data API consent, uploads, comments, replies and likes go through YouTube's official API. Instagram, Facebook and TikTok are on the way; Blowhorn doesn't post there yet."
         },
         {
           "q": "Can my team amplify the launch?",

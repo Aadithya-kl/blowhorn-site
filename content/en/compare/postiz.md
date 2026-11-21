@@ -32,7 +32,7 @@
     {
       "f": "Networks",
       "t": "30+ incl. LinkedIn, X, Reddit, Slack, Discord, Bluesky, Instagram, TikTok, YouTube",
-      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube"
+      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube and more"
     },
     {
       "f": "Amplify across your accounts",

@@ -41,7 +41,7 @@
     {
       "f": "Networks",
       "t": "Twitter, Facebook, Tumblr",
-      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube"
+      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube and more"
     },
     {
       "f": "Bought engagement",

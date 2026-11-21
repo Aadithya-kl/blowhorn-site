@@ -42,7 +42,7 @@
     {
       "f": "Networks",
       "t": "Instagram, TikTok, YouTube, X, Facebook, LinkedIn",
-      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube"
+      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube and more"
     },
     {
       "f": "Related to the original Thunderclap?",

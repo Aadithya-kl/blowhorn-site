@@ -37,7 +37,7 @@
     {
       "f": "Networks",
       "t": "X, LinkedIn, Threads, Bluesky, Mastodon",
-      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube"
+      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube and more"
     },
     {
       "f": "Many people amplifying one post",

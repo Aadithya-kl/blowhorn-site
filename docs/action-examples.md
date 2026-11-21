@@ -92,11 +92,15 @@ lists actions), YouTube's change is the model:
    `data/integrations.json` (the YAML owns them; `check_action_matrix.py
    --source` fails a repeat) and set `posts`, `exampleLink` and `demoMeta`.
 2. Add one `data/action_examples.json` entry per action (above).
-3. Copy: every list that names all of Blowhorn's networks names the new one
-   too (compare Networks and "Where it acts" rows, the home description,
-   role leads, FAQ answers, "N networks" counts), and the compare logo
-   strips (`logos`, `network_logos`, platform ids) gain its id. Curated
-   lists, such as the developer networks, stay as they are.
+3. Copy: never count the networks ("seven networks", "N fronts"); use
+   uncountable phrasing ("every network you post on", "more networks than a
+   count can hold"). Every list that names all of Blowhorn's networks names
+   the new one too (compare Networks and "Where it acts" rows, the home
+   description, role leads, FAQ answers) and reads as non-exhaustive, ending
+   "and more". The compare logo strips (`logos`, `network_logos`, platform
+   ids) gain its id and keep their "+ many more" item, and the home fan keeps
+   its cut-off logos. Curated lists, such as the developer networks, stay as
+   they are. `check_theme.py` fails a countable network phrase.
 4. The Field Manual: a platform briefing (`content/en/field-manual/<id>.md`)
    quoting the platform's own rules, a row in the action matrix with
    sourced grades, and its section out of `other-feeds.md` (keep the old

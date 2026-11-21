@@ -336,6 +336,48 @@ class PlatformLabelGuardTest(unittest.TestCase):
         self.assertEqual(self.problems(), [])
 
 
+class CountedNetworksTest(unittest.TestCase):
+    """Blowhorn's networks are never counted in site copy."""
+
+    def setUp(self):
+        import check_theme as check
+
+        self.check = check
+        self.tmp = Path(tempfile.mkdtemp())
+        (self.tmp / "content/en/compare").mkdir(parents=True)
+        (self.tmp / "content/en/docs").mkdir(parents=True)
+        (self.tmp / "data").mkdir()
+        (self.tmp / "layouts").mkdir()
+
+    def tearDown(self):
+        import shutil
+
+        shutil.rmtree(self.tmp)
+
+    def write(self, rel, text):
+        (self.tmp / rel).write_text(text, encoding="utf-8")
+
+    def test_checked_in_copy_passes(self):
+        self.assertEqual(self.check.check_countable_network_copy(ROOT), [])
+
+    def test_counted_phrases_fail(self):
+        for phrase in ("Blowhorn covers eight networks", "Seven fronts, one desk", "on 8 networks"):
+            self.write("content/en/compare/acme.md", phrase + "\n")
+            found = self.check.check_countable_network_copy(self.tmp)
+            self.assertEqual(len(found), 1, (phrase, found))
+
+    def test_data_and_layouts_are_scanned_but_docs_are_not(self):
+        self.write("data/x.json", '{"a": "across seven networks"}\n')
+        self.write("layouts/x.html", "<p>eight fronts</p>\n")
+        self.write("content/en/docs/x.md", "nine networks\n")
+        found = self.check.check_countable_network_copy(self.tmp)
+        self.assertEqual(len(found), 2, found)
+
+    def test_seven_tabs_and_all_seven_pass(self):
+        self.write("data/x.json", '{"a": "seven tabs and a prayer", "b": "all seven", "c": "seven-tabs"}\n')
+        self.assertEqual(self.check.check_countable_network_copy(self.tmp), [])
+
+
 class PlatformSoonCopyTest(unittest.TestCase):
     """The site's own copy must never call a listed platform coming soon,
     while "coming soon" copy that names no platform stays allowed and the

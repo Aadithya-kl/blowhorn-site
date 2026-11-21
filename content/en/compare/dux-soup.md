@@ -42,7 +42,7 @@
       "t": "Sequences of up to 12 actions: visits, connects, messages, InMails, endorsements, follows"
     },
     {
-      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube",
+      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube and more",
       "f": "Networks",
       "t": "LinkedIn, including Sales Navigator and Recruiter"
     },
@@ -64,7 +64,7 @@
   ],
   "wins": [
     "No vendor server logs in as you, and no per-seat math for extra computers: as many of your computers as you like share one queue",
-    "One post amplified by every profile in your account, across eight networks, not one",
+    "One post amplified by every profile in your account, across every network you post on, not one",
     "Dry run and check the queue before anything goes out, and stand down one activity, one computer or the whole fleet with one switch"
   ],
   "loses": [

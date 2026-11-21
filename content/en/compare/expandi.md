@@ -100,7 +100,7 @@
       "t": "Yes, from its cloud"
     },
     {
-      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube",
+      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube and more",
       "f": "Networks",
       "t": "LinkedIn (plus email)"
     },
@@ -144,7 +144,7 @@
     "You also speak on X, Reddit, Hacker News, GitHub, Bluesky, Slack and YouTube, and want your people amplifying",
     "You want safety controls, a dry run before anything posts, and one pause switch for the whole fleet"
   ],
-  "verdict": "Blowhorn isn't a bot. It's you. Expandi is a serious outbound machine: LinkedIn and email sequences, branching Smart Sequences, InMails and personalization at volume, run from its cloud. If that volume is the job, pick Expandi, honestly. Blowhorn is for careful outreach and real-person amplification, from your own browser, on eight networks.",
+  "verdict": "Blowhorn isn't a bot. It's you. Expandi is a serious outbound machine: LinkedIn and email sequences, branching Smart Sequences, InMails and personalization at volume, run from its cloud. If that volume is the job, pick Expandi, honestly. Blowhorn is for careful outreach and real-person amplification, from your own browser, on every network you post on.",
   "weight": 21,
   "wins": [
     "You never hand over your LinkedIn password or cookie to a vendor server",
