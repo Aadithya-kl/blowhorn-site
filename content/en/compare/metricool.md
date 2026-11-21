@@ -19,7 +19,7 @@
   "us": [
     "You need many real profiles to lift one post",
     "Hacker News, Reddit, GitHub and Slack message surfaces matter",
-    "Your own browser for LinkedIn, X, Reddit, Hacker News and YouTube; the platform API for GitHub, Bluesky and Slack"
+    "Your own signed-in browser, through the extension, for LinkedIn, X, Reddit, Hacker News, YouTube and more; after YouTube Data API consent, uploads, comments, replies and likes go through YouTube's official API (Posts-tab posts stay in the browser). GitHub, Bluesky and Slack use their APIs."
   ],
   "price_them": "Free plan; Starter from $20 per month, Advanced from $53 per month",
   "price_src": "https://metricool.com/pricing/",
@@ -27,7 +27,7 @@
     {
       "f": "Where it acts",
       "t": "Metricool's cloud",
-      "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit, Hacker News and YouTube; the platform's API for GitHub, Bluesky and Slack"
+      "b": "Your computers: your own signed-in browser, through the extension, for LinkedIn, X, Reddit, Hacker News, YouTube and more. After YouTube Data API consent, uploads, comments, replies and likes go through YouTube's official API; Posts-tab posts stay in the browser. GitHub, Bluesky and Slack use their APIs."
     },
     {
       "f": "Analytics and ads reporting",

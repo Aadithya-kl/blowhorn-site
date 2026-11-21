@@ -54,7 +54,7 @@
         },
         {
           "q": "How does it post?",
-          "a": "LinkedIn, X, Reddit, Hacker News and YouTube: Blowhorn types in your own browser, signed in as you. Slack, Bluesky and GitHub go through their APIs. The desktop app and the Python CLI share the same queue."
+          "a": "LinkedIn, X, Reddit, Hacker News, YouTube and more: Blowhorn types in your own browser, signed in as you; after Data API consent, YouTube uploads, comments, replies and likes use its official API. Slack, Bluesky and GitHub use their APIs. The app and the Python CLI share one queue."
         },
         {
           "q": "Will the same post go out twice?",
@@ -121,7 +121,7 @@
         },
         {
           "t": "Human-paced by design",
-          "b": "Types key by key in your own browser for LinkedIn, X, Reddit, Hacker News, YouTube and more. Caps itself. CAPTCHA and 2FA stay with you."
+          "b": "Types key by key in your own browser for LinkedIn, X, Reddit, Hacker News, YouTube and more (YouTube uploads, comments, replies and likes use its official API after Data API consent). Caps itself. CAPTCHA and 2FA stay with you."
         }
       ],
       "prompt": "Draft the release posts from CHANGELOG.md, react on the GitHub issue, submit to Hacker News, then --dry-run the rest.",
@@ -200,7 +200,7 @@
         },
         {
           "t": "Reply without seven tabs",
-          "b": "Send comments and replies from the same queue you posted from. LinkedIn, X, Reddit, Hacker News, YouTube and more run in your own browser."
+          "b": "Send comments and replies from the same queue you posted from. LinkedIn, X, Reddit, Hacker News, YouTube and more run in your own browser; after YouTube Data API consent, YouTube comments and replies go through its official API."
         }
       ],
       "prompt": "Queue pre-event, day-of and follow-up posts for the talk, then --dry-run.",

@@ -58,7 +58,7 @@
       "t": "Outbound prospecting at volume, with drip sequences"
     },
     {
-      "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit, Hacker News and YouTube; the platform's API for GitHub, Bluesky and Slack",
+      "b": "Your computers: your own signed-in browser, through the extension, for LinkedIn, X, Reddit, Hacker News, YouTube and more. After YouTube Data API consent, uploads, comments, replies and likes go through YouTube's official API; Posts-tab posts stay in the browser. GitHub, Bluesky and Slack use their APIs.",
       "f": "Where it acts",
       "t": "Dripify's cloud, no browser extension required"
     },

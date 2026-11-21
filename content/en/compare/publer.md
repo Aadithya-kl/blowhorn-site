@@ -19,7 +19,7 @@
   "us": [
     "One post should be lifted by many real profiles, not recycled",
     "Hacker News, Reddit, GitHub and Slack message surfaces are where your audience is",
-    "Your own browser for LinkedIn, X, Reddit, Hacker News and YouTube; the platform API for GitHub, Bluesky and Slack"
+    "Your own signed-in browser, through the extension, for LinkedIn, X, Reddit, Hacker News, YouTube and more; after YouTube Data API consent, uploads, comments, replies and likes go through YouTube's official API (Posts-tab posts stay in the browser). GitHub, Bluesky and Slack use their APIs."
   ],
   "price_them": "Free plan for 3 accounts (X needs a paid plan); paid plans priced per social account, plus per additional member",
   "price_src": "https://publer.com/pricing",
@@ -27,7 +27,7 @@
     {
       "f": "Where it acts",
       "t": "Publer's cloud",
-      "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit, Hacker News and YouTube; the platform's API for GitHub, Bluesky and Slack"
+      "b": "Your computers: your own signed-in browser, through the extension, for LinkedIn, X, Reddit, Hacker News, YouTube and more. After YouTube Data API consent, uploads, comments, replies and likes go through YouTube's official API; Posts-tab posts stay in the browser. GitHub, Bluesky and Slack use their APIs."
     },
     {
       "f": "Networks",
