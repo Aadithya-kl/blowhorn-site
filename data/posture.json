@@ -99,7 +99,7 @@
       "dials": [
         {
           "label": "Wait between actions",
-          "value": "Standard pacing without added delay"
+          "value": "Immediate (no added delay)"
         },
         {
           "label": "Daily volume",
