@@ -43,10 +43,6 @@
         {
           "label": "Retries of scheduled jobs",
           "value": "None"
-        },
-        {
-          "label": "Runs sharing a platform",
-          "value": "One profile at a time"
         }
       ]
     },
@@ -77,7 +73,7 @@
         },
         {
           "label": "Warmup",
-          "value": "7 days, standard ramp"
+          "value": "7-day ramp (new profiles run Safety on for 14 days)"
         },
         {
           "label": "Pace",
@@ -90,10 +86,6 @@
         {
           "label": "Retries of scheduled jobs",
           "value": "None"
-        },
-        {
-          "label": "Runs sharing a platform",
-          "value": "Profiles on one platform take turns"
         }
       ]
     },
@@ -107,7 +99,7 @@
       "dials": [
         {
           "label": "Wait between actions",
-          "value": "Immediate next queued row"
+          "value": "Standard pacing without added delay"
         },
         {
           "label": "Daily volume",
@@ -123,7 +115,7 @@
         },
         {
           "label": "Warmup",
-          "value": "3 days, fast ramp"
+          "value": "3-day ramp (new profiles run Safety on for 14 days)"
         },
         {
           "label": "Pace",
@@ -131,15 +123,11 @@
         },
         {
           "label": "Outreach (follows and invitations)",
-          "value": "On across all platforms"
+          "value": "On"
         },
         {
           "label": "Retries of scheduled jobs",
           "value": "One, never for a sign-in"
-        },
-        {
-          "label": "Runs sharing a platform",
-          "value": "Profiles on one platform may run together"
         }
       ]
     }

@@ -1297,7 +1297,9 @@ html[data-theme="signal"] #platforms .logo-tile img[src*="github-invertocat-blac
 .posture-figure.is-playing img { visibility: hidden; }
 .posture-radio:checked + .posture-figure { opacity: 1; }
 .posture-radio:focus-visible + .posture-figure { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
-.posture-track { position: relative; height: 2px; margin: var(--space-3) calc(100% / 6) var(--space-2); background: var(--card-muted); border-radius: 999px; }
+.posture-track { position: relative; height: 4px; margin: var(--space-3) calc(100% / 6) var(--space-2); background: linear-gradient(to right, var(--teal-deep), var(--teal) 50%, var(--amber)); border-radius: 999px; }
+.posture-track::before { content: "🐢"; position: absolute; right: calc(100% + var(--space-2)); top: 50%; transform: translateY(-50%); font-size: 1rem; line-height: 1; opacity: 0.75; }
+.posture-track::after { content: "🐇"; position: absolute; left: calc(100% + var(--space-2)); top: 50%; transform: translateY(-50%); font-size: 1rem; line-height: 1; opacity: 0.75; }
 .posture-dot { position: absolute; top: 50%; width: 22px; height: 22px; transform: translate(-50%, -50%); cursor: pointer; }
 .posture-dot::before { content: ""; position: absolute; inset: 8px; border-radius: 50%; background: var(--card-muted); }
 .posture-dot:nth-of-type(1) { left: 0; }
