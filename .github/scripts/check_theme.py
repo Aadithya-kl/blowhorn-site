@@ -35,7 +35,9 @@ REST API and Risk Profile, which name no platform.
 
 Blowhorn's networks are never counted either (check_countable_network_copy):
 "eight networks" or "seven fronts" in site copy fails, so a new platform
-never leaves a stale count.
+never leaves a stale count. Nor are they listed as a closed set
+(check_open_network_lists): a sentence naming all of them, or all but one,
+must end the list with "and more", so it stays true when one ships.
 
 Usage: check_theme.py BUILD_DIR
 """
@@ -450,6 +452,111 @@ def check_countable_network_copy(root: Path) -> list[str]:
     return problems
 
 
+# What makes a list of networks read as open, attached to a network name:
+# right after one, "Slack, YouTube and more", "... plus many more",
+# "+ many more"; or right before one, "such as LinkedIn, X ...".
+OPEN_LIST_END_RE = re.compile(
+    r",?\s*(?:(?:and|or|plus)\s+(?:many\s+)?more|\+\s*many\s+more)\b",
+    re.I,
+)
+OPEN_LIST_START_RE = re.compile(r"\bsuch\s+as\s*$", re.I)
+TAG_RE = re.compile(r"<[^>]*>")
+MD_LINK_RE = re.compile(r"!?\[([^\]]*)\]\([^)]*\)")
+MD_MARK_RE = re.compile(r"\*+|`+|(?<!\w)_+|_+(?!\w)")
+
+# Sentences that name the networks as a record of something fixed, not as
+# Blowhorn's reach: a film's own captions and the logo loop's frames. Each is
+# (path, a phrase from the sentence).
+ALL_NETWORK_LISTS_ALLOWED = {
+    ("data/hero.json", "Major Blowhorn's one call lands on"),
+    (
+        "content/en/resources/videos/getting-started/battalion-thunder.md",
+        "Major Blowhorn's one call lands on",
+    ),
+    ("data/integrations.json", "A row of platform logos slides by"),
+}
+
+
+def supported_network_names(root: Path) -> list[str]:
+    """The networks Blowhorn acts on: every data/platforms/<id>.yaml, by its
+    name without a parenthetical ("X (Twitter)" is X in copy)."""
+    names = []
+    for path in sorted((root / "data" / "platforms").glob("*.yaml")):
+        name = yaml.safe_load(path.read_text(encoding="utf-8")).get("name")
+        if name:
+            names.append(re.sub(r"\s*\(.*?\)", "", name).strip())
+    return names
+
+
+def plain_text(text: str) -> str:
+    """Copy as a reader sees it: HTML tags, Markdown links and emphasis
+    reduced to their text."""
+    return MD_MARK_RE.sub("", MD_LINK_RE.sub(r"\1", TAG_RE.sub(" ", text)))
+
+
+def copy_sentences(path: Path) -> list[str]:
+    """Every sentence of a source file's copy, as plain text: the strings of
+    its structured data or front matter, its Markdown body, or a layout's
+    text."""
+    if path.suffix == ".html":
+        strings = [path.read_text(encoding="utf-8")]
+    else:
+        documents, body = copy_documents(path)
+        strings = [body]
+        pending = list(documents)
+        while pending:
+            node = pending.pop()
+            if isinstance(node, str):
+                strings.append(node)
+            elif isinstance(node, dict):
+                pending.extend(node.values())
+            elif isinstance(node, list):
+                pending.extend(node)
+    return [s.strip() for text in strings for s in SENTENCE_SPLIT_RE.split(plain_text(text)) if s.strip()]
+
+
+def check_open_network_lists(root: Path) -> list[str]:
+    """Fail a sentence that lists all of Blowhorn's networks, or all but one,
+    as a closed set. Such a list is stale the day a platform ships (it was
+    how YouTube went missing from "plus LinkedIn, X, Reddit and Bluesky"), so
+    it must read as open: "..., YouTube and more" (docs/action-examples.md
+    step 3). Curated lists, such as the developer networks or the analytics
+    networks, name fewer and are not matched. Scans what
+    check_countable_network_copy scans."""
+    names = supported_network_names(root)
+    name_res = {n: re.compile(rf"(?<![\w-]){re.escape(n)}(?![\w-])") for n in names}
+    content = root / "content" / "en"
+    docs = content / "docs"
+    files = [p for p in sorted(content.rglob("*.md")) if docs not in p.parents]
+    data = root / "data"
+    files += sorted(data.rglob("*.json")) + sorted(data.rglob("*.yaml"))
+    files += sorted((root / "layouts").rglob("*.html"))
+    problems: list[str] = []
+    for path in files:
+        rel = path.relative_to(root).as_posix()
+        allowed = [phrase for (p, phrase) in ALL_NETWORK_LISTS_ALLOWED if p == rel]
+        for sentence in copy_sentences(path):
+            spans = {n: [m.span() for m in name_res[n].finditer(sentence)] for n in names}
+            missing = [n for n in names if not spans[n]]
+            if len(missing) > 1:
+                continue
+            if any(
+                OPEN_LIST_END_RE.match(sentence, end) or OPEN_LIST_START_RE.search(sentence, 0, start)
+                for found in spans.values()
+                for start, end in found
+            ):
+                continue
+            if any(phrase in sentence for phrase in allowed):
+                continue
+            gap = f" and leaves out {missing[0]}" if missing else ""
+            problems.append(
+                f"{rel} lists Blowhorn's networks as a closed set{gap}: "
+                f"{sentence[:160]!r}; name every network and end the list "
+                "with 'and more' (docs/action-examples.md)"
+            )
+    return problems
+
+
 def main(root: Path) -> int:
     problems = []
     want_theme = expected_home_theme()
@@ -527,6 +634,7 @@ def main(root: Path) -> int:
     problems.extend(check_platform_labels(root, ROOT))
     problems.extend(check_platform_soon_copy(ROOT))
     problems.extend(check_countable_network_copy(ROOT))
+    problems.extend(check_open_network_lists(ROOT))
 
     for item in problems:
         print(f"theme: {item}", file=sys.stderr)

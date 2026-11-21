@@ -378,6 +378,117 @@ class CountedNetworksTest(unittest.TestCase):
         self.assertEqual(self.check.check_countable_network_copy(self.tmp), [])
 
 
+class OpenNetworkListsTest(unittest.TestCase):
+    """A sentence listing all of Blowhorn's networks, or all but one, must
+    read as open ("and more"), so it never goes stale when one ships."""
+
+    PLATFORMS = {
+        "hacker-news": "Hacker News",
+        "linkedin": "LinkedIn",
+        "x": "X (Twitter)",
+        "youtube": "YouTube",
+    }
+    ALL = "LinkedIn, X, Hacker News and YouTube"
+
+    def setUp(self):
+        import check_theme as check
+
+        self.check = check
+        self.tmp = Path(tempfile.mkdtemp())
+        (self.tmp / "data/platforms").mkdir(parents=True)
+        for pid, name in self.PLATFORMS.items():
+            self.write(f"data/platforms/{pid}.yaml", f"id: {pid}\nname: {name}\n")
+        (self.tmp / "content/en/compare").mkdir(parents=True)
+        (self.tmp / "content/en/docs").mkdir(parents=True)
+        (self.tmp / "layouts").mkdir()
+
+    def tearDown(self):
+        import shutil
+
+        shutil.rmtree(self.tmp)
+
+    def write(self, rel, text):
+        (self.tmp / rel).write_text(text, encoding="utf-8")
+
+    def found(self):
+        return self.check.check_open_network_lists(self.tmp)
+
+    def test_checked_in_copy_passes(self):
+        self.assertEqual(self.check.check_open_network_lists(ROOT), [])
+
+    def test_names_come_from_the_platform_yaml_without_parentheticals(self):
+        self.assertEqual(
+            self.check.supported_network_names(self.tmp),
+            ["Hacker News", "LinkedIn", "X", "YouTube"],
+        )
+
+    def test_closed_list_of_every_network_fails(self):
+        self.write("content/en/compare/acme.md", f"Posts to {self.ALL}.\n")
+        found = self.found()
+        self.assertEqual(len(found), 1, found)
+        self.assertNotIn("leaves out", found[0])
+
+    def test_closed_list_missing_one_network_names_it(self):
+        self.write(
+            "data/x.json",
+            '{"a": "Hacker News joins LinkedIn and X in one queue."}\n',
+        )
+        found = self.found()
+        self.assertEqual(len(found), 1, found)
+        self.assertIn("leaves out YouTube", found[0])
+
+    def test_open_lists_pass(self):
+        for text in (
+            "Posts to LinkedIn, X, Hacker News, YouTube and more.",
+            "You also speak on X, Hacker News, YouTube and more",
+            "Your audience is on LinkedIn, X, YouTube and more, and you message Hacker News.",
+            "Accounts you configure, such as LinkedIn, X and Hacker News.",
+            "Every network: LinkedIn, X, Hacker News, YouTube + many more",
+            "Posts to LinkedIn, X, Hacker News, [YouTube](/field-manual/youtube/) and more.",
+            "Posts to LinkedIn, X, Hacker News, **YouTube** and more.",
+            "Posts to LinkedIn, X, _Hacker News_, <b>YouTube</b> and more.",
+        ):
+            self.write("content/en/compare/acme.md", text + "\n")
+            self.assertEqual(self.found(), [], text)
+
+    def test_open_marker_away_from_the_list_does_not_open_it(self):
+        for text in (
+            "Blowhorn posts to LinkedIn, X and Hacker News from one or more computers.",
+            "Post, follow and more on LinkedIn, X and Hacker News.",
+            "Accounts such as yours post to LinkedIn, X and Hacker News.",
+        ):
+            self.write("content/en/compare/acme.md", text + "\n")
+            found = self.found()
+            self.assertEqual(len(found), 1, (text, found))
+            self.assertIn("leaves out YouTube", found[0])
+
+    def test_curated_lists_pass(self):
+        self.write(
+            "data/x.yaml",
+            "a: Analytics cover LinkedIn and YouTube.\n"
+            "b: Hacker News and X.\n",
+        )
+        self.assertEqual(self.found(), [])
+
+    def test_layouts_are_scanned_through_their_tags(self):
+        self.write("layouts/x.html", f"<p>One queue for <b>{self.ALL}</b>.</p>\n")
+        self.assertEqual(len(self.found()), 1)
+        self.write("layouts/x.html", "<p>One queue for <b>LinkedIn, X, Hacker News</b> and more.</p>\n")
+        self.assertEqual(self.found(), [])
+
+    def test_synced_docs_are_not_scanned(self):
+        self.write("content/en/docs/x.md", f"Blowhorn posts to {self.ALL}.\n")
+        self.assertEqual(self.found(), [])
+
+    def test_recorded_film_captions_are_allowed(self):
+        (self.tmp / "content/en/resources/videos/getting-started").mkdir(parents=True)
+        self.write(
+            "content/en/resources/videos/getting-started/battalion-thunder.md",
+            "Major Blowhorn's one call lands on LinkedIn, X and Hacker News.\n",
+        )
+        self.assertEqual(self.found(), [])
+
+
 class PlatformSoonCopyTest(unittest.TestCase):
     """The site's own copy must never call a listed platform coming soon,
     while "coming soon" copy that names no platform stays allowed and the
