@@ -7,8 +7,8 @@
       "title": "Blowhorn for developer distribution",
       "weight": 10,
       "headline": "Post where developers actually talk.",
-      "lead": "Hacker News, GitHub, Reddit and Slack, plus LinkedIn, X and Bluesky, from one queue. Posted as you, at a human pace.",
-      "description": "One queue for the networks technical companies use: Hacker News, GitHub, Reddit and Slack, plus LinkedIn, X and Bluesky, posted as you from your own browser.",
+      "lead": "Hacker News, GitHub, Reddit and Slack, plus LinkedIn, X, Bluesky, YouTube and more, from one queue. Posted as you, at a human pace.",
+      "description": "One queue for the networks technical companies use: Hacker News, GitHub, Reddit and Slack, plus LinkedIn, X, Bluesky, YouTube and more, posted as you from your own browser.",
       "art": {
         "src": "assets/brand/cast/major-6-hat-left-horn.webp",
         "alt": "Major Blowhorn, a teal rooster drill sergeant in a campaign hat, pointing and shouting through his gold bullhorn, Caribbean Green sound waves pouring out of it"
@@ -64,11 +64,11 @@
         },
         {
           "q": "How does it post to each network?",
-          "a": "LinkedIn, X, Reddit and Hacker News: Blowhorn types in your own browser, signed in as you. Slack, Bluesky and GitHub go through their APIs."
+          "a": "LinkedIn, X, Reddit, Hacker News and YouTube: Blowhorn works in your own browser, signed in as you; once a profile gives YouTube Data API consent, YouTube uploads, comments, replies and likes go through YouTube's official API. Slack, Bluesky and GitHub go through their APIs."
         },
         {
           "q": "What about Instagram, TikTok, Facebook and YouTube?",
-          "a": "Blowhorn works on them in your own browser, signed in as you."
+          "a": "YouTube is supported. Blowhorn works in your own signed-in browser; with YouTube Data API consent, uploads, comments, replies and likes go through YouTube's official API. Instagram, Facebook and TikTok are on the way; Blowhorn doesn't post there yet."
         }
       ],
       "related": [
@@ -350,7 +350,7 @@
         },
         {
           "q": "What about Instagram, TikTok, Facebook and YouTube?",
-          "a": "Blowhorn works on them in your own browser, signed in as you."
+          "a": "YouTube is supported. Blowhorn works in your own signed-in browser; with YouTube Data API consent, uploads, comments, replies and likes go through YouTube's official API. Instagram, Facebook and TikTok are on the way; Blowhorn doesn't post there yet."
         }
       ],
       "related": [

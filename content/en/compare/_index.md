@@ -6,7 +6,7 @@ lead: Plenty of tools will post for you. Blowhorn posts as you, from every compu
 layout: compare
 aliases:
   - /versus/
-lastmod: 2026-10-26
+lastmod: 2026-11-20
 sitemap:
   changefreq: monthly
   priority: 0.5
@@ -96,7 +96,7 @@ rows:
     advocacy: { level: yes, text: "Yes" }
     local: { level: no, text: "No" }
   - feature: Instagram, TikTok, Facebook and YouTube
-    blowhorn: { level: partial, text: "Coming soon" }
+    blowhorn: { level: partial, text: "YouTube only" }
     schedulers: { level: yes, text: "Yes" }
     linkedin: { level: no, text: "No" }
     advocacy: { level: partial, text: "Some" }

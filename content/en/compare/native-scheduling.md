@@ -5,7 +5,7 @@
   "description": "LinkedIn and X let you schedule posts for free, one network and one profile at a time. Blowhorn puts every network and every profile you run in one queue, and lets your profiles amplify each post.",
   "layout": "versus",
   "weight": 90,
-  "lastmod": "2026-10-13",
+  "lastmod": "2026-11-20",
   "competitor": "native scheduling",
   "mark": "Nt",
   "site_url": "https://www.linkedin.com/help/linkedin/answer/a1524001",
@@ -17,14 +17,14 @@
     "You don't need anyone to amplify your posts"
   ],
   "us": [
-    "You post the same news across LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky and Slack",
+    "You post the same news across LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube and more",
     "You run several profiles and want them to amplify each other",
-    "You want one place to see LinkedIn, X and Bluesky results"
+    "You want one place to see LinkedIn, X, Bluesky and YouTube results"
   ],
   "wins": [
     "One queue for every network and every profile",
     "Your other profiles amplify a post in its first hour",
-    "Results from LinkedIn, X and Bluesky in one place"
+    "Results from LinkedIn, X, Bluesky and YouTube in one place"
   ],
   "loses": [
     "Built-in scheduling is free and official",
@@ -36,7 +36,7 @@
     {
       "f": "Networks",
       "t": "One at a time, inside each app",
-      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack. Instagram, TikTok, Facebook and YouTube coming soon"
+      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube and more"
     },
     {
       "f": "Profiles",
@@ -66,7 +66,7 @@
       "a": "If you only post on LinkedIn from one profile, it's free and it works. Blowhorn helps when one announcement has to land on many networks and profiles at once."
     }
   ],
-  "major": "Free is fine for one front. Launch day has seven.",
+  "major": "Free is fine for one front. Launch day needs every network.",
   "aliases": [
     "/versus/native-scheduling/"
   ],

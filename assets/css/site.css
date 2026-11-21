@@ -973,6 +973,9 @@ html[data-hero-art="fan"] .platforms-fan { display: none; }
 .fan .fan-line:nth-of-type(5) { animation-delay: 240ms; }
 .fan .fan-line:nth-of-type(6) { animation-delay: 300ms; }
 .fan .fan-line:nth-of-type(7) { animation-delay: 360ms; }
+.fan .fan-line:nth-of-type(8) { animation-delay: 420ms; }
+/* More platforms than fit: cut-off logos at the picture's edge, quieter than the wired tiles. */
+.fan .fan-more { opacity: 0.6; }
 @media (prefers-reduced-motion: reduce) {
   .fan .fan-line { animation: none; stroke-dasharray: none; }
   .fan .fan-pulse { display: none; }
@@ -1078,8 +1081,16 @@ html[data-hero-art="fan"] .platforms-fan { display: none; }
   gap: var(--space-3);
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
-/* Seven platforms in two columns leave one orphan; let it span the row. */
-@media (max-width: 639px) { .platforms > :last-child:nth-child(odd) { grid-column: 1 / -1; } }
+/* The last item says there are more than the grid shows; it is not a platform card. */
+.platforms-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6) var(--space-3) var(--space-4);
+  border: var(--stroke-hairline) dashed var(--line-strong);
+  border-radius: var(--radius-lg);
+  color: var(--ink-muted);
+}
 @media (min-width: 640px) { .platforms { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (min-width: 960px) { .platforms { grid-template-columns: repeat(7, minmax(0, 1fr)); } }
 .platform {
@@ -2661,6 +2672,8 @@ body { background: var(--surface); }
 .versus-all { margin-top: var(--space-6); }
 .versus-logos { display: flex; flex-wrap: wrap; gap: var(--grid-gap); padding: 0; list-style: none; }
 .versus-logos li { display: grid; justify-items: center; gap: var(--space-2); }
+/* "+ many more": the strip is never the whole set. */
+.versus-more { align-self: center; color: var(--ink-muted); }
 
 /* ---------- Whitespace and rhythm (DESIGN.md, "Whitespace and rhythm") ----------
    One spacing system for every page. Sections, heads, grids and cards read these

@@ -5,7 +5,7 @@
   "description": "Thunderclap (thunderclap.it, 2012 to 2018) proved that a crowd lifting one message works. It closed on 15 Sep 2018. Blowhorn carries the idea forward with real people acting as themselves, at a human pace.",
   "layout": "versus",
   "weight": 60,
-  "lastmod": "2026-10-12",
+  "lastmod": "2026-11-20",
   "competitor": "Thunderclap",
   "mark": "Tc",
   "site_url": "https://web.archive.org/web/20180902194404/http://thunderclap.it/",
@@ -36,12 +36,12 @@
     {
       "f": "Where it acted",
       "t": "Thunderclap's cloud",
-      "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit and Hacker News; the platform's API for GitHub, Bluesky and Slack"
+      "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit, Hacker News and YouTube; the platform's API for GitHub, Bluesky and Slack"
     },
     {
       "f": "Networks",
       "t": "Twitter, Facebook, Tumblr",
-      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack. Instagram, TikTok, Facebook and YouTube coming soon"
+      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube and more"
     },
     {
       "f": "Bought engagement",

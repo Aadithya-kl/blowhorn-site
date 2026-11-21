@@ -5,7 +5,7 @@
   "description": "Postiz is the strongest agent-ready scheduler out there, with 30+ networks, a hosted MCP and a self-host option. Blowhorn's difference is who presses Post: your own browser, on your own computers, plus Hacker News, GitHub and LinkedIn outreach.",
   "layout": "versus",
   "weight": 18,
-  "lastmod": "2026-10-13",
+  "lastmod": "2026-11-20",
   "competitor": "Postiz",
   "mark": "Pz",
   "site_url": "https://postiz.com/",
@@ -27,12 +27,12 @@
     {
       "f": "Where it acts",
       "t": "Postiz's cloud, or your self-hosted server, through official apps",
-      "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit and Hacker News; the platform's API for GitHub, Bluesky and Slack"
+      "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit, Hacker News and YouTube; the platform's API for GitHub, Bluesky and Slack"
     },
     {
       "f": "Networks",
       "t": "30+ incl. LinkedIn, X, Reddit, Slack, Discord, Bluesky, Instagram, TikTok, YouTube",
-      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack. Instagram, TikTok, Facebook and YouTube coming soon"
+      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube and more"
     },
     {
       "f": "Amplify across your accounts",

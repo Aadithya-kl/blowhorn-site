@@ -7,8 +7,8 @@ description: Every action Blowhorn takes on each platform, and whether that plat
 lead: "One table, every platform. What Blowhorn can do, and how each platform's own rules grade it. Read the notes before you charge."
 layout: field-manual
 weight: 1
-checked: 13 October 2026
-lastmod: 2026-10-26
+checked: 20 November 2026
+lastmod: 2026-11-20
 # Supported actions come from the product's capability list and the public
 # Platforms reference (/docs/reference/platforms/). Each risk grade cites the
 # platform's own rule in the page body; no platform publishes a safe number.
@@ -62,7 +62,13 @@ matrix:
   - platform: Slack
     via: Official API, your token
     message: { risk: care, text: "Each workspace sets its own rules. Hypothesis: one message per channel" }
-  - platform: Facebook, YouTube, Instagram, TikTok, Threads, Mastodon
+  - platform: YouTube
+    page: /field-manual/youtube
+    via: Your browser, through the extension; after Data API consent, uploads, comments, replies and likes go through YouTube's official API
+    post: { risk: care, text: "Your own video, private unless you choose, but YouTube bans automated access. Capped at 3 uploads a day [10]" }
+    comment: { risk: care, text: "No high-volume or repetitive comments; only in a run you start [16]" }
+    amplify: { risk: risky, text: "Likes from many profiles artificially increase a metric [17]" }
+  - platform: Facebook, Instagram, TikTok, Threads, Mastodon
     page: /field-manual/other-feeds
     via: Not supported by Blowhorn
 
@@ -87,6 +93,8 @@ Some of these actions have no official API at all. Hacker News has no write API:
 
 A grade describes the action, not the tool. LinkedIn says it doesn't permit "browser extensions that... automate activity on LinkedIn's website" ([LinkedIn Help](https://www.linkedin.com/help/linkedin/answer/a1341387)). Blowhorn types at human pace and hands you every CAPTCHA, but it is a browser extension acting on LinkedIn, so every LinkedIn action carries that rule with it. Weigh that before you run anything there unattended.
 
+YouTube's Terms of Service carry the same kind of rule: you may not "access the Service using any automated means (such as robots, botnets or scrapers)" ([YouTube Terms of Service](https://www.youtube.com/static?template=terms)). Blowhorn never comments, replies or likes on YouTube from a scheduled run, but every YouTube action is still software acting on YouTube.
+
 ## Notes and sources
 
 1. LinkedIn: "We're improving our systems to reduce repetitive, low-substance posts and engagement bait, such as 'comment to agree' prompts" ([LinkedIn Pressroom, 12 Mar 2026](https://news.linkedin.com/2026/ImprovingTheFeed)).
@@ -104,3 +112,5 @@ A grade describes the action, not the tool. LinkedIn says it doesn't permit "bro
 13. Hacker News: "Don't solicit upvotes, comments, or submissions" and "Don't post generated text or AI-edited text" ([HN guidelines](https://news.ycombinator.com/newsguidelines.html)).
 14. Bluesky: "Do not artificially manipulate features or social signals to gain unearned reach" ([Community Guidelines, 19 Sep 2025](https://bsky.social/about/support/community-guidelines)).
 15. GitHub does not allow "inauthentic interactions, such as fake accounts and automated inauthentic activity; rank abuse, such as automated starring or following" ([GitHub Acceptable Use Policies](https://docs.github.com/en/site-policy/acceptable-use-policies/github-acceptable-use-policies)).
+16. YouTube's spam policy prohibits "Using high-volume, repetitive, or deceptive comments, live chats, or other messages" ([Spam policy](https://support.google.com/youtube/answer/2801973)).
+17. YouTube: "YouTube doesn't allow anything that artificially increases the number of views, likes, comments, or other metrics either by using automatic systems or serving up videos to unsuspecting viewers" ([Fake engagement policy](https://support.google.com/youtube/answer/3399767)).

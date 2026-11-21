@@ -23,9 +23,19 @@ matching hash, so JS enhancement cannot leave all four panels stacked.
 No platform-availability "Coming soon" label may return: the catalog, the
 action matrix, the docs platform pages and the docs all-actions table are
 scanned for it (check_platform_labels), and the showcase page's "Where it
-works" section is scanned too. Other "coming soon" copy stays out of scope:
-team invites, the Windows waitlist and /coming-soon/thanks/, the REST API,
-Risk Profile, and compare pages about a competitor.
+works" section is scanned too. The site's own copy is scanned at the source
+as well (check_platform_soon_copy): no sentence in content/en/ outside the
+synced docs, or in data/, may name a platform data/integrations.json lists
+and call it coming soon, and no data or front matter record (a table row,
+an FAQ entry) may name one in one field and say "Coming soon" in another,
+so a compare page's Networks row or an FAQ answer cannot keep one after the
+platform ships. Other "coming soon" copy stays out
+of scope: team invites, the Windows waitlist and /coming-soon/thanks/, the
+REST API and Risk Profile, which name no platform.
+
+Blowhorn's networks are never counted either (check_countable_network_copy):
+"eight networks" or "seven fronts" in site copy fails, so a new platform
+never leaves a stale count.
 
 Usage: check_theme.py BUILD_DIR
 """
@@ -36,6 +46,8 @@ import subprocess
 import sys
 from html.parser import HTMLParser
 from pathlib import Path
+
+import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -277,6 +289,167 @@ def check_platform_labels(build_dir: Path, root: Path) -> list[str]:
     return problems
 
 
+# One sentence of copy: a line break or a full stop ends it.
+SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+|\n")
+# A status with no subject of its own, such as a table cell's "Coming soon".
+BARE_SOON_RE = re.compile(r"\W*coming[ -]soon\W*", re.I)
+
+
+def platform_names(root: Path) -> list[str]:
+    """Every name a listed platform goes by in copy: its YAML or catalog
+    name, and that name without a parenthetical ("X (Twitter)" is also X)."""
+    data = json.loads((root / "data/integrations.json").read_text(encoding="utf-8"))
+    names: set[str] = set()
+    for item in data["platforms"]:
+        name = item.get("name")
+        yaml_path = root / "data" / "platforms" / f"{item['id']}.yaml"
+        if yaml_path.is_file():
+            name = yaml.safe_load(yaml_path.read_text(encoding="utf-8")).get("name") or name
+        if not name:
+            continue
+        names.add(name)
+        names.add(re.sub(r"\s*\(.*?\)", "", name).strip())
+    return sorted(names)
+
+
+def copy_documents(path: Path) -> tuple[list, str]:
+    """A source file as its structured documents (JSON or YAML data, a
+    page's JSON or YAML front matter) and its Markdown body prose."""
+    text = path.read_text(encoding="utf-8")
+    if path.suffix == ".json":
+        return [json.loads(text)], ""
+    if path.suffix == ".yaml":
+        return [yaml.safe_load(text)], ""
+    if text.startswith("{"):
+        front, end = json.JSONDecoder().raw_decode(text)
+        return [front], text[end:]
+    if text.startswith("---"):
+        end = text.find("\n---", 3)
+        if end >= 0:
+            return [yaml.safe_load(text[3:end])], text[end + 4 :]
+    return [], text
+
+
+def record_parts(node, strings: list[str], nested: list) -> None:
+    """A record's strings are its own fields and those of the mappings it
+    holds; each item of a list it holds is a record of its own."""
+    if isinstance(node, str):
+        strings.append(node)
+    elif isinstance(node, dict):
+        for value in node.values():
+            record_parts(value, strings, nested)
+    elif isinstance(node, list):
+        nested.extend(node)
+
+
+def soon_records(document, names_platform) -> list[str]:
+    """Judge each record (the document, and every list item in it) as one
+    unit: fail a sentence that names a platform and calls it coming soon,
+    and a bare "Coming soon" when another field of its record names a
+    platform, such as a compare row whose feature lists the platforms and
+    whose Blowhorn cell says "Coming soon"."""
+    found: list[str] = []
+    pending = [document]
+    while pending:
+        strings: list[str] = []
+        record_parts(pending.pop(0), strings, pending)
+        statuses, subjects = [], []
+        for text in strings:
+            sentences = [s.strip() for s in SENTENCE_SPLIT_RE.split(text)]
+            found += [s for s in sentences if PLATFORM_LABEL_RE.search(s) and names_platform(s)]
+            bare = any(BARE_SOON_RE.fullmatch(s) for s in sentences)
+            (statuses if bare else subjects).append(text)
+        named = [text for text in subjects if names_platform(text)]
+        if statuses and named:
+            found.append(f"{named[0].strip()} / {statuses[0].strip()}")
+    return found
+
+
+def check_platform_soon_copy(root: Path) -> list[str]:
+    """Fail site copy that names a listed platform and calls it coming
+    soon. Scans content/en/ (the synced docs are the product's and are
+    guarded on the built pages by check_platform_labels) and every JSON and
+    YAML file under data/. Structured data and front matter are judged a
+    record at a time (soon_records); Markdown body prose a sentence at a
+    time."""
+    names = platform_names(root)
+    name_res = [re.compile(rf"(?<![\w-]){re.escape(n)}(?![\w-])") for n in names]
+
+    def names_platform(text: str) -> bool:
+        return any(rx.search(text) for rx in name_res)
+
+    content = root / "content" / "en"
+    docs = content / "docs"
+    files = [
+        path
+        for path in sorted(content.rglob("*.md"))
+        if docs not in path.parents
+    ]
+    data = root / "data"
+    files += sorted(data.rglob("*.json")) + sorted(data.rglob("*.yaml"))
+    problems: list[str] = []
+    for path in files:
+        documents, body = copy_documents(path)
+        found = [hit for document in documents for hit in soon_records(document, names_platform)]
+        found += [
+            s.strip()
+            for s in SENTENCE_SPLIT_RE.split(body)
+            if PLATFORM_LABEL_RE.search(s) and names_platform(s)
+        ]
+        rel = path.relative_to(root)
+        problems += [
+            f"{rel} calls a listed platform coming soon: {hit[:160]!r}" for hit in found
+        ]
+    return problems
+
+
+NUMBER_WORDS = (
+    "two three four five six seven eight nine ten eleven twelve thirteen "
+    "fourteen fifteen sixteen"
+).split()
+# Blowhorn's networks are never counted: "seven networks", "8 fronts" go stale
+# the day a platform ships. "seven tabs" and "all seven" are not matches.
+COUNTED_NETWORKS_RE = re.compile(
+    rf"\b(?:{'|'.join(NUMBER_WORDS)}|\d+)\s+(?:networks|fronts)\b", re.I
+)
+
+
+# Counts that are not Blowhorn's: a competitor's own figure, and the demo
+# page's four-act scene. Each is (path, phrase).
+COUNTED_NETWORKS_ALLOWED = {
+    ("content/en/compare/blotato.md", "9 networks"),
+    ("content/en/compare/publer.md", "13 networks"),
+    ("content/en/compare/buffer.md", "four networks"),
+    ("layouts/demo.html", "four fronts"),
+}
+
+
+def check_countable_network_copy(root: Path) -> list[str]:
+    """Fail marketing copy that counts networks ("eight networks", "seven
+    fronts"). Scans content/en/ outside the synced docs, data/*.json and
+    *.yaml, and layouts/."""
+    content = root / "content" / "en"
+    docs = content / "docs"
+    files = [p for p in sorted(content.rglob("*.md")) if docs not in p.parents]
+    data = root / "data"
+    files += sorted(data.rglob("*.json")) + sorted(data.rglob("*.yaml"))
+    files += sorted((root / "layouts").rglob("*.html"))
+    problems: list[str] = []
+    for path in files:
+        text = path.read_text(encoding="utf-8")
+        rel = path.relative_to(root).as_posix()
+        for m in COUNTED_NETWORKS_RE.finditer(text):
+            if (rel, m.group(0).lower()) in COUNTED_NETWORKS_ALLOWED:
+                continue
+            line = text.count("\n", 0, m.start()) + 1
+            problems.append(
+                f"{rel}:{line} counts networks ({m.group(0)!r}); "
+                "never count them, say 'every network you post on' or 'and more' "
+                "(docs/action-examples.md)"
+            )
+    return problems
+
+
 def main(root: Path) -> int:
     problems = []
     want_theme = expected_home_theme()
@@ -352,6 +525,8 @@ def main(root: Path) -> int:
         problems.extend(platforms_default_problems())
 
     problems.extend(check_platform_labels(root, ROOT))
+    problems.extend(check_platform_soon_copy(ROOT))
+    problems.extend(check_countable_network_copy(ROOT))
 
     for item in problems:
         print(f"theme: {item}", file=sys.stderr)

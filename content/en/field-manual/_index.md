@@ -6,7 +6,7 @@ description: What LinkedIn, X, Reddit and other social feeds reward and penalize
 lead: "We've lost more profiles so you don't have to. Here is what every feed told us, in its own words, and what we learned the hard way."
 layout: field-manual
 checked: 28 October 2026
-lastmod: 2026-10-28
+lastmod: 2026-11-20
 sitemap:
   changefreq: monthly
   priority: 0.5
@@ -53,4 +53,4 @@ None of that makes a behavior allowed. The rules govern what an account does, no
 
 Curious what sites can see about your browser? Run the free check at [Blowhorn Tells](https://tells.blowhorn.ai/). It shows what a page can read, not what a platform will decide.
 
-Blowhorn posts to LinkedIn, X, Reddit, Hacker News, Bluesky, Slack and GitHub, on your computer ([Platforms](/docs/reference/platforms/), [System requirements](/docs/reference/requirements/)). The pages on Facebook, YouTube, Instagram, TikTok, Threads and Mastodon are general education only: Blowhorn doesn't post to them.
+Blowhorn posts to LinkedIn, X, Reddit, Hacker News, Bluesky, Slack, GitHub and YouTube, on your computer ([Platforms](/docs/reference/platforms/), [System requirements](/docs/reference/requirements/)). The page on Facebook, Instagram, TikTok, Threads and Mastodon is general education only: Blowhorn doesn't post to them.

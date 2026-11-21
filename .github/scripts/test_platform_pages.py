@@ -121,8 +121,8 @@ class SourceTest(unittest.TestCase):
 
     def test_a_platform_without_yaml_gets_no_page(self):
         def fn(rec):
-            rec["platform"] = "youtube"
-        self.assertNamed(self.mutate(fn), "data/platforms/youtube.yaml is missing")
+            rec["platform"] = "instagram"
+        self.assertNamed(self.mutate(fn), "data/platforms/instagram.yaml is missing")
 
     def test_an_activity_must_name_an_action_the_platform_lists(self):
         def fn(rec):

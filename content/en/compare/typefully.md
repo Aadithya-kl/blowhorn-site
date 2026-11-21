@@ -5,7 +5,7 @@
   "description": "Typefully is the best writing experience for threads and posts on X, LinkedIn, Threads, Bluesky and Mastodon. Blowhorn takes over once it's written: real people amplifying it across many networks.",
   "layout": "versus",
   "weight": 17,
-  "lastmod": "2026-10-12",
+  "lastmod": "2026-11-20",
   "competitor": "Typefully",
   "mark": "Tf",
   "site_url": "https://typefully.com/",
@@ -32,12 +32,12 @@
     {
       "f": "Where it acts",
       "t": "Typefully's cloud",
-      "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit and Hacker News; the platform's API for GitHub, Bluesky and Slack"
+      "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit, Hacker News and YouTube; the platform's API for GitHub, Bluesky and Slack"
     },
     {
       "f": "Networks",
       "t": "X, LinkedIn, Threads, Bluesky, Mastodon",
-      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack. Instagram, TikTok, Facebook and YouTube coming soon"
+      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube and more"
     },
     {
       "f": "Many people amplifying one post",

@@ -5,7 +5,7 @@
   "description": "Blowhorn isn't a bot. It's you. Hootsuite is a full social operations suite for larger teams: inbox, listening, approvals, ads. Blowhorn is a lighter, sharper tool for technical voices who need real people amplifying on developer networks.",
   "layout": "versus",
   "weight": 11,
-  "lastmod": "2026-11-02",
+  "lastmod": "2026-11-20",
   "competitor": "Hootsuite",
   "mark": "Hs",
   "site_url": "https://www.hootsuite.com/",
@@ -33,7 +33,7 @@
     {
       "f": "Where it acts",
       "t": "Hootsuite's cloud, through official apps",
-      "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit and Hacker News; the platform's API for GitHub, Bluesky and Slack"
+      "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit, Hacker News and YouTube; the platform's API for GitHub, Bluesky and Slack"
     },
     {
       "f": "Inbox, listening, approvals",
@@ -93,34 +93,14 @@
     "intro": "One message, every profile, previewed first."
   },
   "logos": [
-    {
-      "src": "assets/platforms/linkedin-in-bug.png",
-      "alt": "LinkedIn"
-    },
-    {
-      "src": "assets/platforms/x-logo-black.png",
-      "alt": "X"
-    },
-    {
-      "src": "assets/platforms/reddit-logo.png",
-      "alt": "Reddit"
-    },
-    {
-      "src": "assets/platforms/hacker-news-y18.svg",
-      "alt": "Hacker News"
-    },
-    {
-      "src": "assets/platforms/github-invertocat-black.svg",
-      "alt": "GitHub"
-    },
-    {
-      "src": "assets/platforms/bluesky-butterfly-blue.svg",
-      "alt": "Bluesky"
-    },
-    {
-      "src": "assets/platforms/slack-mark.svg",
-      "alt": "Slack"
-    }
+    "linkedin",
+    "x",
+    "reddit",
+    "hacker-news",
+    "github",
+    "bluesky",
+    "slack",
+    "youtube"
   ],
   "sitemap": {
     "changefreq": "monthly",

@@ -16,16 +16,16 @@
    "q": "Is Sprout Social better than Blowhorn?"
   },
   {
-   "a": "No. Blowhorn's analytics cover LinkedIn, X and Bluesky across all your computers, which is useful but not a reporting suite.",
+   "a": "No. Blowhorn's analytics cover LinkedIn, X, Bluesky and YouTube across all your computers, which is useful but not a reporting suite.",
    "q": "Can Blowhorn replace Sprout's reporting?"
   }
  ],
  "group": "Cloud schedulers",
- "lastmod": "2026-11-02",
+ "lastmod": "2026-11-20",
  "layout": "versus",
  "linkTitle": "Sprout Social",
  "loses": [
-  "Reporting and listening: Sprout's analytics, smart inbox and listening are excellent. Blowhorn's analytics cover LinkedIn, X and Bluesky",
+  "Reporting and listening: Sprout's analytics, smart inbox and listening are excellent. Blowhorn's analytics cover LinkedIn, X, Bluesky and YouTube",
   "Enterprise governance: roles, approvals and support for brand teams with compliance needs",
   "Advocacy at scale: Sprout's Employee Advocacy add-on is the enterprise answer; Blowhorn's team amplification is the small-team end"
  ],
@@ -40,12 +40,12 @@
    "t": "Brand and social teams"
   },
   {
-   "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit and Hacker News; the platform's API for GitHub, Bluesky and Slack",
+   "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit, Hacker News and YouTube; the platform's API for GitHub, Bluesky and Slack",
    "f": "Where it acts",
    "t": "Sprout's cloud, through official APIs"
   },
   {
-   "b": "One picture of runs and analytics for LinkedIn, X and Bluesky",
+   "b": "One picture of runs and analytics for LinkedIn, X, Bluesky and YouTube",
    "f": "Reporting and listening",
    "t": "Excellent - analytics, smart inbox, listening"
   },

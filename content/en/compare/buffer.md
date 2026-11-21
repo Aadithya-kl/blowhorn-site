@@ -5,7 +5,7 @@
   "description": "Blowhorn isn't a bot. It's you. Buffer is the friendliest way to keep a steady, approved calendar on many networks, with every computer switched off. Blowhorn is for the moment you need many real voices on the networks developers use.",
   "layout": "versus",
   "weight": 10,
-  "lastmod": "2026-11-16",
+  "lastmod": "2026-11-20",
   "competitor": "Buffer",
   "mark": "Bu",
   "site_url": "https://buffer.com/",
@@ -17,7 +17,7 @@
     "You want a free plan to start, and per-channel pricing that grows one channel at a time"
   ],
   "us": [
-    "Your audience lives on LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky and Slack",
+    "Your audience lives on LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube and more",
     "One post should be amplified by your founders, your team and your supporters, as themselves, not just published once",
     "You want posting to happen from your own browser, on your own computers, at a human pace, under rules you set",
     "You run one person, a local practice, a whole enterprise, or several client brands from one shared queue"
@@ -28,12 +28,12 @@
     {
       "f": "Where it acts",
       "t": "Buffer's cloud, through each network's official APIs",
-      "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit and Hacker News; the platform's API for GitHub, Bluesky and Slack"
+      "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit, Hacker News and YouTube; the platform's API for GitHub, Bluesky and Slack"
     },
     {
       "f": "Networks",
       "t": "Many, incl. Instagram, TikTok, Threads, Pinterest, Mastodon, Facebook, YouTube, LinkedIn, X and Bluesky",
-      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky and Slack. More networks: Coming soon"
+      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube and more"
     },
     {
       "f": "Amplify one post across many people",
@@ -70,7 +70,7 @@
   "faq": [
     {
       "q": "Is Buffer better than Blowhorn?",
-      "a": "For a broad, always-on calendar across consumer networks, yes. For amplifying one message from many real profiles on LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky and Slack, we think Blowhorn is the better fit."
+      "a": "For a broad, always-on calendar across consumer networks, yes. For amplifying one message from many real profiles on LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack and YouTube, we think Blowhorn is the better fit."
     },
     {
       "q": "Can I use both?",
@@ -93,34 +93,14 @@
     "intro": "Preview before anything goes out. AI drafts, you decide."
   },
   "logos": [
-    {
-      "src": "assets/platforms/linkedin-in-bug.png",
-      "alt": "LinkedIn"
-    },
-    {
-      "src": "assets/platforms/x-logo-black.png",
-      "alt": "X"
-    },
-    {
-      "src": "assets/platforms/reddit-logo.png",
-      "alt": "Reddit"
-    },
-    {
-      "src": "assets/platforms/hacker-news-y18.svg",
-      "alt": "Hacker News"
-    },
-    {
-      "src": "assets/platforms/github-invertocat-black.svg",
-      "alt": "GitHub"
-    },
-    {
-      "src": "assets/platforms/bluesky-butterfly-blue.svg",
-      "alt": "Bluesky"
-    },
-    {
-      "src": "assets/platforms/slack-mark.svg",
-      "alt": "Slack"
-    }
+    "linkedin",
+    "x",
+    "reddit",
+    "hacker-news",
+    "github",
+    "bluesky",
+    "slack",
+    "youtube"
   ],
   "sitemap": {
     "changefreq": "monthly",

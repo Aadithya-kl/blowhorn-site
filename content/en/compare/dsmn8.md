@@ -5,7 +5,7 @@
   "description": "Blowhorn isn't a bot. It's you. DSMN8 is an employee advocacy and executive influence platform for mid-market and enterprise. Blowhorn is a lighter way for small technical teams to amplify through real people.",
   "layout": "versus",
   "weight": 32,
-  "lastmod": "2026-11-03",
+  "lastmod": "2026-11-20",
   "competitor": "DSMN8",
   "mark": "D8",
   "site_url": "https://dsmn8.com/",
@@ -19,7 +19,7 @@
   ],
   "us": [
     "You are a small technical team, not an enterprise rollout",
-    "Your audience is on Hacker News, Reddit, GitHub, LinkedIn, X and Bluesky, and you use Slack messages via API",
+    "Your audience is on Hacker News, Reddit, GitHub, LinkedIn, X, Bluesky, YouTube and more, and you use Slack messages via API",
     "You want to start free during early access, with no sales call in the way, knowing sessions can break, automation can still be blocked, and a computer must be awake because this is not hosted SaaS"
   ],
   "network_logos": [
@@ -29,7 +29,8 @@
     "hacker-news",
     "github",
     "bluesky",
-    "slack"
+    "slack",
+    "youtube"
   ],
   "wins": [
     "Developer networks: Hacker News, Reddit and GitHub, plus Slack messages via API; DSMN8's Slack surface is internal distribution and notification only, not public publishing",
@@ -38,7 +39,7 @@
   ],
   "loses": [
     "DSMN8 governs a program: approvals, SAML SSO, role controls, audit trails and gamification. Blowhorn does not claim those here",
-    "DSMN8 reports UTM attribution, earned media value and CRM attribution. Blowhorn analytics cover LinkedIn, X and Bluesky",
+    "DSMN8 reports UTM attribution, earned media value and CRM attribution. Blowhorn analytics cover LinkedIn, X, Bluesky and YouTube",
     "DSMN8 keeps running while your computers are closed. Blowhorn needs a computer awake"
   ],
   "price_them": "Custom quote only, annual contract",
@@ -52,7 +53,7 @@
     {
       "f": "Where it acts",
       "t": "The vendor's cloud; employees connect their accounts",
-      "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit and Hacker News; the platform's API for GitHub, Bluesky and Slack"
+      "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit, Hacker News and YouTube; the platform's API for GitHub, Bluesky and Slack"
     },
     {
       "f": "Content library, approvals, gamification",
@@ -67,7 +68,7 @@
     {
       "f": "Analytics",
       "t": "UTM tracking, earned media value, CRM attribution",
-      "b": "LinkedIn, X and Bluesky analytics"
+      "b": "LinkedIn, X, Bluesky and YouTube analytics"
     },
     {
       "f": "Many people amplifying one post",

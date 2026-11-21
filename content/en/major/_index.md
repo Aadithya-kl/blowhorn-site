@@ -5,7 +5,7 @@ description: The life, legend and loud opinions of Major Blowhorn, Blowhorn's dr
 lead: Thirty years of basic training. One horn. Zero patience for messages nobody hears.
 layout: major
 outputs: ["HTML", "md", "dispatches"]
-lastmod: 2026-10-18
+lastmod: 2026-11-20
 sitemap:
   changefreq: weekly
   priority: 0.4
@@ -75,7 +75,7 @@ troops:
     id: 'general'
     img: 'assets/brand/cast/general-base.webp'
     alt: 'The General, an old gray billy goat with a white beard and a coral cap band, holding a bugle to his ear and leaning on his cane'
-    v: 'The old goat who promoted Major after the Blowhard incident, and he has been half deaf ever since. Now he holds a bugle to his ear and trusts only the numbers: real likes, replies and follows from LinkedIn, X and Bluesky, all in one report. He has never smiled. He came close once, at a reply count.'
+    v: 'The old goat who promoted Major after the Blowhard incident, and he has been half deaf ever since. Now he holds a bugle to his ear and trusts only the numbers: real likes, replies and follows from LinkedIn, X, Bluesky and YouTube, all in one report. He has never smiled. He came close once, at a reply count.'
     links:
       - t: "What the numbers mean"
         u: '/docs/explanation/analytics/'
@@ -99,7 +99,7 @@ troops:
     id: 'keyboard-warrior'
     img: 'assets/brand/cast/keyboard-warrior-base.webp'
     alt: 'Keyboard Warrior, a gold rooster in a teal helmet holding a keyboard with green keys like a shield'
-    v: 'A gold rooster with a keyboard for a shield. You write the post one time and he carries it to LinkedIn, X, Reddit, Bluesky, Slack, Hacker News and GitHub, no copy-paste marathon required. He will not improve your jokes. He just makes sure your words land where your people are.'
+    v: 'A gold rooster with a keyboard for a shield. You write the post one time and he carries it to LinkedIn, X, Reddit, Bluesky, Slack, Hacker News, GitHub and YouTube, no copy-paste marathon required. He will not improve your jokes. He just makes sure your words land where your people are.'
     links:
       - t: "How posting works"
         u: '/docs/how-to/publish/post-content/'

@@ -5,7 +5,7 @@
   "description": "Claude in Chrome is a general browser agent that can do almost anything you can, in your own logins. Blowhorn is a dedicated social tool with a queue, a schedule, amplification and scripted, rehearsable actions, and Claude Code can drive it.",
   "layout": "versus",
   "weight": 51,
-  "lastmod": "2026-11-02",
+  "lastmod": "2026-11-20",
   "competitor": "Claude in Chrome",
   "mark": "CiC",
   "site_url": "https://claude.com/claude-in-chrome",
@@ -94,6 +94,7 @@
     "hacker-news",
     "github",
     "bluesky",
-    "slack"
+    "slack",
+    "youtube"
   ]
 }
