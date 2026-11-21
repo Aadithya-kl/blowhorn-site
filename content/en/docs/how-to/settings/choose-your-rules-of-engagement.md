@@ -58,7 +58,8 @@ Blowhorn on uses it. If your organization cannot keep it yet, it is saved on
 this computer only: the command says `scope: this_computer` with the reason,
 the app says so in one line under the grid, and the chip's slider reads
 **Set here, on this computer only**. Each grid cell shows only its rules of
-engagement (Warming, Safety on, Weapons tight or Weapons free); hold the
+engagement (Safety on, Weapons tight or Weapons free), or Warming with the
+preset it returns to under it; hold the
 pointer over a chip to see where its choice comes from. Your organization's choice for that platform comes
 first, so when it already has one, the command says it still applies on
 every computer and this computer's choice has no effect until an
@@ -160,7 +161,7 @@ each platform's built-in ceiling.
 - **After a challenge:** the profile on that platform is held for 24
   hours.
 - **Outreach:** on for established platforms, off on platforms still
-  being built (Facebook, Instagram, TikTok, YouTube).
+  marked experimental in the Risk Profile table (Facebook, Instagram, TikTok, and YouTube, which is otherwise a supported platform).
 - **At once:** one profile at a time on a platform, and no preset limit
   on runs overall. Setting `defaults.concurrency.max_runs` adds one.
 - **Retries:** a failed scheduled job is not retried.
@@ -182,7 +183,7 @@ the most throughput and accept the most exposure.
 - **After a challenge:** the profile on that platform is held for 12
   hours - the shortest pause, so a challenge is the place Weapons free costs
   you the most caution.
-- **Outreach:** on everywhere, including platforms still being built.
+- **Outreach:** on everywhere, including platforms marked experimental.
 - **At once:** different profiles may share a platform, and no preset
   limit on runs overall. One profile is still held to one run on a
   platform.
@@ -195,7 +196,13 @@ A new profile or a new Mac runs under Safety on for scheduled jobs until it
 has history - 14 days, whatever preset you picked. Its caps ramp over
 those 14 days, from about a quarter of Safety on's caps on day one
 (about 1 LinkedIn post a day) to Safety on's full caps by day 14, and
-only then does your chosen preset take over. A profile idle longer
+only then does your chosen preset take over. You can still choose a preset
+while a profile warms up: on the Posture screen its cells keep reading
+**Warming**, and the line under each chip names the preset you chose
+("then Weapons free"), which takes over when the warm-up ends. The 14 days start at the
+first run that reached the platform: a run that failed before it did
+anything there, such as one stopped because Chrome was missing, does not
+start them. A profile idle longer
 than the 15-day ledger window warms up again. A run you start yourself
 is not held by the warmup, only warned about, and it follows your
 chosen preset's caps, quiet hours and outreach.

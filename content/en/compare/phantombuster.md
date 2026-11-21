@@ -5,7 +5,7 @@
   "description": "PhantomBuster is a powerful data and outreach automation platform across 15+ sites. Blowhorn is narrower on purpose: careful actions and real-person amplification, from your own browser.",
   "layout": "versus",
   "weight": 22,
-  "lastmod": "2026-10-13",
+  "lastmod": "2026-11-20",
   "competitor": "PhantomBuster",
   "mark": "Ph",
   "site_url": "https://phantombuster.com/",
@@ -19,7 +19,7 @@
   "us": [
     "You want careful LinkedIn hygiene, not volume prospecting",
     "No vendor server should log in as you; Blowhorn acts from your own signed-in browser",
-    "You also speak on X, Reddit, Hacker News, GitHub, Bluesky and Slack, and want your people amplifying"
+    "You also speak on X, Reddit, Hacker News, GitHub, Bluesky, Slack and YouTube, and want your people amplifying"
   ],
   "price_them": "Start $56, Grow $128, Scale $352 a month, billed annually",
   "price_src": "https://phantombuster.com/pricing",
@@ -32,7 +32,7 @@
     {
       "f": "Where it acts",
       "t": "PhantomBuster's cloud, through your accounts, with your browser closed",
-      "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit and Hacker News; the platform's API for GitHub, Bluesky and Slack"
+      "b": "Your computers: your own signed-in browser, through the extension, for LinkedIn, X, Reddit, Hacker News, YouTube and more. After YouTube Data API consent, uploads, comments, replies and likes go through YouTube's official API; Posts-tab posts stay in the browser. GitHub, Bluesky and Slack use their APIs."
     },
     {
       "f": "Data extraction and enrichment",
@@ -47,7 +47,7 @@
     {
       "f": "Networks",
       "t": "LinkedIn (plus email)",
-      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack. Instagram, TikTok, Facebook and YouTube coming soon"
+      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube and more"
     },
     {
       "f": "Amplify one post",

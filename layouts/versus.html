@@ -10,17 +10,19 @@
 {{- end }}
 {{ define "main" }}
     {{- $p := .Params -}}
-    {{- /* Platform logo lookup for the optional network_logos strip. Files are
-      the platforms' own art under static/assets/platforms/, unmodified. */ -}}
-    {{- $platLogos := dict
-      "linkedin" (dict "src" "assets/platforms/linkedin-in-bug.png" "alt" "LinkedIn")
-      "x" (dict "src" "assets/platforms/x-logo-black.png" "alt" "X")
-      "reddit" (dict "src" "assets/platforms/reddit-logo.png" "alt" "Reddit")
-      "hacker-news" (dict "src" "assets/platforms/hacker-news-y18.svg" "alt" "Hacker News")
-      "github" (dict "src" "assets/platforms/github-invertocat-black.svg" "alt" "GitHub")
-      "bluesky" (dict "src" "assets/platforms/bluesky-butterfly-blue.svg" "alt" "Bluesky")
-      "slack" (dict "src" "assets/platforms/slack-mark.svg" "alt" "Slack")
-    -}}
+    {{- /* The optional network_logos strip and the logos section name
+      platforms by id; each one's name and logo come from its
+      data/platforms/<id>.yaml (the platforms' own art under
+      static/assets/platforms/, unmodified), so a new platform needs no
+      edit here. An id with no YAML fails the build. */ -}}
+    {{- $platLogos := dict -}}
+    {{- range $id := union ($p.network_logos | default slice) ($p.logos | default slice) -}}
+      {{- with index hugo.Data.platforms $id -}}
+        {{- $platLogos = merge $platLogos (dict $id (dict "src" .logo "alt" (replaceRE ` \(.*\)$` "" .name))) -}}
+      {{- else -}}
+        {{- errorf "versus: %s names platform %q, which has no data/platforms/%s.yaml" $.File.Path $id $id -}}
+      {{- end -}}
+    {{- end -}}
     <main id="main" class="page agent-page versus-page">
       <div class="wrap">
         <header class="agent-hero glass">
@@ -76,9 +78,9 @@
               {{- with $p.network_logos }}
               <ul class="army-plats versus-plats">
                 {{- range . -}}
-                  {{- $logo := index $platLogos . -}}
-                  {{- with $logo }}<li><img src="{{ .src | relURL }}" alt="{{ .alt }}" width="28" height="28" loading="lazy"></li>{{ end -}}
+                  {{- with index $platLogos . }}<li><img src="{{ .src | relURL }}" alt="{{ .alt }}" width="28" height="28" loading="lazy"></li>{{ end -}}
                 {{- end }}
+                <li class="versus-more ui">+ many more</li>
               </ul>
               {{- end }}
               <p class="ui">{{ partial "download-button.html" (dict "kind" "text") }}</p>
@@ -151,10 +153,11 @@
           </div>
           {{- with $p.logos }}
           <div class="section-head">
-            <h3 class="h3">Networks Blowhorn posts on today</h3>
+            <h3 class="h3">Some of the networks Blowhorn posts on</h3>
           </div>
           <ul class="versus-logos">
-            {{- range . }}<li><span class="logo-tile"><img src="{{ .src | relURL }}" alt="{{ .alt }}" width="28" height="28" loading="lazy"></span><span class="ui">{{ .alt }}</span></li>{{ end }}
+            {{- range . }}{{ with index $platLogos . }}<li><span class="logo-tile"><img src="{{ .src | relURL }}" alt="" width="28" height="28" loading="lazy"></span><span class="ui">{{ .alt }}</span></li>{{ end }}{{ end }}
+            <li class="versus-more ui">+ many more</li>
           </ul>
           {{- end }}
         </section>
@@ -195,7 +198,7 @@
         </section>
 
         <section class="agent-section agent-cta glass" aria-labelledby="cta-title">
-          <h2 id="cta-title" class="h2">One message out, many ears in</h2>
+          <h2 id="cta-title" class="h2">{{ partial "slogan.html" . }}</h2>
           <p class="muted">If that sounds like what you've been missing, give Blowhorn a try. It's free during early access.</p>
           <p class="actions">{{ partial "download-button.html" (dict) }}</p>
         </section>

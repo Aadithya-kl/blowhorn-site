@@ -244,9 +244,9 @@ class ActionMatrixCheckTest(unittest.TestCase):
     def test_link_on_exception_cell_fails(self):
         want = check.expected(self.root)
         want["cells"] = dict(want["cells"])
-        want["cells"]["post:youtube"] = ("supported", "/docs/reference/platforms/youtube/")
+        want["cells"]["post:instagram"] = ("supported", "/docs/reference/platforms/instagram/")
         self.render(want)
-        self.assert_flags("post:youtube is 'supported', data says 'none'")
+        self.assert_flags("post:instagram is 'supported', data says 'none'")
 
     def test_dead_anchor_fails(self):
         target = check.built_file(self.build, "/docs/reference/platforms/linkedin/")

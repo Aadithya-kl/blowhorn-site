@@ -5,7 +5,7 @@
   "description": "Dux-Soup, now sold as STACKED, is a long-running LinkedIn outreach tool with drip campaigns and CRM sync. Blowhorn isn't a bot. It's you: careful outreach and real-person amplification across many networks.",
   "layout": "versus",
   "weight": 27,
-  "lastmod": "2026-11-02",
+  "lastmod": "2026-11-20",
   "competitor": "Dux-Soup",
   "mark": "DS",
   "site_url": "https://www.dux-soup.com/",
@@ -20,7 +20,7 @@
   "us": [
     "You want careful LinkedIn outreach, not volume prospecting",
     "No vendor server logs in as you. Blowhorn acts from your own signed-in browser, on your own computers",
-    "You also speak on X, Reddit, Hacker News, GitHub, Bluesky and Slack, and you want your people amplifying your posts as themselves",
+    "You also speak on X, Reddit, Hacker News, GitHub, Bluesky, Slack and YouTube, and you want your people amplifying your posts as themselves",
     "You are a solo founder, a local practice, a big team or an agency, and you want one queue for every profile"
   ],
   "price_them": "STACKED local $55 per month ($41.25 annually); STACKED cloud $99 ($74.17 annually)",
@@ -32,7 +32,7 @@
       "t": "Outbound prospecting at volume"
     },
     {
-      "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit and Hacker News; each platform's API for GitHub, Bluesky and Slack",
+      "b": "Your computers: your own signed-in browser, through the extension, for LinkedIn, X, Reddit, Hacker News, YouTube and more. After YouTube Data API consent, uploads, comments, replies and likes go through YouTube's official API; Posts-tab posts stay in the browser. GitHub, Bluesky and Slack use their APIs.",
       "f": "Where it acts",
       "t": "STACKED local, a desktop app on your computer, or STACKED cloud, which runs in Dux-Soup's cloud without your computer on"
     },
@@ -42,7 +42,7 @@
       "t": "Sequences of up to 12 actions: visits, connects, messages, InMails, endorsements, follows"
     },
     {
-      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack",
+      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube and more",
       "f": "Networks",
       "t": "LinkedIn, including Sales Navigator and Recruiter"
     },
@@ -64,7 +64,7 @@
   ],
   "wins": [
     "No vendor server logs in as you, and no per-seat math for extra computers: as many of your computers as you like share one queue",
-    "One post amplified by every profile in your account, across seven networks, not one",
+    "One post amplified by every profile in your account, across every network you post on, not one",
     "Dry run and check the queue before anything goes out, and stand down one activity, one computer or the whole fleet with one switch"
   ],
   "loses": [

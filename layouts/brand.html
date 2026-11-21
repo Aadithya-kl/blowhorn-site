@@ -42,7 +42,7 @@
                   {{ $icon | safeHTML }}
                   Download full brand kit
                 </a>
-                <p class="caption muted">ZIP, {{ .full.size }}. Logos, colors, type, usage rules, Major Blowhorn, the troops, Old Thunderlung, the scenes and the launch press graphics.</p>
+                <p class="caption muted">ZIP, {{ .full.size }}. Logos, colors, type, usage rules, Major Blowhorn, the troops, Old Thunderlung, the scenes, the launch press graphics and the listing banners.</p>
               </div>
               <div class="brand-download">
                 <a class="button button-secondary" href="{{ .logos.url | relURL }}" download>
@@ -122,7 +122,7 @@
             </picture>
             <figcaption>
               <span class="label">Tagline</span>
-              <span class="brand-tagline">One message out, many ears in</span>
+              <span class="brand-tagline">{{ partial "slogan.html" . }}</span>
             </figcaption>
           </figure>
         </header>
@@ -458,7 +458,7 @@
             </div>
             <div class="card card-plain">
               <h3 class="h3">The tagline</h3>
-              <p>One message out, many ears in. Set it in Bricolage Grotesque, sentence case, and let it stand on its own.</p>
+              <p>Not a bot. It's you. Set it in Bricolage Grotesque, sentence case, and let it stand on its own.</p>
             </div>
           </div>
         </section>
@@ -466,7 +466,7 @@
         <section class="brand-cta" aria-labelledby="cta-title">
           <div class="brand-cta-copy">
             <h2 id="cta-title" class="h2">Take it with you</h2>
-            <p class="muted">The kit has the logos in SVG and PNG, the cast, scenes and press graphics in WebP, the colors and a PDF of the rules.</p>
+            <p class="muted">The kit has the logos in SVG and PNG, the cast, scenes, press graphics and listing banners in WebP, the colors and a PDF of the rules.</p>
           </div>
           {{- partial "brand-kit-downloads.html" .Params.kits }}
         </section>

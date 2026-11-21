@@ -189,8 +189,8 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
-  /* Viewport fallback for fragment targets that are not sections (docs
-     headings, skip links). Home section anchors use scroll-margin below. */
+  /* Clears the sticky header for every fragment target: sections have no
+     block padding, so section anchors land right at the section top too. */
   scroll-padding-top: calc(var(--header-h) + var(--stroke-hairline));
 }
 
@@ -347,14 +347,10 @@ pre code { background: none; padding: 0; overflow-wrap: normal; }
   padding-inline: var(--gutter);
 }
 
-.section { padding-block: var(--space-12); }
 .section + .section { border-top: var(--stroke-hairline) solid var(--line); }
 .section-head { max-width: 40rem; }
 .section-head > * + * { margin-top: var(--space-3); }
 .section-body { margin-top: var(--space-8); }
-@media (min-width: 900px) {
-  .section { padding-block: var(--space-16); }
-}
 
 /* ---------- Buttons ---------- */
 .button {
@@ -977,6 +973,9 @@ html[data-hero-art="fan"] .platforms-fan { display: none; }
 .fan .fan-line:nth-of-type(5) { animation-delay: 240ms; }
 .fan .fan-line:nth-of-type(6) { animation-delay: 300ms; }
 .fan .fan-line:nth-of-type(7) { animation-delay: 360ms; }
+.fan .fan-line:nth-of-type(8) { animation-delay: 420ms; }
+/* More platforms than fit: cut-off logos at the picture's edge, quieter than the wired tiles. */
+.fan .fan-more { opacity: 0.6; }
 @media (prefers-reduced-motion: reduce) {
   .fan .fan-line { animation: none; stroke-dasharray: none; }
   .fan .fan-pulse { display: none; }
@@ -1082,8 +1081,16 @@ html[data-hero-art="fan"] .platforms-fan { display: none; }
   gap: var(--space-3);
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
-/* Seven platforms in two columns leave one orphan; let it span the row. */
-@media (max-width: 639px) { .platforms > :last-child:nth-child(odd) { grid-column: 1 / -1; } }
+/* The last item says there are more than the grid shows; it is not a platform card. */
+.platforms-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6) var(--space-3) var(--space-4);
+  border: var(--stroke-hairline) dashed var(--line-strong);
+  border-radius: var(--radius-lg);
+  color: var(--ink-muted);
+}
 @media (min-width: 640px) { .platforms { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (min-width: 960px) { .platforms { grid-template-columns: repeat(7, minmax(0, 1fr)); } }
 .platform {
@@ -1403,8 +1410,8 @@ html[data-hero-art="fan"] .platforms-fan { display: none; }
 }
 
 /* ---------- Footer ----------
-   A glass panel: a top band (the tagline left, the newsletter right), one row
-   of links, then the legal bar. The panel is a glass surface (see "Liquid
+   A glass panel: a top band (the logo and tagline left, the newsletter right),
+   one row of links, then the legal bar. The panel is a glass surface (see "Liquid
    glass" below). */
 .site-footer {
   padding-block: var(--space-12) var(--space-8);
@@ -1422,6 +1429,10 @@ html[data-hero-art="fan"] .platforms-fan { display: none; }
   padding-bottom: var(--space-8);
   border-bottom: var(--stroke-hairline) solid var(--line);
 }
+/* The header's lockup at 128 px, above the Brand page's 96 px minimum, with
+   half the icon's height (16 px) clear before the tagline. */
+.footer-logo { display: inline-flex; margin-bottom: var(--space-4); }
+.footer-logo img { width: 128px; height: auto; }
 .footer-tagline {
   margin: 0;
   font-family: var(--font-display);
@@ -1457,8 +1468,7 @@ html[data-hero-art="fan"] .platforms-fan { display: none; }
   align-items: center;
   gap: var(--space-2) var(--space-6);
 }
-.footer-links a,
-.footer-links .footer-consent {
+.footer-links a {
   font-size: 14px;
   line-height: 20px;
   font-weight: 500;
@@ -1466,8 +1476,7 @@ html[data-hero-art="fan"] .platforms-fan { display: none; }
   text-decoration: none;
   white-space: nowrap;
 }
-.footer-links a:hover,
-.footer-links .footer-consent:hover { color: var(--link); }
+.footer-links a:hover { color: var(--link); }
 .footer-bottom {
   margin-top: var(--space-6);
   padding-inline: var(--space-2);
@@ -1752,6 +1761,8 @@ body { background: var(--surface); }
 }
 .brand-showcase img { width: min(100%, 260px); }
 .brand-showcase figcaption { display: grid; justify-items: center; gap: var(--space-2); text-align: center; }
+/* The lead slogan in two colours (layouts/_partials/slogan.html): the ink, then brand green. */
+.slogan-b { color: var(--link); } /* Teal Deep on light, Teal Bright on dark */
 .brand-tagline {
   font-family: var(--font-display);
   font-weight: 800;
@@ -1805,15 +1816,9 @@ body { background: var(--surface); }
 .brand-index a:hover::before { color: var(--teal); }
 .brand-index a:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
 
-.brand-section {
-  padding-block: var(--space-12);
-  border-top: var(--stroke-hairline) solid var(--line);
-}
-.brand-index + .brand-section { margin-top: var(--space-8); }
 .brand-section .section-head + * { margin-top: var(--space-8); }
 .brand-subhead { margin: var(--space-12) 0 var(--space-4); }
 .brand-note { margin-top: var(--space-4); max-width: 48rem; }
-@media (min-width: 900px) { .brand-section { padding-block: var(--space-16); } }
 
 /* Grounds */
 .stage-light { background: var(--white); }
@@ -2152,11 +2157,6 @@ body { background: var(--surface); }
 .compare-page { padding-top: var(--space-8); }
 .compare-hero > * + * { margin-top: var(--space-4); }
 .compare-hero .body-lg { max-width: 40rem; }
-.compare-section {
-  padding-block: var(--space-12);
-  border-top: var(--stroke-hairline) solid var(--line);
-}
-.compare-hero + .compare-section { margin-top: var(--space-12); }
 .compare-section .section-head + * { margin-top: var(--space-8); }
 .compare-scroll {
   overflow-x: auto;
@@ -2198,7 +2198,6 @@ body { background: var(--surface); }
   .mark-yes { background: var(--teal-bright); }
   .mark-partial { background: linear-gradient(90deg, var(--teal-bright) 50%, transparent 50%); box-shadow: inset 0 0 0 1.5px var(--teal-bright); }
 }
-@media (min-width: 900px) { .compare-section { padding-block: var(--space-16); } }
 
 /* Coverage matrix: a Markdown table tagged {.coverage}. layouts/_markup/render-table.html
    gives each legend cell a cov-* class; brand tokens only, and every fill is mixed into
@@ -2362,8 +2361,6 @@ body { background: var(--surface); }
 .download-page .download-grid { align-items: stretch; }
 
 /* ---------- Agentic AI Marketing (/agents/) ---------- */
-.agent-page .agent-section { margin-top: var(--space-12); }
-.agent-page .major-says { margin-top: var(--space-12); }
 .agent-hero {
   display: grid; gap: var(--space-8); align-items: center;
   padding: clamp(24px, 5vw, 56px);
@@ -2670,8 +2667,8 @@ body { background: var(--surface); }
 .page .versus-table tbody tr:hover > * { background: color-mix(in srgb, var(--surface-tint) 35%, transparent); }
 .page .versus-table tbody tr:hover > .compare-us { background: var(--surface-tint); }
 
-/* The rule hugs the text, so the section trades its padding for margin. */
-.page .agent-section.versus-belief { padding-block: 0; margin-block: var(--section-y); background-image: none; }
+/* The rule hugs the text: no padding and no divider image. */
+.page .agent-section.versus-belief { padding-block: 0; background-image: none; }
 .versus-belief > * + * { margin-top: var(--space-4); }
 .versus-belief p { max-width: var(--text-measure, 64ch); color: var(--ink-muted); }
 .versus-belief p:first-of-type { color: var(--ink); font-size: 18px; line-height: 28px; }
@@ -2679,13 +2676,13 @@ body { background: var(--surface); }
 .versus-all { margin-top: var(--space-6); }
 .versus-logos { display: flex; flex-wrap: wrap; gap: var(--grid-gap); padding: 0; list-style: none; }
 .versus-logos li { display: grid; justify-items: center; gap: var(--space-2); }
+/* "+ many more": the strip is never the whole set. */
+.versus-more { align-self: center; color: var(--ink-muted); }
 
 /* ---------- Whitespace and rhythm (DESIGN.md, "Whitespace and rhythm") ----------
    One spacing system for every page. Sections, heads, grids and cards read these
    tokens; never patch spacing per page. A title never touches its content. */
 :root {
-  --section-y: 64px;          /* section padding-block, mobile */
-  --section-gap: 0px;         /* extra space between stacked glass sections */
   --head-gap: 32px;           /* heading (or section head) to its content, minimum */
   --eyebrow-gap: 12px;        /* label to heading */
   --intro-gap: 16px;          /* heading to its intro paragraph */
@@ -2696,54 +2693,31 @@ body { background: var(--surface); }
 }
 @media (min-width: 900px) {
   :root {
-    --section-y: 112px;
     --head-gap: 40px;
     --grid-gap: 32px;
     --card-pad: 32px;
   }
 }
 
-/* Sections: generous block padding, a soft divider between neighbors. */
-.section,
+/* Sections: no block padding and no divider (20 Nov 2026: section padding
+   left too much whitespace between stacked sections). A section that follows
+   other content gets one head gap of air instead, so neighbors never touch and
+   every page shares one rhythm. Glass panels that are their own section keep
+   their inner padding; hero blocks carry no bottom margin, the section after
+   them supplies the gap. */
 .compare-section,
 .brand-section,
 .agent-page .agent-section,
-.page .agent-section { padding-block: var(--section-y); margin-top: 0; }
-
-/* In-page section anchors (#platforms, #how, #trust, #download, ...): html
-   scroll-padding-top already clears the sticky header (--header-h is 72px). Pull back by the section's own block padding so
-   the label lands just under the bar after --section-y grew. */
-section[id],
-.section[id],
-.compare-section[id] {
-  scroll-margin-top: calc(0px - var(--section-y));
+.page .agent-section { padding-block: 0; }
+* + :is(.section, .compare-section, .brand-section, .agent-section, .pricing-section),
+:is(.agent-section, .compare-section) + .major-says {
+  margin-top: var(--head-gap);
 }
-.brand-section[id] {
-  scroll-margin-top: 0;
-}
-.agent-section + .agent-section,
-.compare-section + .compare-section,
-.brand-section + .brand-section,
-.agent-section + .major-says,
-.major-says + .agent-section {
-  background-image: linear-gradient(90deg, transparent, var(--line) 18%, var(--line) 82%, transparent);
-  background-size: min(100%, var(--measure)) 1px;
-  background-repeat: no-repeat;
-  background-position: top center;
-}
-/* Glass panels that are themselves sections keep their own padding and float
-   with a full section of air around them instead of a divider. */
 .agent-page .agent-section.glass,
 .page .agent-section.glass {
   padding: clamp(32px, 5vw, 64px);
-  margin-block: calc(var(--section-y) / 2);
   background-image: none;
 }
-.agent-page .major-says { margin-block: calc(var(--section-y) / 2); }
-.agent-hero { margin-bottom: calc(var(--section-y) / 2); }
-.compare-hero + .compare-section,
-.brand-index + .brand-section { margin-top: 0; }
-
 /* Heads: eyebrow -> title -> intro, then a clear gap before content. */
 .section-head, .page-head, .download-head { max-width: 44rem; }
 .section-head > .label + *, .page-head > .label + * { margin-top: var(--eyebrow-gap); }
@@ -2793,7 +2767,7 @@ a.card.docs-card > * { margin-top: 0; }
 .code-copy-inline.is-copied { color: var(--link); }
 
 /* Major Blowhorn page (/major/). Spacing reads the rhythm tokens above. */
-.major-hero { display: grid; gap: var(--grid-gap); align-items: center; padding-block: var(--section-y) calc(var(--section-y) / 2); }
+.major-hero { display: grid; gap: var(--grid-gap); align-items: center; padding-block: var(--head-gap) 0; }
 /* The hero quote is the General's line, so it carries his avatar and name in
    the style of the "The Major says" callout (round art on cream, label).
    The art is a head-and-shoulders crop of the cast image. */
@@ -3357,7 +3331,6 @@ a.card.docs-card > * { margin-top: 0; }
 .pricing-hero { max-width: 44rem; }
 .pricing-hero > * + * { margin-top: var(--intro-gap); }
 .pricing-hero .display { text-wrap: balance; }
-.pricing-section { margin-top: var(--section-y); }
 .pricing-hero + .pricing-plans { margin-top: var(--head-gap); }
 .billing-switch {
   display: inline-flex; gap: var(--space-1); padding: var(--space-1);
@@ -3434,7 +3407,7 @@ a.card.docs-card > * { margin-top: 0; }
   grid-template-columns: minmax(0, 1fr);
 }
 @media (min-width: 820px) {
-  .pricing-single { grid-template-columns: minmax(0, 26rem) minmax(0, 1fr); gap: calc(var(--section-y) / 2); }
+  .pricing-single { grid-template-columns: minmax(0, 26rem) minmax(0, 1fr); gap: calc(var(--grid-gap) * 2); }
 }
 .pricing-coming { max-width: var(--text-measure); }
 .pricing-coming > * + * { margin-top: var(--eyebrow-gap); }
@@ -3521,6 +3494,7 @@ a.card-link, a.docs-card, a.platform, a.agent-tile {
 a.card-link::after, a.docs-card::after, a.platform::after, a.agent-tile::after {
   content: "";
   flex: none;
+  display: block;
   width: 28px; height: 28px;
   border-radius: var(--radius-pill);
   background-color: var(--card-chip, var(--surface-tint));
@@ -3545,9 +3519,9 @@ a.card-paper::after {
 a.card-dispatch::after {
   --card-cue-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M2.5 7h8.5M7.5 3.5L11 7l-3.5 3.5' fill='none' stroke='%2300D3A9' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
-/* Big cards: chip in the top-right corner, beside the icon. Platform tiles:
+/* Big cards: chip in flow at the end of the card. Platform tiles:
    agent and versus tiles: a smaller chip in the corner, clear of the copy. */
-a.card-link::after, a.docs-card::after { position: absolute; top: var(--space-4); right: var(--space-4); margin: 0; }
+a.card-link::after, a.docs-card::after { position: relative; }
 a.platform::after { position: absolute; top: var(--space-2); right: var(--space-2); width: 22px; height: 22px; background-size: 12px 12px; margin: 0; }
 a.agent-tile::after { position: absolute; top: var(--space-2); right: var(--space-2); width: 20px; height: 20px; background-size: 11px 11px; margin: 0; }
 
@@ -3601,16 +3575,16 @@ a.agent-tile { padding-right: var(--space-6); }
 .fm-prose { overflow-wrap: break-word; }
 /* Platform index cards: a resting arrow shows each card opens its own page. */
 .platform-cards { margin-top: var(--space-4); }
-/* They use the shared round arrow chip, centred on the right. Hover lifts the
-   card 2px like every card link (cards.css); the chip stays as it is at rest,
-   with no fill change and no shift, so the arrow stays aligned with the other cards. */
+/* They use the shared round arrow chip, in flow at the end of the card like
+   every other docs card. Hover lifts the card 2px like every card link
+   (cards.css); the chip stays as it is at rest, with no fill change and no
+   shift, so the arrow stays aligned with the other cards. */
 a.docs-card.platform-card { padding-right: calc(var(--space-8) + var(--space-4)); }
-/* That padding already clears the centred chip, so the title does not also
+/* The platform card keeps its own right padding, so the title does not also
    reserve the corner-chip room every other docs card's first child keeps. */
 a.docs-card.platform-card > :first-child { padding-right: 0; }
-a.docs-card.platform-card::after { top: 50%; right: var(--space-4); transform: translateY(-50%); }
 a.docs-card.platform-card:hover::after, a.docs-card.platform-card:focus-visible::after {
-  transform: translateY(-50%);
+  transform: none;
   background-color: var(--card-chip, var(--surface-tint));
   --card-cue-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M2.5 7h8.5M7.5 3.5L11 7l-3.5 3.5' fill='none' stroke='%2300756A' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
@@ -3737,9 +3711,6 @@ a.docs-card.platform-card:hover::after, a.docs-card.platform-card:focus-visible:
 }
 .tabs-soon > * + * { margin-top: var(--space-2); }
 .action-example { margin-top: var(--head-gap); }
-/* #action-<id> targets from the actions table: no block padding, so undo the
-   section[id] pull-back and let html scroll-padding-top clear the header. */
-.action-example[id] { scroll-margin-top: 0; }
 .action-shot img {
   display: block;
   width: 100%;
@@ -3856,16 +3827,6 @@ a.docs-card.platform-card[href$="/facebook/"]::before { background-image: url(".
 }
 .consent-close:hover { background: var(--surface-raised); color: var(--ink); }
 .consent-close svg { fill: none; stroke: currentColor; stroke-width: var(--stroke-icon); stroke-linecap: round; }
-.footer-consent {
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  color: inherit;
-  text-decoration: none;
-  cursor: pointer;
-}
-.footer-consent:hover { color: var(--link); }
 @media (prefers-reduced-motion: no-preference) {
   .consent:not([hidden]) { animation: consent-in 200ms ease-out; }
   @keyframes consent-in {
@@ -4086,3 +4047,58 @@ a.docs-card.platform-card[href$="/facebook/"]::before { background-image: url(".
 .docs-contributor-link:hover { color: var(--link); }
 .docs-contributor-sep { color: var(--line); }
 .docs-contributor-plain { color: var(--ink-muted); }
+
+/* ---------- Support page (/support/) ---------- */
+.support-contact-grid {
+  display: grid;
+  gap: var(--grid-gap);
+  align-items: start;
+}
+@media (min-width: 900px) {
+  .support-contact-grid { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+}
+.support-contact-aside > * + * { margin-top: var(--stack-gap); }
+.support-contact-aside .label { margin: 0; }
+.support-mail { font-size: 18px; line-height: 28px; }
+.support-form-card { max-width: 44rem; }
+.support-form { display: grid; gap: var(--stack-gap); }
+.support-form-pair {
+  margin: 0;
+  display: grid;
+  gap: var(--stack-gap);
+}
+@media (min-width: 720px) {
+  .support-form-pair { grid-template-columns: 1fr 1fr; gap: var(--grid-gap); }
+}
+.support-form-field { margin: 0; display: grid; gap: var(--space-2); }
+.support-form-field label { color: var(--ink); font-weight: 500; }
+.support-form input,
+.support-form textarea {
+  width: 100%;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--glass-field);
+  color: var(--ink);
+  font: inherit;
+}
+.support-form input { height: 44px; }
+.support-form textarea { resize: vertical; }
+.support-form input::placeholder,
+.support-form textarea::placeholder { color: var(--ink-muted); }
+.support-form-actions { margin: 0; }
+.support-links { padding: 0; list-style: none; }
+.support-links li { display: grid; }
+.support-links a { text-decoration: none; color: var(--ink); }
+.support-links a .h3 { color: var(--ink); }
+.support-links a:hover .h3 { color: var(--link); }
+.support-links a > * { margin-top: 0; }
+.support-major {
+  display: grid;
+  gap: var(--grid-gap);
+  align-items: center;
+}
+@media (min-width: 720px) {
+  .support-major { grid-template-columns: 12rem 1fr; }
+}
+.support-major-art { width: 12rem; height: auto; }

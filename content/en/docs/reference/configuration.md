@@ -9,7 +9,28 @@ How Blowhorn resolves what a run uses, and where its output goes.
 `engine/blowhorn/config_schema.py` is the one list of options; `blowhorn
 config show` prints each with its stored, environment, effective, and
 source values. `blowhorn config set` edits the file without rewriting
-it: comments, order, and quoting survive.
+it: comments, order, and quoting survive, and a `null` stays `null`.
+A file that cannot be read as YAML is reported once on stderr and read as
+empty, so `--json` output stays one JSON document; `config set` on such
+a file changes nothing and says so. A stored number written in words is
+refused by name (`config show --json` included). A key written twice
+makes the file unreadable, and the warning names it
+(`defaults.profile is written twice; keep one`): Blowhorn does not guess
+which of the two you meant. In a yes/no option, `yes`, `no`, `on` and
+`off` (in any case) mean yes and no, as they always have, and `config
+show` prints them as `true` and `false`; in a text option a hand-written
+`off` or `yes` is read as that word.
+
+A merge key (`<<: *base`) brings its keys in as YAML defines it, the
+mapping's own keys winning. `config set` changes only the key you name:
+a key under an alias (`defaults: *base`), or under a mapping an anchor
+or a merge shares with another key, is refused by name and the file is
+left as it was, because the change would reach the other key too; write
+that mapping out in full and set the key again. A text it writes is
+quoted whenever any YAML reader could take it for something else
+(`profile: '1:30'`, not a number), and a file written with CRLF line
+endings keeps them. A quiet-hours time zone must be spelt as the time
+zone database spells it (`America/New_York`, not `america/new_york`).
 
 Precedence, highest first: the CLI flag, the environment variable, the
 `.blowhorn.yaml` default, then the built-in. The file lives beside the
@@ -40,7 +61,7 @@ environment variables.
 | `defaults.approval.mode` | `BLOWHORN_APPROVAL_MODE` | `off` | `off`, `agent` or `all`: who must approve before work publishes (see below) |
 | `defaults.caps` | none | none | Your own daily caps per platform and action, under the built-in ceilings (see below) |
 | `defaults.quiet_hours` | `BLOWHORN_QUIET_HOURS` | none | Hours when the scheduler claims nothing, written `HH:MM-HH:MM` like `22:00-07:00` (the window may wrap midnight). A due activity inside it is held, not failed, and runs when the window ends. A profile's own Quiet Hours setting wins for its activities |
-| `defaults.quiet_hours_tz` | `BLOWHORN_QUIET_HOURS_TZ` | this computer's zone | The IANA time zone `defaults.quiet_hours` is read in, like `America/New_York`. A profile's own Quiet Hours Time Zone setting wins for its activities |
+| `defaults.quiet_hours_tz` | `BLOWHORN_QUIET_HOURS_TZ` | this computer's zone | The IANA time zone `defaults.quiet_hours` is read in, like `America/New_York`, spelled exactly as the time-zone database spells it: `america/new_york` is refused on every computer. A profile's own Quiet Hours Time Zone setting wins for its activities |
 | `defaults.typing_delay_min_ms`, `defaults.typing_delay_max_ms`, `defaults.typing_jitter_ms`, `defaults.typing_target_duration_s` | `BLOWHORN_TYPING_DELAY_MIN_MS`, `BLOWHORN_TYPING_DELAY_MAX_MS`, `BLOWHORN_TYPING_JITTER_MS`, `BLOWHORN_TYPING_TARGET_DURATION_S` | 35, 165, 9, 20 | How fast keys are typed: the pause band between keys in milliseconds, the random wobble on each pause, and how long a whole entry aims to take in seconds. Shapes both drivers (see below) |
 | `defaults.typing_micro_pause_chance_pct`, `defaults.typing_micro_pause_min_ms`, `defaults.typing_micro_pause_max_ms`, `defaults.typing_long_pause_min_chars`, `defaults.typing_long_pause_max_chars`, `defaults.typing_long_pause_min_ms`, `defaults.typing_long_pause_max_ms` | `BLOWHORN_TYPING_MICRO_PAUSE_CHANCE_PCT`, `BLOWHORN_TYPING_MICRO_PAUSE_MIN_MS`, `BLOWHORN_TYPING_MICRO_PAUSE_MAX_MS`, `BLOWHORN_TYPING_LONG_PAUSE_MIN_CHARS`, `BLOWHORN_TYPING_LONG_PAUSE_MAX_CHARS`, `BLOWHORN_TYPING_LONG_PAUSE_MIN_MS`, `BLOWHORN_TYPING_LONG_PAUSE_MAX_MS` | 7, 50, 220, 45, 85, 350, 1250 | Short hesitations between keys and longer pauses every so many keys. Playwright only: the extension driver sends one key per message and runs no pause plan (see below) |
 | `defaults.typing_allow_mistakes`, `defaults.typing_mistake_rate_pct`, `defaults.typing_max_mistakes_per_entry`, `defaults.typing_mistake_min_text_length`, `defaults.typing_mistake_delay_min_ms`, `defaults.typing_mistake_delay_max_ms`, `defaults.typing_mistake_pause_min_ms`, `defaults.typing_mistake_pause_max_ms` | `BLOWHORN_TYPING_ALLOW_MISTAKES`, `BLOWHORN_TYPING_MISTAKE_RATE_PCT`, `BLOWHORN_TYPING_MAX_MISTAKES_PER_ENTRY`, `BLOWHORN_TYPING_MISTAKE_MIN_TEXT_LENGTH`, `BLOWHORN_TYPING_MISTAKE_DELAY_MIN_MS`, `BLOWHORN_TYPING_MISTAKE_DELAY_MAX_MS`, `BLOWHORN_TYPING_MISTAKE_PAUSE_MIN_MS`, `BLOWHORN_TYPING_MISTAKE_PAUSE_MAX_MS` | on, 3, 4, 20, 55, 170, 80, 350 | Whether a typed entry may include a wrong key that is then corrected, how often, and the pauses around the correction. Playwright only, never on sign-in (see below) |
@@ -69,7 +90,8 @@ Blowhorn reads and writes everything in your Blowhorn account. A
 `defaults.store.backend` or `defaults.store.config` key left in an older
 file, and `BLOWHORN_STORE_BACKEND` in the environment, are ignored
 (`config show --json` lists the two keys as unknown), and `config set`
-refuses a `store.<name>` key. Data an older version kept in a local store is
+refuses a `store.<name>` key and any `defaults.store.<name>` but
+`defaults.store.organization`. Data an older version kept in a local store is
 not read and is not brought into your account.
 
 ## Risk Profile presets
@@ -98,7 +120,7 @@ The concurrency rows are the values the presets carry, and they are enforced, no
 
 Scheduled jobs on a new profile or a new computer run cautious until the warmup is done, whatever you chose -- the cautious concurrency values included. A run you start yourself is not held by the warmup, only noted; it still follows the caps, quiet hours and outreach setting of the preset you chose. When a run covers several profiles or platforms, a held one is skipped by name and the rest run. To run once anyway, add `--ignore-risk`, or choose **Do it anyway** next to a held item under Activity › History or in Posture's held back list. Logins are never retried under any preset. Choose a preset in the app on the **Posture** screen - the slider for everyone, and a grid for each platform, each profile, and one profile on one platform (the same mode also shows as a mini-slider in the menu-bar popover, which opens Posture) - or with `blowhorn risk set`; see [Which choice wins](#which-choice-wins). `blowhorn risk show` says which preset is in effect and where it comes from, and `blowhorn risk grid` lists every profile on every platform at once. For choosing between the presets in lived terms, see [Choose your rules of engagement](/docs/how-to/settings/choose-your-rules-of-engagement/).
 
-One activity can run under its own preset: set **rules of engagement** in the activity editor, or `risk_profile=cautious` in the activity's params, and that activity runs cautious (pace, caps share, quiet hours, challenge pause) while the same profile × platform runs standard elsewhere. The activity's detail shows the preset and where it came from (`Safety on · this activity`, or `Safety on · inherits: LinkedIn × work profile`); a run report names `schedule` as the source when the activity's own value held it. A run you start by hand can override everything for that one run with `--risk-profile cautious` (before the command word, between a group word and its subcommand, or after it); an unknown value is refused before anything runs. Activities without the field behave exactly as before, and the field is refused on commands the gate does not act on (analytics, report, withdraw, reconcile) rather than accepted and ignored. The upstream Schedule construct gains a top-level `riskProfile` field in a proposed meshery/schemas change (open, not yet released); until a release carries it, the value travels in the activity's params.
+One activity can run under its own preset: set **rules of engagement** in the activity editor, or `risk_profile=cautious` in the activity's params, and that activity runs cautious (pace, caps share, quiet hours, challenge pause) while the same profile × platform runs standard elsewhere. The activity's detail shows the preset and where it came from (`Safety on · this activity`, or `Safety on · inherits: LinkedIn × work profile`); a run report names `schedule` as the source when the activity's own value held it. A run you start by hand can override everything for that one run with `--risk-profile cautious` (before the command word, between a group word and its subcommand, or after it); an unknown value is refused before anything runs. Activities without the field behave exactly as before, and the field is refused on commands the gate does not act on (analytics, report, withdraw, reconcile) rather than accepted and ignored. The value travels on the schedule as its top-level `posture` field (meshery/schemas v1.3.114, which renamed the proposed `riskProfile` construct). For now the same value is also kept in the activity's params, so an activity keeps its preset while your Blowhorn account does not yet store the `posture` field.
 
 ### Which choice wins
 
@@ -161,7 +183,7 @@ Local hours with no public actions: cautious 22:00 to 07:00, standard and brisk 
 
 ### Outreach
 
-Whether connect, invite and follow actions may run: cautious off, standard on established platforms only (off on platforms still being built: Facebook, Instagram, TikTok, YouTube), brisk on everywhere, including those platforms. When outreach is off, the gate refuses the action with the preset named, rather than queuing it silently.
+Whether connect, invite and follow actions may run: cautious off, standard on established platforms only (off on platforms still marked experimental in the Risk Profile table: Facebook, Instagram, TikTok, and YouTube, which is otherwise a supported platform), brisk on everywhere, including those platforms. When outreach is off, the gate refuses the action with the preset named, rather than queuing it silently.
 
 ### Pause after a challenge
 

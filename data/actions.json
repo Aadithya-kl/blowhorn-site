@@ -45,7 +45,7 @@
       "id": "amplify",
       "name": "Amplify",
       "group": "rally",
-      "description": "Repost, retweet, quote, or upvote existing content from each of your profiles."
+      "description": "Repost, retweet, quote, upvote, or like existing content from each of your profiles."
     },
     {
       "id": "react",

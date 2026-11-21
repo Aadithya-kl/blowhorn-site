@@ -5,7 +5,7 @@
   "description": "Thunderclap.com sells followers, likes, views and comments, one-off or by subscription. Blowhorn sells none of that. We focus on real people, real replies and real discussion.",
   "layout": "versus",
   "weight": 61,
-  "lastmod": "2026-10-12",
+  "lastmod": "2026-11-20",
   "competitor": "Thunderclap.com",
   "mark": "T$",
   "site_url": "https://thunderclap.com/",
@@ -19,7 +19,7 @@
   "us": [
     "You want people who actually know you to show up in the replies",
     "You want a conversation, not a count",
-    "You want to speak on LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky and Slack, as yourself"
+    "You want to speak on LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack and YouTube, as yourself"
   ],
   "price_them": "Packages from $0.99; automatic followers from $2.99 per month; automatic likes on every new post from $26.99 per month",
   "price_src": "https://thunderclap.com/",
@@ -42,7 +42,7 @@
     {
       "f": "Networks",
       "t": "Instagram, TikTok, YouTube, X, Facebook, LinkedIn",
-      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack. Instagram, TikTok, Facebook and YouTube coming soon"
+      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube and more"
     },
     {
       "f": "Related to the original Thunderclap?",

@@ -393,8 +393,20 @@ here, on the public site repository.
    and would merge before the dispatched run finished. The merge is made
    with `github.token`, whose pushes start no workflows, so the workflow
    then starts `site.yml` on `master` by the same dispatch, and that run
-   deploys. If a check fails, nothing merges and the PR stays open for a
-   human. The workflow never pushes to `master` directly.
+   deploys. The merge is automatic. The only reasons it does not happen are
+   a failed check, which leaves the PR open for a human because a broken
+   site must not deploy, and a merge conflict with `master`, which
+   `make docs-sync-merge` reports on the PR and in the job log before it
+   stops (it also stops, with a log line, if GitHub still cannot say
+   whether the PR is mergeable after a minute). A re-run does not clear a conflict: while the PR is open, each
+   sync builds on its `docs-sync` branch. Resolve the conflict on
+   `docs-sync`, or close the PR and re-run the sync, which then starts
+   fresh from `master`. The workflow never pushes to `master` directly.
+   Every sync commit is authored and committed as the `arjunmehta-git`
+   account (its GitHub noreply address) and carries the DCO sign-off. The
+   pull request itself and its merge are still made with `github.token`,
+   so GitHub shows them as `github-actions[bot]`; attributing those to the
+   account would need a user token, which this workflow does not hold.
 
 A public release starts the sync by itself: `publish-dmg.yml`'s last job
 runs `make dmg-sync-docs`, which starts `sync-docs.yml` at the product tag
@@ -746,7 +758,8 @@ own after a change to anything the internal build is made from:
   `DMG_SOURCE_TOKEN`, whether blowhorn `master` has a commit in the last 30
   minutes under a mounted path (`marketing/strategy/**`,
   `marketing/capability-comparison/**`, `marketing/brand/**` including the
-  asset catalog, `marketing/cast/**`, `marketing/assets.manifest.json`, or
+  asset catalog, `marketing/cast/**`, `marketing/store/**`, `marketing/press/**`,
+  `marketing/assets.manifest.json`, or
   `internal/{engineering,design,specs,plans,research,features}/**`). If so it deploys
   that `master` SHA. The run fails, rather than skipping, when
   `DMG_SOURCE_TOKEN` is missing or cannot read the repository. Polling keeps
@@ -790,7 +803,7 @@ The workflow, in order (each step is a make target):
    methods. This runs before any private content reaches the runner.
 4. Checks out blowhorn-ai/blowhorn (sparse: `marketing/strategy`,
    `marketing/capability-comparison`, `marketing/brand`, `marketing/cast`,
-   `marketing/assets.manifest.json`, `internal/engineering`,
+   `marketing/store`, `marketing/press`, `marketing/assets.manifest.json`, `internal/engineering`,
    `internal/design`, `internal/specs`, `internal/plans`,
    `internal/research`, `internal/features`) with the read-only deploy key.
 5. `site-internal-build` with `BASE_URL=https://internal.blowhorn.ai/`, output

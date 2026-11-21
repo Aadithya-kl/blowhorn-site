@@ -5,7 +5,7 @@
   "description": "Blotato is an AI content engine with a hosted MCP that publishes to 9 networks through official APIs. Blowhorn is for real-person amplification on developer networks, driven by your agent through a CLI.",
   "layout": "versus",
   "weight": 50,
-  "lastmod": "2026-11-02",
+  "lastmod": "2026-11-20",
   "competitor": "Blotato",
   "mark": "Bl",
   "site_url": "https://www.blotato.com/",
@@ -32,7 +32,7 @@
     {
       "f": "Where it acts",
       "t": "Blotato's cloud, through official APIs",
-      "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit and Hacker News; the platform's API for GitHub, Bluesky and Slack"
+      "b": "Your computers: your own signed-in browser, through the extension, for LinkedIn, X, Reddit, Hacker News, YouTube and more. After YouTube Data API consent, uploads, comments, replies and likes go through YouTube's official API; Posts-tab posts stay in the browser. GitHub, Bluesky and Slack use their APIs."
     },
     {
       "f": "AI media generation",
@@ -100,6 +100,7 @@
     "hacker-news",
     "github",
     "bluesky",
-    "slack"
+    "slack",
+    "youtube"
   ]
 }

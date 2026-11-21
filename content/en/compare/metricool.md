@@ -5,7 +5,7 @@
   "description": "Blowhorn isn't a bot. It's you. Metricool wins on analytics, competitor tracking and ads reporting for brands and agencies. Blowhorn is amplification-first, through real people on developer networks.",
   "layout": "versus",
   "weight": 16,
-  "lastmod": "2026-11-03",
+  "lastmod": "2026-11-20",
   "competitor": "Metricool",
   "mark": "Mc",
   "site_url": "https://metricool.com/",
@@ -19,7 +19,7 @@
   "us": [
     "You need many real profiles to lift one post",
     "Hacker News, Reddit, GitHub and Slack message surfaces matter",
-    "Your own browser for LinkedIn, X, Reddit and Hacker News; the platform API for GitHub, Bluesky and Slack"
+    "Your own signed-in browser, through the extension, for LinkedIn, X, Reddit, Hacker News, YouTube and more; after YouTube Data API consent, uploads, comments, replies and likes go through YouTube's official API (Posts-tab posts stay in the browser). GitHub, Bluesky and Slack use their APIs."
   ],
   "price_them": "Free plan; Starter from $20 per month, Advanced from $53 per month",
   "price_src": "https://metricool.com/pricing/",
@@ -27,12 +27,12 @@
     {
       "f": "Where it acts",
       "t": "Metricool's cloud",
-      "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit and Hacker News; the platform's API for GitHub, Bluesky and Slack"
+      "b": "Your computers: your own signed-in browser, through the extension, for LinkedIn, X, Reddit, Hacker News, YouTube and more. After YouTube Data API consent, uploads, comments, replies and likes go through YouTube's official API; Posts-tab posts stay in the browser. GitHub, Bluesky and Slack use their APIs."
     },
     {
       "f": "Analytics and ads reporting",
       "t": "Deep: PDF and PPT reports, custom templates on Advanced, ads reporting",
-      "b": "LinkedIn, X and Bluesky analytics"
+      "b": "LinkedIn, X, Bluesky and YouTube analytics"
     },
     {
       "f": "Replies and inbox",
@@ -83,9 +83,9 @@
     "Own-device custody: work runs from your own computers, not Metricool's servers"
   ],
   "loses": [
-    "Metricool's analytics, client reports and ads reporting are deeper. Blowhorn analytics cover LinkedIn, X and Bluesky only",
+    "Metricool's analytics, client reports and ads reporting are deeper. Blowhorn analytics cover LinkedIn, X, Bluesky and YouTube only",
     "Metricool's per-brand inbox for Facebook, Instagram and YouTube is the only unified inbox in this comparison. Blowhorn does not run a care desk",
-    "Metricool schedules across consumer networks and reports for many brands. Blowhorn covers seven networks, for small technical teams"
+    "Metricool schedules across consumer networks and reports for many brands. Blowhorn covers more networks than a count can hold, for small technical teams"
   ],
   "network_logos": [
     "linkedin",
@@ -94,7 +94,8 @@
     "hacker-news",
     "github",
     "bluesky",
-    "slack"
+    "slack",
+    "youtube"
   ],
   "sitemap": {
     "changefreq": "monthly",

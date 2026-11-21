@@ -5,7 +5,7 @@
   "description": "Linked Helper is a long-running desktop LinkedIn tool, priced per LinkedIn account, with deep campaigns and a built-in CRM. Blowhorn isn't a bot. It's you: careful outreach and real-person amplification across many networks, from a fleet of your computers.",
   "layout": "versus",
   "weight": 26,
-  "lastmod": "2026-11-02",
+  "lastmod": "2026-11-20",
   "competitor": "Linked Helper",
   "mark": "LH",
   "site_url": "https://www.linkedhelper.com/",
@@ -20,7 +20,7 @@
   "us": [
     "You want careful LinkedIn outreach, not volume prospecting",
     "No vendor server logs in as you. Blowhorn acts from your own signed-in browser, on your own computers",
-    "You also speak on X, Reddit, Hacker News, GitHub, Bluesky and Slack, and you want your people amplifying your posts as themselves",
+    "You also speak on X, Reddit, Hacker News, GitHub, Bluesky, Slack and YouTube, and you want your people amplifying your posts as themselves",
     "You are a solo founder, a local practice, a big team or an agency, and you want one queue for every profile"
   ],
   "price_them": "Standard from $15 per license per month, lower on longer terms",
@@ -32,7 +32,7 @@
       "t": "Outbound prospecting at volume"
     },
     {
-      "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit and Hacker News; each platform's API for GitHub, Bluesky and Slack",
+      "b": "Your computers: your own signed-in browser, through the extension, for LinkedIn, X, Reddit, Hacker News, YouTube and more. After YouTube Data API consent, uploads, comments, replies and likes go through YouTube's official API; Posts-tab posts stay in the browser. GitHub, Bluesky and Slack use their APIs.",
       "f": "Where it acts",
       "t": "A desktop app on your computer, or on a server you control for round-the-clock runs"
     },
@@ -47,7 +47,7 @@
       "t": "30-plus actions: sequences, messages, follow-ups, endorsements, visits, data export"
     },
     {
-      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack",
+      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube and more",
       "f": "Networks",
       "t": "LinkedIn, including Sales Navigator, Recruiter and Talent"
     },
@@ -69,7 +69,7 @@
   ],
   "wins": [
     "As many of your computers as you like share one queue, and any awake computer covers the schedule",
-    "One post amplified by every profile in your account, across seven networks, not one",
+    "One post amplified by every profile in your account, across every network you post on, not one",
     "Dry run and check the queue before anything goes out, and stand down one activity, one computer or the whole fleet with one switch"
   ],
   "loses": [

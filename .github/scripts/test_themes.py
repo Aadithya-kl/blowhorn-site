@@ -336,5 +336,161 @@ class PlatformLabelGuardTest(unittest.TestCase):
         self.assertEqual(self.problems(), [])
 
 
+class CountedNetworksTest(unittest.TestCase):
+    """Blowhorn's networks are never counted in site copy."""
+
+    def setUp(self):
+        import check_theme as check
+
+        self.check = check
+        self.tmp = Path(tempfile.mkdtemp())
+        (self.tmp / "content/en/compare").mkdir(parents=True)
+        (self.tmp / "content/en/docs").mkdir(parents=True)
+        (self.tmp / "data").mkdir()
+        (self.tmp / "layouts").mkdir()
+
+    def tearDown(self):
+        import shutil
+
+        shutil.rmtree(self.tmp)
+
+    def write(self, rel, text):
+        (self.tmp / rel).write_text(text, encoding="utf-8")
+
+    def test_checked_in_copy_passes(self):
+        self.assertEqual(self.check.check_countable_network_copy(ROOT), [])
+
+    def test_counted_phrases_fail(self):
+        for phrase in ("Blowhorn covers eight networks", "Seven fronts, one desk", "on 8 networks"):
+            self.write("content/en/compare/acme.md", phrase + "\n")
+            found = self.check.check_countable_network_copy(self.tmp)
+            self.assertEqual(len(found), 1, (phrase, found))
+
+    def test_data_and_layouts_are_scanned_but_docs_are_not(self):
+        self.write("data/x.json", '{"a": "across seven networks"}\n')
+        self.write("layouts/x.html", "<p>eight fronts</p>\n")
+        self.write("content/en/docs/x.md", "nine networks\n")
+        found = self.check.check_countable_network_copy(self.tmp)
+        self.assertEqual(len(found), 2, found)
+
+    def test_seven_tabs_and_all_seven_pass(self):
+        self.write("data/x.json", '{"a": "seven tabs and a prayer", "b": "all seven", "c": "seven-tabs"}\n')
+        self.assertEqual(self.check.check_countable_network_copy(self.tmp), [])
+
+
+class PlatformSoonCopyTest(unittest.TestCase):
+    """The site's own copy must never call a listed platform coming soon,
+    while "coming soon" copy that names no platform stays allowed and the
+    synced docs are left to the built-page guard."""
+
+    def setUp(self):
+        import shutil
+
+        import check_theme as check
+
+        self.check = check
+        self.tmp = Path(tempfile.mkdtemp())
+        self.root = self.tmp / "repo"
+        shutil.copytree(ROOT / "data", self.root / "data")
+        (self.root / "content/en/compare").mkdir(parents=True)
+        (self.root / "content/en/docs").mkdir(parents=True)
+
+    def tearDown(self):
+        import shutil
+
+        shutil.rmtree(self.tmp)
+
+    def write(self, rel, text):
+        path = self.root / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    def test_checked_in_copy_passes(self):
+        self.assertEqual(self.check.check_platform_soon_copy(ROOT), [])
+
+    def test_names_come_from_yaml_and_catalog(self):
+        names = self.check.platform_names(ROOT)
+        for name in ("YouTube", "Instagram", "X (Twitter)", "X", "Hacker News"):
+            self.assertIn(name, names)
+
+    def test_compare_networks_row_fails(self):
+        self.write(
+            "content/en/compare/acme.md",
+            '{"rows":[{"f":"Networks","b":"LinkedIn, X. Instagram and YouTube coming soon"}]}\n',
+        )
+        found = self.check.check_platform_soon_copy(self.root)
+        self.assertEqual(len(found), 1, found)
+        self.assertIn("content/en/compare/acme.md", found[0])
+
+    def test_compare_hub_row_split_across_fields_fails(self):
+        # The compare hub's Networks row before YouTube shipped: the platforms
+        # are the row's feature and the status is its Blowhorn cell.
+        self.write(
+            "content/en/compare/_index.md",
+            "---\n"
+            "title: Compare\n"
+            "rows:\n"
+            "  - feature: Instagram, TikTok, Facebook and YouTube\n"
+            '    blowhorn: { level: partial, text: "Coming soon" }\n'
+            '    schedulers: { level: yes, text: "Yes" }\n'
+            "  - feature: Posts with every laptop closed\n"
+            '    blowhorn: { level: partial, text: "As long as one computer is awake" }\n'
+            "---\n\nBody.\n",
+        )
+        found = self.check.check_platform_soon_copy(self.root)
+        self.assertEqual(len(found), 1, found)
+        self.assertIn("YouTube", found[0])
+
+    def test_faq_answer_split_from_its_question_fails(self):
+        self.write(
+            "content/en/ai/mcp.md",
+            '{"faq": [{"q": "Does it post to YouTube?", "a": "Coming soon. Today, use the CLI."}]}\n',
+        )
+        found = self.check.check_platform_soon_copy(self.root)
+        self.assertEqual(len(found), 1, found)
+        self.assertIn("content/en/ai/mcp.md", found[0])
+
+    def test_bare_soon_row_without_a_platform_passes(self):
+        self.write(
+            "content/en/compare/_index.md",
+            "---\n"
+            "intro: Works on LinkedIn, X and YouTube.\n"
+            "rows:\n"
+            "  - feature: Team invites\n"
+            '    blowhorn: { level: partial, text: "Coming soon" }\n'
+            "  - feature: LinkedIn, X and YouTube\n"
+            '    blowhorn: { level: yes, text: "Yes" }\n'
+            "---\n",
+        )
+        self.write(
+            "content/en/ai/mcp.md",
+            '{"faq": [{"q": "Can I npx it?", "a": "Coming soon. Today, use the CLI on LinkedIn."}]}\n',
+        )
+        self.assertEqual(self.check.check_platform_soon_copy(self.root), [])
+
+    def test_data_faq_fails(self):
+        faq = self.root / "data/solutions.json"
+        faq.write_text(
+            faq.read_text(encoding="utf-8").replace(
+                '"solutions"', '"note": "TikTok is Coming soon.", "solutions"', 1
+            ),
+            encoding="utf-8",
+        )
+        found = self.check.check_platform_soon_copy(self.root)
+        self.assertTrue(any("data/solutions.json" in p for p in found), found)
+
+    def test_soon_copy_without_a_platform_passes(self):
+        self.write(
+            "content/en/compare/acme.md",
+            '{"rows":[{"b":"Sound wave from every profile. Team invites coming soon"}]}\n',
+        )
+        self.write("content/en/download.md", "Blowhorn for Windows, coming soon.\n")
+        self.assertEqual(self.check.check_platform_soon_copy(self.root), [])
+
+    def test_synced_docs_are_not_scanned(self):
+        self.write("content/en/docs/reference/platforms/tiktok.md", "TikTok is coming soon.\n")
+        self.assertEqual(self.check.check_platform_soon_copy(self.root), [])
+
+
 if __name__ == "__main__":
     unittest.main()

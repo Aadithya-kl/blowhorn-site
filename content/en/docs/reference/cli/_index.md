@@ -81,7 +81,7 @@ and checked against it, so a page says what `--help` says.
 | [`blowhorn accept`](/docs/reference/cli/accept/) | Accept pending LinkedIn connection invitations other people have sent you, one at a time with a randomized pause between each. |
 | [`blowhorn analytics`](/docs/reference/cli/analytics/) | blowhorn analytics: activities, activity, history, import-exports, operations, pages. |
 | [`blowhorn auth`](/docs/reference/cli/auth/) | blowhorn auth: anonymous-usage-stats, login, logout, share-activity-publicly, status, switch-organization. |
-| [`blowhorn chrome`](/docs/reference/cli/chrome/) | blowhorn chrome: active-tab, attach-chrome, confirm, create-profile, discover, extension-enable, extension-install, extension-mode, extension-status, map, open-profile, profiles, remember, spaces-setup, status, suggest, unmap. |
+| [`blowhorn chrome`](/docs/reference/cli/chrome/) | blowhorn chrome: active-tab, attach-chrome, confirm, create-profile, discover, extension-enable, extension-install, extension-mode, extension-status, map, open, open-profile, profiles, remember, spaces-setup, status, suggest, unmap. |
 | [`blowhorn classify-url`](/docs/reference/cli/classify-url/) | Say what a link is, by the platform rules the engine keeps. |
 | [`blowhorn comment`](/docs/reference/cli/comment/) | Post LinkedIn, Reddit, or Bluesky comments from scheduled activities or ad-hoc target/message flags. |
 | [`blowhorn config`](/docs/reference/cli/config/) | blowhorn config: get, path, set, show. |
@@ -388,8 +388,9 @@ The commands that never look at `--platform` do not reject anything:
 - `schedule` reads it as a filter over scheduled activities, and accepts every
   platform an activity may carry.
 - `profile current/list/switch` never read it.
-- `profile auth --all` refreshes a fixed list and ignores `--platform`
-  entirely, so an unsupported platform is inert there too.
+- `profile auth --all` refreshes a fixed list (LinkedIn, X, Reddit and
+  Slack; never the YouTube consent, which is asked for by name) and ignores
+  `--platform` entirely, so an unsupported platform is inert there too.
 
 `schedule` is the one activity that is not "what this command acts on". It dispatches
 whatever a schedule activity names, and its `--platform` filters those activities, so every
@@ -501,6 +502,7 @@ blowhorn profile switch your-profile
 blowhorn profile auth --platform x            # a sign-in records the session as valid, checked now
 blowhorn profile auth --platform bluesky --profile your-profile  # prompts for handle + app password; saved only if Bluesky accepts the login
 printf '%s\n' "$APP_PASSWORD" | blowhorn profile auth --platform bluesky --profile your-profile --handle you.bsky.social --app-password-stdin --json
+blowhorn profile auth --platform youtube --profile your-profile  # the Data API consent in your browser, with your own OAuth client; nothing stored if you refuse
 blowhorn profile auth --platform reddit --profile all --exclude ""
 blowhorn profile auth --all
 ```

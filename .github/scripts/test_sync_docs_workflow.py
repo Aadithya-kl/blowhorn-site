@@ -22,6 +22,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import yaml
+
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 WORKFLOW = ROOT / ".github" / "workflows" / "sync-docs.yml"
@@ -106,12 +108,13 @@ class SyncDocsWorkflowTest(unittest.TestCase):
         # protection, so it would merge before the checks finish.
         self.assertNotRegex(text, r"gh pr merge[^\n]*--auto")
 
-    def run_merge(self, checks_script):
+    def run_merge(self, checks_script, mergeable_script='echo MERGEABLE'):
         """Run the merge script against a fake gh; return (result, log lines).
 
         checks_script is the shell body of the fake `gh pr checks`; the fake
-        sees "$@" and a per-run call counter in "$n". Every other gh call
-        succeeds and is logged, so the log shows whether a merge happened.
+        sees "$@" and a per-run call counter in "$n". mergeable_script is the
+        shell body answering `gh pr view --json mergeable`. Every other gh
+        call succeeds and is logged, so the log shows whether a merge happened.
         """
         with tempfile.TemporaryDirectory() as tmp:
             tmp = Path(tmp)
@@ -121,7 +124,14 @@ class SyncDocsWorkflowTest(unittest.TestCase):
                 "#!/usr/bin/env bash\n"
                 f'echo "$*" >> "{log}"\n'
                 'case "$1 $2" in\n'
-                '  "pr view") echo "7 OPEN abc123" ;;\n'
+                '  "pr view")\n'
+                '    case "$*" in\n'
+                '      *mergeable*)\n'
+                f'        n=$(grep -c "mergeable" "{log}")\n'
+                f"{mergeable_script}\n"
+                '        ;;\n'
+                '      *) echo "7 OPEN abc123" ;;\n'
+                '    esac ;;\n'
                 '  "run list") echo "99 completed success" ;;\n'
                 '  "pr checks")\n'
                 f'    n=$(grep -c "^pr checks" "{log}")\n'
@@ -180,6 +190,108 @@ class SyncDocsWorkflowTest(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("pr merge 7 --squash", calls)
+
+    def test_merge_reports_a_conflict_and_does_not_merge(self):
+        result, calls = self.run_merge(
+            'echo "DCO pass"', mergeable_script="echo CONFLICTING"
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn("pr merge 7 --squash", calls)
+        self.assertTrue(any(c.startswith("pr comment 7 ") for c in calls))
+        self.assertIn("merge conflict", result.stderr)
+
+    def test_merge_waits_for_mergeability_to_settle(self):
+        # GitHub reports UNKNOWN right after a push; the first answer must
+        # not be taken as a verdict.
+        result, calls = self.run_merge(
+            'echo "DCO pass"',
+            mergeable_script='if [ "$n" -le 1 ]; then echo UNKNOWN; else echo MERGEABLE; fi',
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("pr merge 7 --squash", calls)
+
+    def test_merge_refuses_an_unknown_mergeability_it_never_resolves(self):
+        result, calls = self.run_merge(
+            'echo "DCO pass"', mergeable_script="echo UNKNOWN"
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn("pr merge 7 --squash", calls)
+
+    def test_sync_commits_as_the_arjunmehta_git_account(self):
+        # Runs the workflow's own commit step in a scratch repository. The
+        # oracle is the account's published GitHub noreply address
+        # (<user id>+<login>@users.noreply.github.com, id 231106746).
+        account = "arjunmehta-git"
+        email = "231106746+arjunmehta-git@users.noreply.github.com"
+        workflow = yaml.safe_load(WORKFLOW.read_text(encoding="utf-8"))
+        steps = [
+            step
+            for job in workflow["jobs"].values()
+            for step in job.get("steps", [])
+            if step.get("name") == "Open or update the sync pull request"
+        ]
+        self.assertEqual(len(steps), 1)
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            bin_dir = tmp / "bin"
+            bin_dir.mkdir()
+            gh = bin_dir / "gh"
+            gh.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
+            gh.chmod(0o755)
+            base_env = {
+                k: v for k, v in os.environ.items()
+                if not k.startswith(("GIT_AUTHOR_", "GIT_COMMITTER_"))
+            }
+            base_env.update(HOME=str(tmp), GIT_CONFIG_NOSYSTEM="1")
+            isolated = dict(
+                base_env,
+                GIT_AUTHOR_NAME="someone-else",
+                GIT_AUTHOR_EMAIL="someone@example.com",
+                GIT_COMMITTER_NAME="someone-else",
+                GIT_COMMITTER_EMAIL="someone@example.com",
+            )
+
+            def git(*args, cwd):
+                return subprocess.run(
+                    ["git", *args], cwd=cwd, env=isolated, check=True,
+                    capture_output=True, text=True,
+                ).stdout
+
+            origin = tmp / "origin.git"
+            git("init", "--bare", "-q", str(origin), cwd=tmp)
+            site = tmp / "site"
+            site.mkdir()
+            git("init", "-q", "-b", "docs-sync", cwd=site)
+            git("remote", "add", "origin", str(origin), cwd=site)
+            git("commit", "-q", "--allow-empty", "-m", "base", cwd=site)
+            git("push", "-q", "origin", "docs-sync", cwd=site)
+            product = site / "product"
+            product.mkdir()
+            git("init", "-q", cwd=product)
+            git("commit", "-q", "--allow-empty", "-m", "product", cwd=product)
+            docs = site / "content" / "en" / "docs"
+            docs.mkdir(parents=True)
+            (docs / "page.md").write_text("synced\n", encoding="utf-8")
+            env = dict(
+                base_env,
+                PATH=f"{bin_dir}:{os.environ['PATH']}",
+                GITHUB_OUTPUT=str(tmp / "github_output"),
+                SYNC_REF="desktop-1.0.0",
+                SYNC_BRANCH="docs-sync",
+                OPEN_PR="7",
+            )
+            result = subprocess.run(
+                ["bash", "-c", steps[0]["run"]], cwd=site, env=env,
+                capture_output=True, text=True, timeout=60,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            fields = git(
+                "log", "-1", "--format=%an%n%ae%n%cn%n%ce%n%(trailers:key=Signed-off-by,valueonly)",
+                "docs-sync", cwd=origin,
+            ).splitlines()
+        self.assertEqual(fields[:4], [account, email, account, email])
+        # Sign-off (DCO) stays on every sync commit.
+        self.assertEqual(fields[4], f"{account} <{email}>")
 
     def test_makefile_defines_the_merge_target(self):
         text = MAKEFILE.read_text(encoding="utf-8")

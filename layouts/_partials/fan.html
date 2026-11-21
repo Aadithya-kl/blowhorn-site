@@ -4,46 +4,50 @@
   which is in the site contract, and the fan hero uses its own id. */ -}}
 {{- $titleId := .titleId | default "fan-title" -}}
 <svg class="fan" viewBox="0 -24 560 500" role="img" aria-labelledby="{{ $titleId }}" focusable="false" xmlns="http://www.w3.org/2000/svg">
-    <title id="{{ $titleId }}">One message fanning out to every platform</title>
+    <defs><clipPath id="{{ $titleId }}-clip"><rect x="0" y="-24" width="560" height="500"></rect></clipPath></defs>
+    <title id="{{ $titleId }}">One message fanning out to more platforms than fit here</title>
     
     <!-- Paths -->
-    <path class="fan-line" d="M174 226C270 226 240.7 16 350.7 16"></path>
-    <path class="fan-line" d="M174 226C270 226 277.3 86 387.3 86"></path>
-    <path class="fan-line" d="M174 226C270 226 297.5 156 407.5 156"></path>
-    <path class="fan-line" d="M174 226C270 226 304.0 226 414.0 226"></path>
-    <path class="fan-line" d="M174 226C270 226 297.5 296 407.5 296"></path>
-    <path class="fan-line" d="M174 226C270 226 277.3 366 387.3 366"></path>
-    <path class="fan-line" d="M174 226C270 226 240.7 436 350.7 436"></path>
+    <path class="fan-line" d="M174 226C270 226 240.5 16 350.5 16"></path>
+    <path class="fan-line" d="M174 226C270 226 271.6 76 381.6 76"></path>
+    <path class="fan-line" d="M174 226C270 226 292.3 136 402.3 136"></path>
+    <path class="fan-line" d="M174 226C270 226 302.7 196 412.7 196"></path>
+    <path class="fan-line" d="M174 226C270 226 302.7 256 412.7 256"></path>
+    <path class="fan-line" d="M174 226C270 226 292.3 316 402.3 316"></path>
+    <path class="fan-line" d="M174 226C270 226 271.6 376 381.6 376"></path>
+    <path class="fan-line" d="M174 226C270 226 240.5 436 350.5 436"></path>
 
-    <!-- Path 1 (Top) -->
-    <!-- Wave 1 -->
- <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="0s" path="M174 226C270 226 240.7 16 360.7 16" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
- <!-- Wave 2 -->
-    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="-1.3s" path="M174 226C270 226 240.7 16 360.7 16" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
+    <!-- Path 1 -->
+    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="0s" path="M174 226C270 226 240.5 16 360.5 16" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
+    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="-1.3s" path="M174 226C270 226 240.5 16 360.5 16" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
 
     <!-- Path 2 -->
-    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="0s" path="M174 226C270 226 277.3 86 397.3 86" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
-    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="-1.3s" path="M174 226C270 226 277.3 86 397.3 86" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
+    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="0s" path="M174 226C270 226 271.6 76 391.6 76" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
+    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="-1.3s" path="M174 226C270 226 271.6 76 391.6 76" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
 
     <!-- Path 3 -->
-    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="0s" path="M174 226C270 226 297.5 156 417.5 156" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
-    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="-1.3s" path="M174 226C270 226 297.5 156 417.5 156" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
+    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="0s" path="M174 226C270 226 292.3 136 412.3 136" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
+    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="-1.3s" path="M174 226C270 226 292.3 136 412.3 136" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
 
-    <!-- Path 4 (Middle) -->
-    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="0s" path="M174 226C270 226 304.0 226 424.0 226" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
-    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="-1.3s" path="M174 226C270 226 304.0 226 424.0 226" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
+    <!-- Path 4 -->
+    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="0s" path="M174 226C270 226 302.7 196 422.7 196" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
+    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="-1.3s" path="M174 226C270 226 302.7 196 422.7 196" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
 
     <!-- Path 5 -->
-    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="0s" path="M174 226C270 226 297.5 296 417.5 296" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
-    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="-1.3s" path="M174 226C270 226 297.5 296 417.5 296" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
+    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="0s" path="M174 226C270 226 302.7 256 422.7 256" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
+    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="-1.3s" path="M174 226C270 226 302.7 256 422.7 256" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
 
     <!-- Path 6 -->
-    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="0s" path="M174 226C270 226 277.3 366 397.3 366" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
-    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="-1.3s" path="M174 226C270 226 277.3 366 397.3 366" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
+    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="0s" path="M174 226C270 226 292.3 316 412.3 316" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
+    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="-1.3s" path="M174 226C270 226 292.3 316 412.3 316" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
 
-    <!-- Path 7 (Bottom) -->
-    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="0s" path="M174 226C270 226 240.7 436 360.7 436" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
-    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="-1.3s" path="M174 226C270 226 240.7 436 360.7 436" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
+    <!-- Path 7 -->
+    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="0s" path="M174 226C270 226 271.6 376 391.6 376" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
+    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="-1.3s" path="M174 226C270 226 271.6 376 391.6 376" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
+
+    <!-- Path 8 -->
+    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="0s" path="M174 226C270 226 240.5 436 360.5 436" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
+    <circle class="fan-pulse" r="8"><animateMotion dur="2.6s" repeatCount="indefinite" begin="-1.3s" path="M174 226C270 226 240.5 436 360.5 436" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1"></animateMotion></circle>
 
     <g class="bubble-source">
  <path d="M44 170H154Q174 170 174 190V262Q174 282 154 282H72L40 304L52 282H44Q24 282 24 262V190Q24 170 44 170Z"></path>
@@ -53,31 +57,45 @@
     </g>
 
     <g class="fan-tile"><title>LinkedIn</title>
- <rect x="350.7" y="-10.0" width="52" height="52" rx="13"></rect>
- <image href="{{ "assets/platforms/linkedin-in-bug.png" | relURL }}" x="363.9" y="3.2" width="25.6" height="25.6" preserveAspectRatio="xMidYMid meet"></image>
+ <rect x="350.5" y="-10" width="52" height="52" rx="13"></rect>
+ <image href="{{ "assets/platforms/linkedin-in-bug.png" | relURL }}" x="363.7" y="3.2" width="25.6" height="25.6" preserveAspectRatio="xMidYMid meet"></image>
     </g>
     <g class="fan-tile"><title>X</title>
- <rect x="387.3" y="60.0" width="52" height="52" rx="13"></rect>
- <image href="{{ "assets/platforms/x-logo-black.png" | relURL }}" x="400.7" y="73.5" width="25.1" height="25.1" preserveAspectRatio="xMidYMid meet"></image>
+ <rect x="381.6" y="50" width="52" height="52" rx="13"></rect>
+ <image href="{{ "assets/platforms/x-logo-black.png" | relURL }}" x="395.1" y="63.5" width="25.1" height="25.1" preserveAspectRatio="xMidYMid meet"></image>
     </g>
     <g class="fan-tile"><title>Reddit</title>
- <rect x="407.5" y="130.0" width="52" height="52" rx="13"></rect>
- <image href="{{ "assets/platforms/reddit-logo.png" | relURL }}" x="418.6" y="141.1" width="29.8" height="29.8" preserveAspectRatio="xMidYMid meet"></image>
+ <rect x="402.3" y="110" width="52" height="52" rx="13"></rect>
+ <image href="{{ "assets/platforms/reddit-logo.png" | relURL }}" x="413.4" y="121.1" width="29.8" height="29.8" preserveAspectRatio="xMidYMid meet"></image>
+    </g>
+    <g class="fan-tile"><title>YouTube</title>
+ <rect x="412.7" y="170" width="52" height="52" rx="13"></rect>
+ <image href="{{ "assets/platforms/youtube-simple-icons.svg" | relURL }}" x="424.7" y="182.0" width="28" height="28" preserveAspectRatio="xMidYMid meet"></image>
     </g>
     <g class="fan-tile"><title>Slack</title>
- <rect x="414.0" y="200.0" width="52" height="52" rx="13"></rect>
- <image href="{{ "assets/platforms/slack-mark.svg" | relURL }}" x="426.1" y="212.1" width="27.9" height="27.9" preserveAspectRatio="xMidYMid meet"></image>
+ <rect x="412.7" y="230" width="52" height="52" rx="13"></rect>
+ <image href="{{ "assets/platforms/slack-mark.svg" | relURL }}" x="424.8" y="242.1" width="27.9" height="27.9" preserveAspectRatio="xMidYMid meet"></image>
     </g>
     <g class="fan-tile"><title>Bluesky</title>
- <rect x="407.5" y="270.0" width="52" height="52" rx="13"></rect>
- <image href="{{ "assets/platforms/bluesky-butterfly-blue.svg" | relURL }}" x="418.6" y="282.9" width="29.8" height="26.2" preserveAspectRatio="xMidYMid meet"></image>
+ <rect x="402.3" y="290" width="52" height="52" rx="13"></rect>
+ <image href="{{ "assets/platforms/bluesky-butterfly-blue.svg" | relURL }}" x="413.4" y="302.9" width="29.8" height="26.2" preserveAspectRatio="xMidYMid meet"></image>
     </g>
     <g class="fan-tile"><title>Hacker News</title>
- <rect x="387.3" y="340.0" width="52" height="52" rx="13"></rect>
- <image href="{{ "assets/platforms/hacker-news-y18.svg" | relURL }}" x="401.2" y="353.9" width="24.2" height="24.2" preserveAspectRatio="xMidYMid meet"></image>
+ <rect x="381.6" y="350" width="52" height="52" rx="13"></rect>
+ <image href="{{ "assets/platforms/hacker-news-y18.svg" | relURL }}" x="395.5" y="363.9" width="24.2" height="24.2" preserveAspectRatio="xMidYMid meet"></image>
     </g>
     <g class="fan-tile"><title>GitHub</title>
- <rect x="350.7" y="410.0" width="52" height="52" rx="13"></rect>
- <image href="{{ "assets/platforms/github-invertocat-black.svg" | relURL }}" x="361.8" y="421.4" width="29.8" height="29.1" preserveAspectRatio="xMidYMid meet"></image>
+ <rect x="350.5" y="410" width="52" height="52" rx="13"></rect>
+ <image href="{{ "assets/platforms/github-invertocat-black.svg" | relURL }}" x="361.6" y="421.4" width="29.8" height="29.1" preserveAspectRatio="xMidYMid meet"></image>
+    </g>
+
+    <!-- More than fit: logos cut off by the edge of the picture. Decorative, no wires. -->
+    <g class="fan-more" clip-path="url(#{{ $titleId }}-clip)" aria-hidden="true">
+      <g class="fan-tile"><rect x="526" y="80" width="52" height="52" rx="13"></rect>
+ <image href="{{ "assets/platforms/instagram-simple-icons.svg" | relURL }}" x="540" y="92" width="28" height="28" preserveAspectRatio="xMidYMid meet"></image></g>
+      <g class="fan-tile"><rect x="526" y="200" width="52" height="52" rx="13"></rect>
+ <image href="{{ "assets/platforms/tiktok-simple-icons.svg" | relURL }}" x="540" y="212" width="28" height="28" preserveAspectRatio="xMidYMid meet"></image></g>
+      <g class="fan-tile"><rect x="526" y="320" width="52" height="52" rx="13"></rect>
+ <image href="{{ "assets/platforms/facebook-simple-icons.svg" | relURL }}" x="540" y="332" width="28" height="28" preserveAspectRatio="xMidYMid meet"></image></g>
     </g>
   </svg>

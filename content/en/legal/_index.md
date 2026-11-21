@@ -44,7 +44,6 @@ policies:
   - title: Terms of service
     summary: The agreement between you and us for the website, the app and the extension, from early access and downloads to acceptable use.
     url: /legal/terms/
-    status: Draft, pending legal review
   - title: Chrome extension permissions
     summary: Each permission the Blowhorn extension asks for, the sites it runs on, and why.
     url: /docs/reference/extension-permissions/
@@ -59,6 +58,8 @@ policies:
 ## See what sites can see {#tells}
 
 Curious what websites can read about your browser? [Blowhorn Tells](https://tells.blowhorn.ai/) is our free "Am I a Bot?" check. It shows the bot-detection and fingerprint signals a site can see, in plain words. The site keeps no copy, and its own page says exactly which outside services see your IP address.
+
+{{< cookie-preferences >}}
 
 ## Report a security issue
 

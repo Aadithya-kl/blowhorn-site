@@ -14,10 +14,10 @@ sitemap:
 kits:
   full:
     url: /brand/blowhorn-brand-kit.zip
-    size: 35 MB
+    size: 44 MB
   logos:
     url: /brand/blowhorn-logo-kit.zip
-    size: 2.0 MB
+    size: 2.2 MB
 # Logo tiles. `stage` is the ground the file is drawn for: light, dark, teal or charcoal.
 lockups:
   - name: Horizontal lockup
@@ -70,14 +70,6 @@ wordmarks:
     note: White, for dark grounds
     file: blowhorn-wordmark-white.svg
     stage: dark
-  - name: Company lockup
-    note: The formal lockup, with the company mark
-    file: layer5-blowhorn-lockup.svg
-    stage: light
-  - name: Company lockup, on dark
-    note: The same, after hours
-    file: layer5-blowhorn-lockup-on-dark.svg
-    stage: dark
   - name: One-color lockup, charcoal
     note: For teal and busy light grounds
     file: blowhorn-lockup-horizontal-mono-charcoal.svg
@@ -93,6 +85,8 @@ apps:
     file: blowhorn-app-icon-dark.svg
   - name: App icon, light
     file: blowhorn-app-icon-light.svg
+  - name: App icon, square, for app directories
+    file: blowhorn-app-icon-square.svg
 mascot:
   - name: Hat, facing left
     file: locked-6/major-6-hat-left
@@ -392,7 +386,7 @@ fonts:
     role: Display
     class: type-display
     weights: ExtraBold 800, Bold 700
-    sample: One message out, many ears in
+    sample: Not a bot. It's you.
     url: https://fonts.google.com/specimen/Bricolage+Grotesque
   - family: Instrument Sans
     role: Text and interface

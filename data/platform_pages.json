@@ -275,8 +275,8 @@
             "title": "Connect an assistant",
             "file": "MCP entry",
             "lang": "json",
-            "code": "{\n  \"mcpServers\": {\n    \"blowhorn\": {\n      \"command\": \"npx\",\n      \"args\": [\"-y\", \"blowhorn-mcp\"]\n    }\n  }\n}",
-            "source": "/docs/how-to/set-up/connect-mcp-client/#start-it-with-npx",
+            "code": "{\n  \"mcpServers\": {\n    \"blowhorn\": {\n      \"type\": \"http\",\n      \"url\": \"https://mcp.blowhorn.ai/mcp\"\n    }\n  }\n}",
+            "source": "/docs/how-to/set-up/connect-mcp-client/#the-server-url",
             "sourceLabel": "Connect an AI assistant over MCP"
           },
           {

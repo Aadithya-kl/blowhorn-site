@@ -5,7 +5,7 @@
   "description": "Comet is a free AI browser with an assistant that can act on pages for you. Blowhorn is a dedicated social tool, scripted and scheduled, that works from your own browser across many profiles and computers.",
   "layout": "versus",
   "weight": 52,
-  "lastmod": "2026-11-02",
+  "lastmod": "2026-11-20",
   "competitor": "Perplexity Comet",
   "mark": "Co",
   "site_url": "https://www.perplexity.ai/comet",
@@ -85,6 +85,7 @@
     "hacker-news",
     "github",
     "bluesky",
-    "slack"
+    "slack",
+    "youtube"
   ]
 }

@@ -97,14 +97,12 @@ body::before {
 
 /* ---------- 3. Rhythm ---------- */
 :root {
-  --section-y: 80px;
   --head-gap: 40px;
   --grid-gap: 24px;
   --card-pad: 28px;
 }
 @media (min-width: 900px) {
   :root {
-    --section-y: 136px;
     --head-gap: 56px;
     --grid-gap: 32px;
     --card-pad: 36px;

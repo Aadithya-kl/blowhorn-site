@@ -5,7 +5,7 @@
   "description": "Blowhorn isn't a bot. It's you. Publer wins on budget scheduling, recycling and bulk posting across 13 networks. Blowhorn is for real-person amplification on developer networks.",
   "layout": "versus",
   "weight": 14,
-  "lastmod": "2026-11-03",
+  "lastmod": "2026-11-20",
   "competitor": "Publer",
   "mark": "Pb",
   "site_url": "https://publer.com/",
@@ -19,7 +19,7 @@
   "us": [
     "One post should be lifted by many real profiles, not recycled",
     "Hacker News, Reddit, GitHub and Slack message surfaces are where your audience is",
-    "Your own browser for LinkedIn, X, Reddit and Hacker News; the platform API for GitHub, Bluesky and Slack"
+    "Your own signed-in browser, through the extension, for LinkedIn, X, Reddit, Hacker News, YouTube and more; after YouTube Data API consent, uploads, comments, replies and likes go through YouTube's official API (Posts-tab posts stay in the browser). GitHub, Bluesky and Slack use their APIs."
   ],
   "price_them": "Free plan for 3 accounts (X needs a paid plan); paid plans priced per social account, plus per additional member",
   "price_src": "https://publer.com/pricing",
@@ -27,12 +27,12 @@
     {
       "f": "Where it acts",
       "t": "Publer's cloud",
-      "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit and Hacker News; the platform's API for GitHub, Bluesky and Slack"
+      "b": "Your computers: your own signed-in browser, through the extension, for LinkedIn, X, Reddit, Hacker News, YouTube and more. After YouTube Data API consent, uploads, comments, replies and likes go through YouTube's official API; Posts-tab posts stay in the browser. GitHub, Bluesky and Slack use their APIs."
     },
     {
       "f": "Networks",
       "t": "13 incl. Instagram, TikTok, Telegram, WordPress, LinkedIn, X, Bluesky",
-      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack message via API. Instagram, Facebook and YouTube coming soon. TikTok is in development, not listed as supported"
+      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, YouTube, Slack message via API and more"
     },
     {
       "f": "Recycling and bulk scheduling",
@@ -88,7 +88,7 @@
     "Own-device custody: your browser sessions stay on your own computers, not in a vendor cloud"
   ],
   "loses": [
-    "Publer schedules and recycles across 13 channels, including Telegram and WordPress. Blowhorn covers seven networks",
+    "Publer schedules and recycles across 13 channels, including Telegram and WordPress. Blowhorn covers more networks than a count can hold",
     "Publer starts free and self-serve, with no sales call. Blowhorn is free during early access, with no published long-term price",
     "Publer's bulk scheduling and RSS automations save hours at volume. Blowhorn is built for a few posts that matter, not high-volume scheduling"
   ],
@@ -99,7 +99,8 @@
     "hacker-news",
     "github",
     "bluesky",
-    "slack"
+    "slack",
+    "youtube"
   ],
   "sitemap": {
     "changefreq": "monthly",

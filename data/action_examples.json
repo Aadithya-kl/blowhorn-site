@@ -846,6 +846,143 @@
           "notes": "The Blowhorn skill teaches your agent this action: read first, rehearse, then ask before it fires."
         }
       }
+    },
+    {
+      "platform": "youtube",
+      "action": "post",
+      "surfaces": {
+        "app": {
+          "status": "placeholder",
+          "screenshot": "assets/docs/actions/youtube/post.png"
+        },
+        "cli": {
+          "status": "available",
+          "command": "blowhorn post --platform youtube --profile personal",
+          "cliRef": "/docs/reference/cli/post/"
+        },
+        "rest": {
+          "status": "placeholder",
+          "notes": "The Blowhorn REST API is coming soon. Until then, use the CLI or MCP."
+        },
+        "mcp": {
+          "status": "available",
+          "prompt": "Dry-run the queued YouTube upload from my personal profile, as private. Show me what would happen and wait for my go before you confirm.",
+          "notes": "Ask an assistant connected to the Blowhorn MCP server. Writes come back as a dry run first; nothing goes out until you say go."
+        },
+        "skill": {
+          "status": "available",
+          "notes": "The Blowhorn skill teaches your agent this action: read first, rehearse, then ask before it fires."
+        }
+      }
+    },
+    {
+      "platform": "youtube",
+      "action": "comment",
+      "surfaces": {
+        "app": {
+          "status": "placeholder",
+          "screenshot": "assets/docs/actions/youtube/comment.png"
+        },
+        "cli": {
+          "status": "placeholder",
+          "notes": "YouTube comments are not a distinct blowhorn command. Put the address in the activity's Comment on, then run blowhorn post --platform youtube."
+        },
+        "rest": {
+          "status": "placeholder",
+          "notes": "The Blowhorn REST API is coming soon. Until then, use the CLI or MCP."
+        },
+        "mcp": {
+          "status": "available",
+          "prompt": "Dry-run a comment from my personal profile on https://www.youtube.com/watch?v=abc123 thanking them for the walkthrough. Show me what would happen and wait for my go before you confirm.",
+          "notes": "Ask an assistant connected to the Blowhorn MCP server. Writes come back as a dry run first; nothing goes out until you say go."
+        },
+        "skill": {
+          "status": "available",
+          "notes": "The Blowhorn skill teaches your agent this action: read first, rehearse, then ask before it fires."
+        }
+      }
+    },
+    {
+      "platform": "youtube",
+      "action": "reply",
+      "surfaces": {
+        "app": {
+          "status": "placeholder",
+          "screenshot": "assets/docs/actions/youtube/reply.png"
+        },
+        "cli": {
+          "status": "placeholder",
+          "notes": "YouTube replies are not a distinct blowhorn command. Put the address in the activity's Comment on, then run blowhorn post --platform youtube."
+        },
+        "rest": {
+          "status": "placeholder",
+          "notes": "The Blowhorn REST API is coming soon. Until then, use the CLI or MCP."
+        },
+        "mcp": {
+          "status": "available",
+          "prompt": "Dry-run a reply from my personal profile to the comment at https://www.youtube.com/watch?v=abc123&lc=xyz answering their question: the dry run walks every step and sends nothing. Show me what would happen and wait for my go before you confirm.",
+          "notes": "Ask an assistant connected to the Blowhorn MCP server. Writes come back as a dry run first; nothing goes out until you say go."
+        },
+        "skill": {
+          "status": "available",
+          "notes": "The Blowhorn skill teaches your agent this action: read first, rehearse, then ask before it fires."
+        }
+      }
+    },
+    {
+      "platform": "youtube",
+      "action": "amplify",
+      "surfaces": {
+        "app": {
+          "status": "placeholder",
+          "screenshot": "assets/docs/actions/youtube/amplify.png"
+        },
+        "cli": {
+          "status": "placeholder",
+          "notes": "YouTube likes are not a distinct blowhorn command. Put the address in the activity's Amplify, then run blowhorn post --platform youtube."
+        },
+        "rest": {
+          "status": "placeholder",
+          "notes": "The Blowhorn REST API is coming soon. Until then, use the CLI or MCP."
+        },
+        "mcp": {
+          "status": "available",
+          "prompt": "Dry-run a like of https://www.youtube.com/watch?v=abc123 from my personal profile only. Show me what would happen and wait for my go before you confirm.",
+          "notes": "Ask an assistant connected to the Blowhorn MCP server. Writes come back as a dry run first; nothing goes out until you say go."
+        },
+        "skill": {
+          "status": "available",
+          "notes": "The Blowhorn skill teaches your agent this action: read first, rehearse, then ask before it fires."
+        }
+      }
+    },
+    {
+      "platform": "youtube",
+      "action": "analytics",
+      "surfaces": {
+        "app": {
+          "status": "placeholder",
+          "screenshot": "assets/docs/actions/youtube/analytics.png"
+        },
+        "cli": {
+          "status": "available",
+          "command": "blowhorn analytics --platform youtube --profile personal",
+          "cliRef": "/docs/reference/cli/analytics/"
+        },
+        "rest": {
+          "status": "placeholder",
+          "notes": "The Blowhorn REST API is coming soon. Until then, use the CLI or MCP."
+        },
+        "mcp": {
+          "status": "available",
+          "prompt": "Show my YouTube channel's figures for my personal profile (read only, nothing to confirm).",
+          "notes": "Ask an assistant connected to the Blowhorn MCP server. Writes come back as a dry run first; nothing goes out until you say go."
+        },
+        "skill": {
+          "status": "available",
+          "notes": "The Blowhorn skill teaches your agent this action: read first, rehearse, then ask before it fires."
+        }
+      }
     }
   ]
 }

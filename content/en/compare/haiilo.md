@@ -5,7 +5,7 @@
   "description": "Blowhorn isn't a bot. It's you. Haiilo is an employee experience platform with advocacy as one module, built for larger, distributed organizations. Blowhorn is for small technical teams who want real people amplifying on developer networks.",
   "layout": "versus",
   "weight": 33,
-  "lastmod": "2026-11-03",
+  "lastmod": "2026-11-20",
   "competitor": "Haiilo",
   "mark": "Hi",
   "site_url": "https://haiilo.com/",
@@ -19,7 +19,7 @@
   ],
   "us": [
     "You are a small technical team, not an enterprise rollout",
-    "Your audience is on Hacker News, Reddit, GitHub, LinkedIn, X and Bluesky, and you use Slack messages via API",
+    "Your audience is on Hacker News, Reddit, GitHub, LinkedIn, X, Bluesky, YouTube and more, and you use Slack messages via API",
     "You want to start free during early access, with no sales call in the way, knowing sessions can break, automation can still be blocked, and a computer must be awake because this is not hosted SaaS"
   ],
   "network_logos": [
@@ -29,7 +29,8 @@
     "hacker-news",
     "github",
     "bluesky",
-    "slack"
+    "slack",
+    "youtube"
   ],
   "wins": [
     "Developer networks: Hacker News, Reddit and GitHub are not listed in Haiilo's vendor knowledge-base list, and Slack is internal distribution, not public publishing",
@@ -38,7 +39,7 @@
   ],
   "loses": [
     "Haiilo is a whole employee platform: intranet, employee app and communications alongside advocacy. Blowhorn contests only the advocacy edge",
-    "Haiilo reports dashboards, earned media value and UTM attribution in Scaling. Blowhorn analytics cover LinkedIn, X and Bluesky",
+    "Haiilo reports dashboards, earned media value and UTM attribution in Scaling. Blowhorn analytics cover LinkedIn, X, Bluesky and YouTube",
     "Haiilo keeps running while your computers are closed. Blowhorn needs a computer awake"
   ],
   "price_them": "Mixed model: quote-only intranet tiers; advocacy Starter per seat, Scaling and Enterprise custom",
@@ -52,7 +53,7 @@
     {
       "f": "Where it acts",
       "t": "The vendor's cloud; employees connect their accounts",
-      "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit and Hacker News; the platform's API for GitHub, Bluesky and Slack"
+      "b": "Your computers: your own signed-in browser, through the extension, for LinkedIn, X, Reddit, Hacker News, YouTube and more. After YouTube Data API consent, uploads, comments, replies and likes go through YouTube's official API; Posts-tab posts stay in the browser. GitHub, Bluesky and Slack use their APIs."
     },
     {
       "f": "Content library, approvals, gamification",
@@ -67,7 +68,7 @@
     {
       "f": "Analytics",
       "t": "Dashboards, earned media value, UTM attribution in Scaling",
-      "b": "LinkedIn, X and Bluesky analytics"
+      "b": "LinkedIn, X, Bluesky and YouTube analytics"
     },
     {
       "f": "Many people amplifying one post",

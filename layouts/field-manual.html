@@ -87,3 +87,9 @@
       </div>
     </main>
 {{ end }}
+
+{{ define "scripts" }}
+    {{- /* A briefing that moved to its own page keeps its old anchor
+      working (front matter anchor_redirects; see anchor-redirects.html). */ -}}
+    {{- partial "anchor-redirects.html" . }}
+{{ end }}

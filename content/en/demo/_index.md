@@ -1,10 +1,10 @@
 ---
 title: Try Blowhorn in your browser
 linkTitle: Demo
-description: A hands-on simulation of the Blowhorn queue. Pick a formation, build a queue, and watch the schedule fill in. Nothing is posted, and nothing leaves your browser.
-lead: A hands-on simulation of the real queue. Pick a formation, build a queue, and watch the schedule fill in. Nothing is posted, and nothing leaves your browser.
+description: "The General walks you through a launch. Pick a formation, load the queue, and sound the call. A simulation: nothing posts, and nothing leaves your browser."
+lead: "The General walks you through a launch. Pick a formation, load the queue, and sound the call. A simulation: nothing posts, and nothing leaves your browser."
 layout: demo
-lastmod: 2026-11-18
+lastmod: 2026-11-19
 sitemap:
   changefreq: monthly
   priority: 0.5

@@ -21,6 +21,13 @@ pass and the pass in flight. `service start` loads the service if it is stopped
 and asks a running one to look at the schedule now. In the app, the "this
 computer" screen shows the same state.
 
+The same screen shows whether the versions agree: an **Extension** row names
+a Google Chrome profile whose extension is behind the app, and an **Engine** row
+names an engine that is not this app's. A behind extension still runs, and
+Chrome updates it on its own schedule; update it sooner from the Blowhorn
+popup (**Upgrade**, or **Check for update**). An extension below the version
+Blowhorn needs cannot run anything until it is updated.
+
 While no pass is running, the service also tells your Blowhorn account that this
 computer is still here, about once a minute, so the computer shows online there
 between passes. It sends nothing while you are signed out.
@@ -79,6 +86,21 @@ service's control connection lived inside the account's log folder, whose path i
 longer than macOS allows for one. Update Blowhorn, and the service starts on its
 own.
 
+## When the service is not running
+
+If This computer says the background service is not running, the service stopped and nothing started it again, so nothing scheduled goes out. The screen says so in a card, not a banner: what is wrong, since when, the likely cause read from the service's own state, and the last line it logged. The card offers four things you can do:
+
+- **Restart the service** asks the service to drain and start again.
+- **Re-register the service** asks the app to register it again from this app.
+- **Open service log** opens the service log.
+- **Report the issue** opens support with the app, engine and extension versions, the diagnosis and the last lines of the log already filled in.
+
+After you take one, the screen reads the service again and says whether it now runs. The **On duty** switch follows the same state: it cannot read on while the screen says the service is not running.
+
+A service that keeps exiting gets the same card, with the cause in the diagnosis's words; the full card with its remediations stays on the Troubleshooting tab.
+
+The app also checks on its own. At launch it confirms the service process is actually alive and on this app's version, not only that launchd holds the registration, and starts it again when it finds it registered but dead. While Blowhorn runs, the schedule state arriving with the service dead starts it again, at most once every ten minutes while it stays dead. A registration that fails is tried again every two minutes, up to thirty times, and the failure is shown on This computer instead of sitting silent.
+
 ## When the service runs but passes say Blowhorn is unreachable
 
 A pass that cannot reach your Blowhorn account is skipped and tried again on the next
@@ -91,9 +113,11 @@ pass; the service itself is fine. Each failed attempt writes one line to that pa
 - `refused` or `reset`: something closed the connection.
 - `other`: none of the above; the line also names the error's type.
 
-The Service log on the Troubleshooting tab shows the end of the launcher's own error file,
-which is never cleared, so lines from an earlier version can sit beside today's.
-Check the **written** time and the version before reading one as current.
+The Service log on the Troubleshooting tab shows what the service has written since it last
+started. Its first line says when that was, which process it is and which version:
+`service run: started at 2026-11-20 09:49:50 (pid 25304, Blowhorn 2.11.1)`. Every line below it
+is from that run. **Open log** opens the whole file, which is never cleared, so it also holds
+earlier runs and versions, each beginning with its own start line.
 
 ## A separate data folder
 

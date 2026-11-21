@@ -29,7 +29,7 @@
     }
   ],
   "group": "LinkedIn growth tools",
-  "lastmod": "2026-11-03",
+  "lastmod": "2026-11-20",
   "layout": "versus",
   "linkTitle": "Dripify",
   "loses": [
@@ -46,7 +46,8 @@
     "hacker-news",
     "github",
     "bluesky",
-    "slack"
+    "slack",
+    "youtube"
   ],
   "price_src": "https://dripify.io/pricing/",
   "price_them": "Pro $59 and Advanced $79 per user per month, billed annually",
@@ -57,7 +58,7 @@
       "t": "Outbound prospecting at volume, with drip sequences"
     },
     {
-      "b": "Your computers: your own signed-in browser for LinkedIn, X, Reddit and Hacker News; the platform's API for GitHub, Bluesky and Slack",
+      "b": "Your computers: your own signed-in browser, through the extension, for LinkedIn, X, Reddit, Hacker News, YouTube and more. After YouTube Data API consent, uploads, comments, replies and likes go through YouTube's official API; Posts-tab posts stay in the browser. GitHub, Bluesky and Slack use their APIs.",
       "f": "Where it acts",
       "t": "Dripify's cloud, no browser extension required"
     },
@@ -97,7 +98,7 @@
       "t": "Yes, from its cloud"
     },
     {
-      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack. Instagram, TikTok, Facebook and YouTube coming soon",
+      "b": "LinkedIn, X, Reddit, Hacker News, GitHub, Bluesky, Slack, YouTube and more",
       "f": "Networks",
       "t": "LinkedIn (plus email)"
     },
@@ -138,10 +139,10 @@
   "us": [
     "You want careful LinkedIn hygiene, not volume prospecting",
     "No vendor server should log in as you; Blowhorn acts from your own signed-in browser",
-    "You also speak on X, Reddit, Hacker News, GitHub, Bluesky and Slack, and want your people amplifying",
+    "You also speak on X, Reddit, Hacker News, GitHub, Bluesky, Slack and YouTube, and want your people amplifying",
     "You want safety controls, a dry run before anything posts, and one pause switch for the whole fleet"
   ],
-  "verdict": "Blowhorn isn't a bot. It's you. Dripify is a capable LinkedIn and email drip campaign tool for sales teams, run from its cloud with a Smart Inbox for replies. If simple, always-on drip sequences are the job, pick Dripify, honestly. Blowhorn is for careful outreach and real-person amplification, from your own browser, on seven networks.",
+  "verdict": "Blowhorn isn't a bot. It's you. Dripify is a capable LinkedIn and email drip campaign tool for sales teams, run from its cloud with a Smart Inbox for replies. If simple, always-on drip sequences are the job, pick Dripify, honestly. Blowhorn is for careful outreach and real-person amplification, from your own browser, on every network you post on.",
   "weight": 24,
   "wins": [
     "You never hand over your LinkedIn password or cookie to a vendor server",
