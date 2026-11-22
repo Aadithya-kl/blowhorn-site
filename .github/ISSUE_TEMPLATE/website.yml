@@ -1,12 +1,12 @@
-name: 🌐 Website Bug Report
+name: 🌐 Website Feedback
 description: Report an issue to help improve the Blowhorn.ai website.
 title: '[Website] '
-labels: ["kind/bug", "help wanted", "framework/hugo", "language/markdown", "language/css"]
+labels: ["help wanted", "framework/hugo", "language/markdown", "language/css", "component/website"]
 body:
   - type: input
     id: affected-pages
     attributes:
-      label: Affected Site Page
+      label: Affected Page (URL)
     validations:
       required: true
   - type: textarea
@@ -22,7 +22,7 @@ body:
       label: Expected Behavior
       description: A brief description of what you expected to happen.
     validations:
-      required: true
+      required: false
   - type: textarea
     id: screenshots-logs
     attributes:
