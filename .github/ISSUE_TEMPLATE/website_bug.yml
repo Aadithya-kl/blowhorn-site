@@ -3,6 +3,12 @@ description: Report an issue to help improve the Blowhorn.ai website.
 title: '[Website] '
 labels: ["kind/bug", "help wanted", "framework/hugo", "language/markdown", "language/css"]
 body:
+  - type: input
+    id: affected-pages
+    attributes:
+      label: Affected Site Page(s)
+    validations:
+      required: true
   - type: textarea
     id: current-behavior
     attributes:
@@ -24,12 +30,6 @@ body:
       description: Add screenshots, logs, or screen recordings to help explain your problem.
     validations:
       required: false
-  - type: input
-    id: affected-pages
-    attributes:
-      label: Affected Site Page(s)
-    validations:
-      required: true
   - type: dropdown
     id: os
     attributes:
