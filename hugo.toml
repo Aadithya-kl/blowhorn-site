@@ -172,6 +172,19 @@ renderSegments = ["public"]
   # Docsy's offline search, with lunr bundled locally (layouts/_partials/docs-head.html).
   offlineSearch = true
   offlineSearchMaxResults = 10
+  # Default Open Graph / Twitter card image for every page that does not
+  # set its own (issue #703). 1200x630, the official horizontal Crowhorn
+  # lockup on a brand-color gradient. No schema governs hugo.toml params;
+  # [params.og] is the one source the social-meta partial reads.
+  images = ["assets/brand/marketing/blowhorn-og-1200x630.png"]
+
+[params.og]
+  image = "assets/brand/marketing/blowhorn-og-1200x630.png"
+  image_width = 1200
+  image_height = 630
+  image_alt = "The Blowhorn logo: the Crowhorn icon beside the Blowhorn wordmark"
+  # Home page OG title, kept as the lead slogan (was already the home-head title).
+  home_title = "Blowhorn: not a bot, it's you"
 
 # The API reference (layout rest-apis, docs/api-reference.md). `spec` is the
 # path, inside this project, of the public OpenAPI JSON that

@@ -30,3 +30,6 @@
     <link rel="apple-touch-icon" href="{{ "assets/brand/logo/blowhorn-apple-touch-icon-180.png" | relURL }}">
     {{- partial "brand-css.html" . }}
     {{- partial "analytics.html" . }}
+    {{- if ne .Kind "404" }}
+    {{- partial "social-meta.html" . }}
+    {{- end }}
