@@ -1,4 +1,4 @@
-name: 💻 Desktop App Bug Report
+name: 💻 Desktop App Feedback
 description: Report an issue to help improve the Blowhorn Desktop App.
 title: '[Desktop App] '
 labels: ["kind/bug", "help wanted", "component/desktop-app"]
