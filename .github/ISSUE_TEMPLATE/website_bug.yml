@@ -6,7 +6,7 @@ body:
   - type: input
     id: affected-pages
     attributes:
-      label: Affected Site Page(s)
+      label: Affected Site Page
     validations:
       required: true
   - type: textarea
