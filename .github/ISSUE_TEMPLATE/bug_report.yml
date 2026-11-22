@@ -30,7 +30,7 @@ body:
       label: Steps to Reproduce
       description: How can we reproduce this? (e.g., 1. Go to... 2. Click on... 3. See error)
     validations:
-      required: true
+      required: false
   - type: textarea
     id: screenshots-logs
     attributes:
@@ -41,13 +41,20 @@ body:
   - type: dropdown
     id: os
     attributes:
-      label: Host OS
+      label: Your Operating System
       options:
         - macOS
         - Windows
         - Linux
     validations:
       required: true
+  - type: input
+    id: os-version
+    attributes:
+      label: Your Operating System Version
+      description: e.g., Golden Gate 27.2.1 (26B131)
+    validations:
+      required: true    
   - type: markdown
     attributes:
       value: |
