@@ -1,4 +1,4 @@
-name: 🐛 Website Bug Report
+name: 🌐 Website Bug Report
 description: Report an issue to help improve the Blowhorn.ai website.
 title: '[Website] '
 labels: ["kind/bug", "help wanted", "framework/hugo", "language/markdown", "language/css"]
