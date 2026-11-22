@@ -59,7 +59,7 @@ PAGES = {
         "main", "your-accounts", "downloads",
     ],
     "brand/index.html": [
-        "main", "logo", "clear-space", "color", "type", "major", "thunderlung", "usage",
+        "main", "logo", "clear-space", "color", "type", "major", "thunderlung", "banners", "usage",
     ],
     "agents/index.html": [
         "main", "agents-title", "pick-title",

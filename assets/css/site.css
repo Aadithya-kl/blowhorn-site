@@ -1874,6 +1874,9 @@ body { background: var(--surface); }
 .asset-stage-square img { width: 50%; max-height: 50%; }
 .asset-stage-short { aspect-ratio: 2 / 1; }
 .asset-stage-short img { width: 64%; }
+/* Full-bleed composed banners that already fill their frame (store marquee, social card). */
+.asset-stage-native { aspect-ratio: auto; padding: 0; overflow: hidden; }
+.asset-stage-native img { width: 100%; max-height: none; }
 .stage-cream.asset-stage { aspect-ratio: 1 / 1; }
 .stage-cream.asset-stage img { width: 84%; max-height: 84%; }
 .asset-meta {
