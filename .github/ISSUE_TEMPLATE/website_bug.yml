@@ -1,28 +1,61 @@
----
 name: 🐛 Website Bug Report
 description: Report an issue to help improve the Blowhorn.ai website.
-title: "[Website] "
+title: '[Website] '
 labels: ["kind/bug", "help wanted", "framework/hugo", "language/markdown", "language/css"]
-type: "bug"
-assignees: ""
----
-### Current Behavior
-<!-- A brief description of the issue. -->
-
-### Expected Behavior
-<!-- A brief description of what you expected to happen. -->
-
-### Screenshots/Logs
-<!-- Add screenshots, logs, or screen recordings to help explain your problem. -->
-
-### Environment
-- **Affected Site Page(s):** 
-- **Your OS:** macOS / Linux / Windows
-- **Your Browser:** Chrome / Safari / Firefox / Edge
-
----
-#### Contributor Guides and Resources
-- 📚 [Blowhorn Documentation](https://blowhorn.ai/docs)
-- 🤝 [Contributing Guidelines](https://github.com/blowhorn-ai/blowhorn-site/blob/master/CONTRIBUTING.md)
-- 🛠 [Local Build & Check Strategy](https://github.com/blowhorn-ai/blowhorn-site#working-on-the-site) (`make site` / `make check`)
-- 🙋🏾🙋🏼 Questions: [Layer5 Community Slack](http://slack.layer5.io) ([#websites](https://mesheryio.slack.com/archives/C015QJKUMPU))
+body:
+  - type: textarea
+    id: current-behavior
+    attributes:
+      label: Current Behavior
+      description: A brief description of the issue.
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: A brief description of what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: screenshots-logs
+    attributes:
+      label: Screenshots/Logs
+      description: Add screenshots, logs, or screen recordings to help explain your problem.
+    validations:
+      required: false
+  - type: input
+    id: affected-pages
+    attributes:
+      label: Affected Site Page(s)
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Your OS
+      options:
+        - macOS
+        - Linux
+        - Windows
+    validations:
+      required: true
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Your Browser
+      options:
+        - Chrome
+        - Safari
+        - Firefox
+        - Edge
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+        #### Contributor Guides and Resources
+        - 📚 [Blowhorn Documentation](https://blowhorn.ai/docs)
+        - 🤝 [Contributing Guidelines](https://github.com/blowhorn-ai/blowhorn-site/blob/master/CONTRIBUTING.md)
+        - 🛠 [Local Build & Check Strategy](https://github.com/blowhorn-ai/blowhorn-site#working-on-the-site) (`make site` / `make check`)
+        - 🙋🏾🙋🏼 Questions: [Layer5 Community Slack](http://slack.layer5.io) ([#websites](https://mesheryio.slack.com/archives/C015QJKUMPU))
