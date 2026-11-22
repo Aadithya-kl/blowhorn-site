@@ -4090,12 +4090,42 @@ a.docs-card.platform-card[href$="/facebook/"]::before { background-image: url(".
 .support-form input::placeholder,
 .support-form textarea::placeholder { color: var(--ink-muted); }
 .support-form-actions { margin: 0; }
-.support-links { padding: 0; list-style: none; }
-.support-links li { display: grid; }
-.support-links a { text-decoration: none; color: var(--ink); }
-.support-links a .h3 { color: var(--ink); }
-.support-links a:hover .h3 { color: var(--link); }
-.support-links a > * { margin-top: 0; }
+.support-links {
+  padding: 0;
+  list-style: none;
+}
+
+.support-links > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}
+
+.support-links > li > a {
+  min-width: 0;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.support-links a .h3 {
+  color: var(--ink);
+}
+
+.support-links a:hover .h3 {
+  color: var(--link);
+}
+
+.support-links a > * {
+  margin-top: 0;
+}
+
+/* Preserve readable card widths at intermediate desktop sizes. */
+@media (min-width: 960px) and (max-width: 1079px) {
+  .support-links.grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .support-major {
   display: grid;
   gap: var(--grid-gap);
