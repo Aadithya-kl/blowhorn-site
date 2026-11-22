@@ -1,10 +1,10 @@
 ---
 name: 🐛 Website Bug Report
-about: Report an issue to help improve the Blowhorn.ai website.
+description: Report an issue to help improve the Blowhorn.ai website.
 title: '[Website] '
 labels: ["kind/bug", "help wanted", "framework/hugo", "language/markdown", "language/css"]
 type: "bug"
-assignees: ''
+assignees: ""
 ---
 ### Current Behavior
 <!-- A brief description of the issue. -->
