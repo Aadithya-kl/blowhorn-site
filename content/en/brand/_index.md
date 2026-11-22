@@ -381,6 +381,22 @@ troublemakers:
     alt: "Small spam gremlins wearing envelope hats."
     w: 640
     h: 360
+# Store and social banners. PNG copies of the product repository's
+# marketing/store/chrome-web-store/ finals (the 1400 x 560 Chrome Web Store
+# marquee and the 1200 x 630 social card), unchanged.
+banners:
+  - name: "Chrome Web Store marquee"
+    file: blowhorn-store-marquee-1400x560.png
+    note: "1400 x 560. For the Chrome Web Store listing."
+    alt: "Blowhorn Chrome Web Store marquee: the Blowhorn lockup, the words Your voice, in cream and at full volume. in Keppel green, and Major Blowhorn."
+    w: 1400
+    h: 560
+  - name: "Social card"
+    file: blowhorn-social-card-1200x630.png
+    note: "1200 x 630. For social posts and link previews."
+    alt: "Blowhorn social card: the Blowhorn lockup, the words Your voice, in cream and at full volume. in Keppel green, and Major Blowhorn."
+    w: 1200
+    h: 630
 fonts:
   - family: Bricolage Grotesque
     role: Display
