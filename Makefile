@@ -225,6 +225,12 @@ site-internal-build: check-go check-deps check-blowhorn
 		HUGO_MODULE_REPLACEMENTS="$(BLOWHORN_MODULE) -> $(BLOWHORN_ABS)" npm run build:internal; \
 	fi
 
+
+.PHONY: site-internal-catalog-check
+## Fail if the built internal catalog references a marketing-assets file missing from public-internal/: make site-internal-catalog-check (after site-internal-build).
+site-internal-catalog-check:
+	$(PYTHON) .github/scripts/check-internal-catalog.py
+
 ## Build and run the site locally with live reload (draft and future content enabled).
 site: check-go check-deps
 	npm run site

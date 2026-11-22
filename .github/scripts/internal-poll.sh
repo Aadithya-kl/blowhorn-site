@@ -20,7 +20,13 @@ paths=(
   marketing/cast
   marketing/store
   marketing/press
+  marketing/scenes
+  marketing/video
+  marketing/archive
   marketing/assets.manifest.json
+  desktop/assets
+  desktop/src/renderer/assets
+  extension
   internal/engineering
   internal/design
   internal/specs
