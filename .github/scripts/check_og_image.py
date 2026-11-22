@@ -20,7 +20,7 @@ import sys
 from html.parser import HTMLParser
 from pathlib import Path
 
-from PIL import Image
+import struct
 
 DEFAULT_PATH = "assets/brand/marketing/blowhorn-og-1200x630.png"
 DEFAULT_WIDTH = 1200
@@ -59,15 +59,30 @@ class MetaCollector(HTMLParser):
         return [content for k, n, content in self.props if k == kind and n == name]
 
 
+def png_size(path: Path) -> tuple[int, int]:
+    """Width and height from the PNG IHDR chunk. Avoids a Pillow dependency in CI."""
+    with path.open("rb") as handle:
+        if handle.read(8) != b"\x89PNG\r\n\x1a\n":
+            raise ValueError(f"{path} is not a PNG")
+        length, typ = struct.unpack(">I4s", handle.read(8))
+        if typ != b"IHDR":
+            raise ValueError(f"{path} has no IHDR chunk")
+        width, height = struct.unpack(">II", handle.read(8))
+    return width, height
+
+
 def image_ok(path: Path) -> list[str]:
     if not path.is_file():
         return [f"{DEFAULT_PATH}: not published"]
-    with Image.open(path) as image:
-        if image.size != (DEFAULT_WIDTH, DEFAULT_HEIGHT):
-            return [
-                f"{DEFAULT_PATH}: {image.size[0]}x{image.size[1]}, "
-                f"expected {DEFAULT_WIDTH}x{DEFAULT_HEIGHT}"
-            ]
+    try:
+        size = png_size(path)
+    except ValueError as exc:
+        return [str(exc)]
+    if size != (DEFAULT_WIDTH, DEFAULT_HEIGHT):
+        return [
+            f"{DEFAULT_PATH}: {size[0]}x{size[1]}, "
+            f"expected {DEFAULT_WIDTH}x{DEFAULT_HEIGHT}"
+        ]
     return []
 
 
