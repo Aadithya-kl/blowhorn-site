@@ -17,6 +17,10 @@ name: Build DMG
 # present, a developer-id job fails with a fixed "not configured yet" message.
 # Signing secrets are passed only to the materialize step, never as job-level
 # env, so setup, rustup and the product build do not inherit the raw p12.
+# DMG_SOURCE_TOKEN is passed only to checkout-product (and to validate's
+# require_signed_ref step for developer-id), never as an input to
+# build-dmg-mac, so rustup, setup-node, pnpm and the upload step do not
+# inherit INPUT_PRODUCT_TOKEN.
 # A developer-id ref must be the commit named by product tag desktop-vVERSION
 # or refs/releases/desktop-vVERSION (the refs make release pushes first).
 #
@@ -104,6 +108,7 @@ jobs:
     uses: ./.github/workflows/product-ci.yml
     with:
       ref: ${{ needs.validate.outputs.ref }}
+      caller: build-dmg
     secrets:
       DMG_SOURCE_TOKEN: ${{ secrets.DMG_SOURCE_TOKEN }}
 
@@ -118,12 +123,16 @@ jobs:
         with:
           persist-credentials: false
 
+      - uses: ./.github/actions/checkout-product
+        with:
+          ref: ${{ needs.validate.outputs.ref }}
+          token: ${{ secrets.DMG_SOURCE_TOKEN }}
+
       - uses: ./.github/actions/build-dmg-mac
         with:
           ref: ${{ needs.validate.outputs.ref }}
           version: ${{ needs.validate.outputs.version }}
           mode: adhoc
-          product_token: ${{ secrets.DMG_SOURCE_TOKEN }}
 
   build-mac-signed:
     name: Mac signed build
@@ -147,9 +156,13 @@ jobs:
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
         run: .github/scripts/build-dmg/materialize_signing.sh
 
+      - uses: ./.github/actions/checkout-product
+        with:
+          ref: ${{ needs.validate.outputs.ref }}
+          token: ${{ secrets.DMG_SOURCE_TOKEN }}
+
       - uses: ./.github/actions/build-dmg-mac
         with:
           ref: ${{ needs.validate.outputs.ref }}
           version: ${{ needs.validate.outputs.version }}
           mode: developer-id
-          product_token: ${{ secrets.DMG_SOURCE_TOKEN }}

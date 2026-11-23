@@ -56,11 +56,40 @@ Pages hosts only the marketing site and small static files.
   `https://github.com/blowhorn-ai/blowhorn-site/releases/download/v1.0.0/Blowhorn-1.0.0-mac-universal.dmg`
 - Releases are never overwritten. Ship a new patch version instead.
 
+## Building the desktop DMG
+
+The signed disk image is built on this repository's free `macos-latest` runner
+by `.github/workflows/build-dmg.yml`, not on a maintainer's Mac. `make release`
+in the product repository tags the commit and dispatches this workflow; the
+local sign and notarize path is an explicit fallback (`make release LOCAL_SIGN=1`).
+
+**Triggers:** `workflow_dispatch` and `repository_dispatch` with event type
+`build-dmg` only. The workflow does not run on `pull_request` or `push`. Linux
+gates (`product-ci.yml`) run first on `ubuntu-latest`, then the Mac job builds
+the image.
+
+**Modes:** `adhoc` is an unsigned timing build. `developer-id` signs, notarizes
+and staples. A signed run is allowed only when the product commit is the one
+named by `desktop-vVERSION` or `refs/releases/desktop-vVERSION`.
+
+**Environment:** signed jobs use the `macos-dmg-signing` environment, which is
+restricted to this repository's `master` branch (a custom policy, because
+`master` is not a protected branch). Pull requests, forks and other branches
+cannot reach it. There are no required reviewers: a signed run on `master`
+proceeds without an approval. That is Yi Nuo's call: any team member listed
+in the Firstmate roster can initiate a release on their own recognizance.
+Signing secret values are stored after the #2759 rotation; the workflow does
+not load keys from the private product repository.
+
+**Artifacts:** the only upload is the DMG and its sha256 manifest, retained for
+1 day. Build logs stay under `RUNNER_TEMP` and are never printed, uploaded or
+cached. Private source is checked out sparsely, with internal paths excluded.
+
 ## Publishing a DMG
 
 The DMG must already be built, signed with a Developer ID certificate, notarized,
-and stapled before it reaches this repo. That happens in the product repo's
-build pipeline. The workflow enforces it: **a public release (`draft=false`)
+and stapled before it is published (see [Building the desktop DMG](#building-the-desktop-dmg)).
+The publish workflow enforces it: **a public release (`draft=false`)
 must have `require_notarized=true`**, which runs `codesign`, `spctl` and
 `stapler validate` on a macOS runner and refuses to publish on failure. Only a
 draft may skip verification, so an unverified image can be reviewed but never

@@ -59,8 +59,7 @@ ENV
 chmod 600 "$github_vars"
 sed 's/^/export /' "$github_vars" >"$env_sh"
 chmod 600 "$env_sh"
-# GITHUB_ENV applies to later steps; the current step sources env.sh.
-if [[ -n "${GITHUB_ENV:-}" ]]; then
-  cat "$github_vars" >>"$GITHUB_ENV"
-fi
+# Later signing steps source env.sh. Do not write GITHUB_ENV: that would
+# expose Apple identifiers and signing paths to rustup, setup-*, and the
+# artifact upload step.
 echo "signing material: written to a temporary directory"

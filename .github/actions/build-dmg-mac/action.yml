@@ -1,5 +1,5 @@
 name: build-dmg-mac
-description: Check out the product sparsely, build the DMG, and stage the artifact. Private output stays under RUNNER_TEMP.
+description: Build the DMG from an already-sparse product checkout and stage the artifact. Private output stays under RUNNER_TEMP.
 inputs:
   ref:
     required: true
@@ -7,43 +7,18 @@ inputs:
     required: true
   mode:
     required: true
-  product_token:
-    required: true
 runs:
   using: composite
   steps:
-    - name: Check out the product commit (sparse, read-only)
-      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      with:
-        repository: blowhorn-ai/blowhorn
-        ref: ${{ inputs.ref }}
-        token: ${{ inputs.product_token }}
-        path: product
-        persist-credentials: false
-        filter: blob:none
-        sparse-checkout-cone-mode: false
-        sparse-checkout: |
-          /*
-          !/release/signing/
-          !/release/signing/**
-          !/data/profiles/
-          !/data/profiles/**
-          !/marketing/gtm/
-          !/marketing/gtm/**
-          !/marketing/walkthrough/
-          !/marketing/walkthrough/**
-          !/marketing/strategy/
-          !/marketing/strategy/**
-          !/marketing/capability-comparison/
-          !/marketing/capability-comparison/**
-          !/data/analytics/
-          !/data/analytics/**
-          !/internal/
-          !/internal/**
-
-    - name: Refuse a checkout that materialized internal paths
+    - name: Require a product checkout
       shell: bash
-      run: python3 .github/scripts/build-dmg/checkout_guard.py product
+      run: |
+        set -euo pipefail
+        if [[ ! -d product ]]; then
+          echo "product checkout is missing; the job must run checkout-product first"
+          exit 1
+        fi
+        python3 .github/scripts/build-dmg/checkout_guard.py product
 
     - name: Set up Python 3.14
       uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
@@ -77,19 +52,27 @@ runs:
         set +x
         set -euo pipefail
         # Signing files are written by the job's materialize step, which is the
-        # only step that receives the raw environment secrets.
+        # only step that receives the raw environment secrets. env.sh is sourced
+        # here instead of via GITHUB_ENV so rustup and setup-* never see the
+        # Apple identifiers or signing paths.
         if [[ ! -f "$RUNNER_TEMP/blowhorn-signing/env.sh" ]]; then
           echo "signing material is missing; the job must run materialize_signing.sh first"
           exit 1
         fi
         # shellcheck disable=SC1091
         source "$RUNNER_TEMP/blowhorn-signing/env.sh"
-        product/desktop/scripts/ci-import-signing-keychain.sh \
+        mkdir -p "$RUNNER_TEMP/build-dmg"
+        if ! product/desktop/scripts/ci-import-signing-keychain.sh \
           --p12 "$SIGNING_P12" \
           --passphrase-file "$SIGNING_PASSPHRASE_FILE" \
           --p8 "$SIGNING_P8" \
           --keychain "$SIGNING_KEYCHAIN" \
-          --password-file "$SIGNING_KEYCHAIN_PASSWORD_FILE"
+          --password-file "$SIGNING_KEYCHAIN_PASSWORD_FILE" \
+          >"$RUNNER_TEMP/build-dmg/import.log" 2>&1; then
+          echo "signing keychain import failed. Run ci-import-signing-keychain.sh in a local checkout to see why."
+          exit 1
+        fi
+        echo "temporary signing keychain: ready"
 
     - name: Build, sign, notarize and verify (output withheld)
       shell: bash
@@ -100,6 +83,14 @@ runs:
       run: |
         set +x
         set -euo pipefail
+        if [[ "$BUILD_MODE" == "developer-id" ]]; then
+          if [[ ! -f "$RUNNER_TEMP/blowhorn-signing/env.sh" ]]; then
+            echo "signing material is missing; the job must run materialize_signing.sh first"
+            exit 1
+          fi
+          # shellcheck disable=SC1091
+          source "$RUNNER_TEMP/blowhorn-signing/env.sh"
+        fi
         python3 .github/scripts/build-dmg/run_build.py \
           --product product \
           --log "$RUNNER_TEMP/build-dmg/build.log" \
@@ -160,6 +151,11 @@ runs:
         set +x
         set -uo pipefail
         status=0
+        if [[ -f "${RUNNER_TEMP:-}/blowhorn-signing/env.sh" ]]; then
+          # shellcheck disable=SC1091
+          source "$RUNNER_TEMP/blowhorn-signing/env.sh"
+        fi
+        mkdir -p "${RUNNER_TEMP:-/tmp}/build-dmg"
         if [[ -n "${SIGNING_KEYCHAIN:-}" && -x product/desktop/scripts/ci-teardown-signing-keychain.sh ]]; then
           product/desktop/scripts/ci-teardown-signing-keychain.sh \
             --keychain "${SIGNING_KEYCHAIN:-}" \
@@ -167,6 +163,7 @@ runs:
             --p12 "${SIGNING_P12:-}" \
             --p8 "${SIGNING_P8:-}" \
             --passphrase-file "${SIGNING_PASSPHRASE_FILE:-}" \
+            >"${RUNNER_TEMP:-/tmp}/build-dmg/teardown.log" 2>&1 \
             || status=$?
         fi
         if [[ -n "${SIGNING_KEYCHAIN:-}" ]]; then

@@ -169,12 +169,14 @@ class RunBuildTest(unittest.TestCase):
             "DEVELOPER_ID_P12_PASSPHRASE": "pw",
             "DMG_SOURCE_TOKEN": "tok",
             "INPUT_PRODUCT_TOKEN": "tok",
+            "INPUT_TOKEN": "tok",
             "APPLE_API_KEY": "/tmp/key.p8",
         })
         self.assertNotIn("DEVELOPER_ID_P12", env)
         self.assertNotIn("DEVELOPER_ID_P12_PASSPHRASE", env)
         self.assertNotIn("DMG_SOURCE_TOKEN", env)
         self.assertNotIn("INPUT_PRODUCT_TOKEN", env)
+        self.assertNotIn("INPUT_TOKEN", env)
         self.assertEqual(env["APPLE_API_KEY"], "/tmp/key.p8")
 
 
@@ -213,6 +215,21 @@ class SchemaSyncTest(unittest.TestCase):
         result = json.loads((ROOT / ".github" / "schemas" / "build-dmg-manifest.schema.json").read_text())
         self.assertEqual(dispatch["properties"]["event_type"]["const"], "build-dmg")
         self.assertEqual(set(result["required"]), {"version", "ref", "signing_mode", "sha256", "size_bytes", "dmg_name"})
+
+
+class PublicLogAuditTest(unittest.TestCase):
+    def test_build_dmg_mac_does_not_take_a_product_token(self):
+        action = (ROOT / ".github" / "actions" / "build-dmg-mac" / "action.yml").read_text()
+        self.assertNotIn("product_token", action)
+        self.assertNotIn("INPUT_PRODUCT_TOKEN", action)
+        workflow = (ROOT / ".github" / "workflows" / "build-dmg.yml").read_text()
+        self.assertNotIn("product_token:", workflow)
+        self.assertIn("uses: ./.github/actions/checkout-product", workflow)
+
+    def test_materialize_does_not_write_github_env(self):
+        script = (ROOT / ".github" / "scripts" / "build-dmg" / "materialize_signing.sh").read_text()
+        self.assertNotIn('>>"$GITHUB_ENV"', script)
+        self.assertNotIn("${GITHUB_ENV", script)
 
 
 if __name__ == "__main__":
