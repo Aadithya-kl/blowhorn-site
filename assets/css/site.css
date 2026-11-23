@@ -4077,6 +4077,7 @@ a.docs-card.platform-card[href$="/facebook/"]::before { background-image: url(".
 .support-form-field { margin: 0; display: grid; gap: var(--space-2); }
 .support-form-field label { color: var(--ink); font-weight: 500; }
 .support-form input,
+.support-form select,
 .support-form textarea {
   width: 100%;
   padding: var(--space-2) var(--space-4);
@@ -4086,7 +4087,10 @@ a.docs-card.platform-card[href$="/facebook/"]::before { background-image: url(".
   color: var(--ink);
   font: inherit;
 }
-.support-form input { height: 44px; }
+.support-form input, .support-form select { min-height: 44px; }
+.support-form [hidden] { display: none; }
+.support-extra summary { cursor: pointer; font-weight: 500; }
+.support-extra-fields { display: grid; gap: var(--stack-gap); margin-top: var(--stack-gap); }
 .support-form textarea { resize: vertical; }
 .support-form input::placeholder,
 .support-form textarea::placeholder { color: var(--ink-muted); }
@@ -4136,3 +4140,6 @@ a.docs-card.platform-card[href$="/facebook/"]::before { background-image: url(".
   .support-major { grid-template-columns: 12rem 1fr; }
 }
 .support-major-art { width: 12rem; height: auto; }
+
+/* Prompts are prose: keep the copyable text readable on narrow screens. */
+.support-prompt pre, .support-prompt code, .support-prompt .line { white-space: pre-wrap; overflow-wrap: anywhere; }
