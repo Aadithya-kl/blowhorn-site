@@ -26,14 +26,25 @@ on:
         description: "Product commit to test (full 40-character SHA)"
         required: true
         type: string
+  workflow_call:
+    inputs:
+      ref:
+        description: "Product commit to test (full 40-character SHA)"
+        required: true
+        type: string
+    secrets:
+      DMG_SOURCE_TOKEN:
+        required: true
 
 run-name: Product CI ${{ inputs.ref }}
 
 permissions:
   contents: read
 
+# Include the event in the group so a manual Product CI run cannot cancel the
+# linux-green gate of a build-dmg release, and the other way around.
 concurrency:
-  group: product-ci-${{ inputs.ref }}
+  group: product-ci-${{ inputs.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:

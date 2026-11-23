@@ -1,0 +1,138 @@
+name: Build DMG
+
+# Builds, signs, notarizes and verifies the private product's desktop DMG on
+# this public repository's free macos-latest runner (#2558, #2624).
+#
+# Triggers: workflow_dispatch and repository_dispatch (event type build-dmg)
+# only. Never pull_request or push. Linux gates (product-ci.yml) run first on
+# ubuntu-latest, then the Mac job.
+#
+# developer-id runs use the macos-dmg-signing environment, which is restricted
+# to this repository's default branch (master) and protected tags, so pull
+# requests and forks cannot reach it. There are no required reviewers: a
+# signed run on an allowed ref proceeds without an approval. Signing secret
+# values are stored after the #2759 rotation; this workflow does not load the
+# keys that are committed in the private repository. Until those values are
+# present, a developer-id job fails with a fixed "not configured yet" message.
+#
+# Private source is checked out sparsely (release/signing/ and other internal
+# paths excluded). Logs never print, upload or cache private output. The only
+# artifact is the DMG plus its sha256 manifest, retained for 1 day.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Product commit (full 40-character SHA)"
+        required: true
+        type: string
+      version:
+        description: "Desktop version (X.Y.Z, no leading v)"
+        required: true
+        type: string
+      mode:
+        description: "adhoc (unsigned timing) or developer-id (signed and notarized)"
+        required: true
+        type: choice
+        options:
+          - adhoc
+          - developer-id
+  repository_dispatch:
+    types:
+      - build-dmg
+
+run-name: Build DMG ${{ inputs.version || github.event.client_payload.version }} ${{ inputs.ref || github.event.client_payload.ref }}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-dmg-${{ inputs.ref || github.event.client_payload.ref }}-${{ inputs.mode || github.event.client_payload.mode }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate payload
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      ref: ${{ steps.resolve.outputs.ref }}
+      version: ${{ steps.resolve.outputs.version }}
+      mode: ${{ steps.resolve.outputs.mode }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Validate ref, version and mode
+        id: resolve
+        env:
+          IN_REF: ${{ inputs.ref || github.event.client_payload.ref }}
+          IN_VERSION: ${{ inputs.version || github.event.client_payload.version }}
+          IN_MODE: ${{ inputs.mode || github.event.client_payload.mode }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os, sys
+          sys.path.insert(0, ".github/scripts/build-dmg")
+          from payload import parse_inputs
+          parsed = parse_inputs(os.environ["IN_REF"], os.environ["IN_VERSION"], os.environ["IN_MODE"])
+          payload = parsed["client_payload"]
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              out.write(f"ref={payload['ref']}\n")
+              out.write(f"version={payload['version']}\n")
+              out.write(f"mode={payload['mode']}\n")
+          print(f"payload: ok {payload['mode']} {payload['version']}")
+          PY
+
+  linux-green:
+    name: Linux gates
+    needs: validate
+    uses: ./.github/workflows/product-ci.yml
+    with:
+      ref: ${{ needs.validate.outputs.ref }}
+    secrets: inherit
+
+  build-mac-adhoc:
+    name: Mac adhoc build
+    needs: [validate, linux-green]
+    if: needs.validate.outputs.mode == 'adhoc'
+    runs-on: macos-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/build-dmg-mac
+        with:
+          ref: ${{ needs.validate.outputs.ref }}
+          version: ${{ needs.validate.outputs.version }}
+          mode: adhoc
+          product_token: ${{ secrets.DMG_SOURCE_TOKEN }}
+
+  build-mac-signed:
+    name: Mac signed build
+    needs: [validate, linux-green]
+    if: needs.validate.outputs.mode == 'developer-id'
+    runs-on: macos-latest
+    timeout-minutes: 120
+    environment: macos-dmg-signing
+    env:
+      DEVELOPER_ID_P12: ${{ secrets.DEVELOPER_ID_P12 }}
+      DEVELOPER_ID_P12_PASSPHRASE: ${{ secrets.DEVELOPER_ID_P12_PASSPHRASE }}
+      APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+      APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/build-dmg-mac
+        with:
+          ref: ${{ needs.validate.outputs.ref }}
+          version: ${{ needs.validate.outputs.version }}
+          mode: developer-id
+          product_token: ${{ secrets.DMG_SOURCE_TOKEN }}

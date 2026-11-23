@@ -1,0 +1,149 @@
+name: build-dmg-mac
+description: Check out the product sparsely, build the DMG, and stage the artifact. Private output stays under RUNNER_TEMP.
+inputs:
+  ref:
+    required: true
+  version:
+    required: true
+  mode:
+    required: true
+  product_token:
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Check out the product commit (sparse, read-only)
+      uses: actions/checkout@v4
+      with:
+        repository: blowhorn-ai/blowhorn
+        ref: ${{ inputs.ref }}
+        token: ${{ inputs.product_token }}
+        path: product
+        persist-credentials: false
+        sparse-checkout-cone-mode: false
+        sparse-checkout: |
+          /*
+          !/release/signing/
+          !/release/signing/**
+          !/data/profiles/
+          !/data/profiles/**
+          !/marketing/gtm/
+          !/marketing/gtm/**
+          !/marketing/walkthrough/
+          !/marketing/walkthrough/**
+          !/marketing/strategy/
+          !/marketing/strategy/**
+          !/marketing/capability-comparison/
+          !/marketing/capability-comparison/**
+          !/data/analytics/
+          !/data/analytics/**
+          !/internal/
+          !/internal/**
+
+    - name: Refuse a checkout that materialized internal paths
+      shell: bash
+      run: python3 .github/scripts/build-dmg/checkout_guard.py product
+
+    - name: Set up Python 3.14
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.14"
+
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 11.1.1
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+
+    - name: Install Rust and both macOS targets
+      shell: bash
+      run: |
+        set -euo pipefail
+        if ! command -v rustup >/dev/null; then
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.85.1
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+        fi
+        # rustup may already be on PATH after the echo above in later steps only.
+        export PATH="$HOME/.cargo/bin:$PATH"
+        rustup target add aarch64-apple-darwin x86_64-apple-darwin
+
+    - name: Import the temporary signing keychain
+      if: inputs.mode == 'developer-id'
+      shell: bash
+      run: |
+        set +x
+        set -euo pipefail
+        .github/scripts/build-dmg/materialize_signing.sh
+        # shellcheck disable=SC1091
+        source "$RUNNER_TEMP/blowhorn-signing/env.sh"
+        product/desktop/scripts/ci-import-signing-keychain.sh \
+          --p12 "$SIGNING_P12" \
+          --passphrase-file "$SIGNING_PASSPHRASE_FILE" \
+          --p8 "$SIGNING_P8" \
+          --keychain "$SIGNING_KEYCHAIN" \
+          --password-file "$SIGNING_KEYCHAIN_PASSWORD_FILE"
+        {
+          echo "BLOWHORN_SIGNING_KEYCHAIN=$SIGNING_KEYCHAIN"
+          echo "BLOWHORN_SIGNING_KEYCHAIN_PASS_FILE=$SIGNING_KEYCHAIN_PASSWORD_FILE"
+        } >> "$GITHUB_ENV"
+
+    - name: Build, sign, notarize and verify (output withheld)
+      shell: bash
+      env:
+        BLOWHORN_BUILD_CLEANUP: "1"
+      run: |
+        set +x
+        set -euo pipefail
+        python3 .github/scripts/build-dmg/run_build.py \
+          --product product \
+          --log "$RUNNER_TEMP/build-dmg/build.log" \
+          --version "${{ inputs.version }}" \
+          --mode "${{ inputs.mode }}"
+
+    - name: Stage the DMG and the manifest
+      shell: bash
+      run: |
+        set -euo pipefail
+        mkdir -p dist
+        python3 - <<'PY'
+        import shutil, sys
+        from pathlib import Path
+        sys.path.insert(0, ".github/scripts/build-dmg")
+        from manifest import parse_manifest
+        src = Path("product/desktop/release-prod")
+        manifest = parse_manifest((src / "build-dmg-manifest.json").read_text())
+        dmg = src / manifest["dmg_name"]
+        if not dmg.is_file():
+            raise SystemExit("built DMG is missing from the product checkout")
+        dest = Path("dist")
+        shutil.copy2(dmg, dest / manifest["dmg_name"])
+        shutil.copy2(src / "build-dmg-manifest.json", dest / "build-dmg-manifest.json")
+        print(f"staged {manifest['dmg_name']} ({manifest['size_bytes']} bytes)")
+        PY
+
+    - name: Upload the signed DMG artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: blowhorn-desktop-dmg
+        path: |
+          dist/Blowhorn-*-universal.dmg
+          dist/build-dmg-manifest.json
+        if-no-files-found: error
+        retention-days: 1
+        compression-level: 0
+
+    - name: Delete the temporary signing keychain
+      if: always() && inputs.mode == 'developer-id'
+      shell: bash
+      run: |
+        set +x
+        set -euo pipefail
+        product/desktop/scripts/ci-teardown-signing-keychain.sh \
+          --keychain "${SIGNING_KEYCHAIN:-}" \
+          --password-file "${SIGNING_KEYCHAIN_PASSWORD_FILE:-}" \
+          --p12 "${SIGNING_P12:-}" \
+          --p8 "${SIGNING_P8:-}" \
+          --passphrase-file "${SIGNING_PASSPHRASE_FILE:-}" \
+          || true
