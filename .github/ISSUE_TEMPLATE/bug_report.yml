@@ -1,0 +1,65 @@
+name: 💻 Desktop App Feedback
+description: Report an issue to help improve the Blowhorn Desktop App.
+title: '[Desktop App] '
+labels: ["kind/bug", "help wanted", "component/desktop"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Blowhorn Version / Release
+      description: e.g., v1.37.0 or commit hash.
+    validations:
+      required: true
+  - type: textarea
+    id: current-behavior
+    attributes:
+      label: Current Behavior
+      description: A brief description of the issue.
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: A brief description of what you expected to happen.
+    validations:
+      required: false
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this? (e.g., 1. Go to... 2. Click on... 3. See error)
+    validations:
+      required: false
+  - type: textarea
+    id: screenshots-logs
+    attributes:
+      label: Screenshots/Logs
+      description: Add screenshots, logs, or screen recordings to help explain your problem.
+    validations:
+      required: false
+  - type: dropdown
+    id: os
+    attributes:
+      label: Your Operating System
+      options:
+        - macOS
+        - Windows
+        - Linux
+    validations:
+      required: true
+  - type: input
+    id: os-version
+    attributes:
+      label: Your Operating System Version
+      description: e.g., Golden Gate 27.2.1 (26B131)
+    validations:
+      required: true    
+  - type: markdown
+    attributes:
+      value: |
+        #### Contributor Guides and Resources
+        - 📚 [Blowhorn Documentation](https://blowhorn.ai/docs)
+        - 🤝 [Contributing Guidelines](https://github.com/blowhorn-ai/blowhorn-site/blob/master/CONTRIBUTING.md)
+        - 🛠 [Local Build & Check Strategy](https://github.com/blowhorn-ai/blowhorn-site#working-on-the-site) (`make site` / `make check`)
+        - 🙋🏾🙋🏼 Questions: [Layer5 Community Slack](http://slack.layer5.io) (#websites)

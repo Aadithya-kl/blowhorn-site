@@ -4,19 +4,7 @@
     {{- $heroDesc := printf "%s %s" $hero.headline ($hero.subhead | default site.Data.hero.tagline) }}
     {{- partial "hero-rotation-head.html" . }}
     {{- partial "machines-rotation-head.html" . }}
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="Blowhorn">
-    <meta property="og:title" content="Blowhorn: not a bot, it's you">
-    <meta property="og:description" content="{{ $heroDesc }}">
-    <meta property="og:url" content="{{ partial "canonical.html" . }}">
-    <meta property="og:image" content="{{ "assets/brand/marketing/blowhorn-social-banner-16x9.png" | absURL }}">
-    <meta property="og:image:width" content="1600">
-    <meta property="og:image:height" content="900">
-    <meta property="og:image:alt" content="Major Blowhorn, a rooster drill sergeant, crows through a megaphone beside the Blowhorn wordmark and the tagline Not a bot. It's you.">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Blowhorn: not a bot, it's you">
-    <meta name="twitter:description" content="{{ $heroDesc }}">
-    <meta name="twitter:image" content="{{ "assets/brand/marketing/blowhorn-social-banner-16x9.png" | absURL }}">
+    {{- /* Open Graph and Twitter tags come from social-meta.html in head.html. */ -}}
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",

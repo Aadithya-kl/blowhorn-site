@@ -225,6 +225,12 @@ site-internal-build: check-go check-deps check-blowhorn
 		HUGO_MODULE_REPLACEMENTS="$(BLOWHORN_MODULE) -> $(BLOWHORN_ABS)" npm run build:internal; \
 	fi
 
+
+.PHONY: site-internal-catalog-check
+## Fail if the built internal catalog references a marketing-assets file missing from public-internal/: make site-internal-catalog-check (after site-internal-build).
+site-internal-catalog-check:
+	$(PYTHON) .github/scripts/check-internal-catalog.py
+
 ## Build and run the site locally with live reload (draft and future content enabled).
 site: check-go check-deps
 	npm run site
@@ -357,7 +363,7 @@ check-platform-pages: site-build
 	python3 .github/scripts/check_platform_pages.py $(BUILD_DIR)
 
 ## Build for production once, then validate-html, check-links, check-third-party and check-urls, plus check-schemas (what site.yml runs).
-site-check: check-schemas validate-html check-links check-third-party check-urls check-no-internal check-theme check-platform-docs check-naming check-action-matrix check-platform-pages check-download-links check-install-cta check-feeds check-brand-kits check-tells check-tips check-api-reference check-tokens
+site-check: check-schemas validate-html check-links check-third-party check-urls check-no-internal check-theme check-platform-docs check-naming check-action-matrix check-platform-pages check-download-links check-install-cta check-feeds check-brand-kits check-tells check-tips check-api-reference check-tokens check-og-image
 
 ## Production build, then fail if any built page or script links to /releases/latest/download (an axi release can hold Latest; build download URLs from data/download.json).
 check-download-links: site-build
@@ -389,6 +395,14 @@ check-tips:
 ## the check reports by hand.
 check-tokens:
 	python3 .github/scripts/check_brand_tokens.py
+
+
+## Production build, then fail if the default 1200x630 Open Graph image is
+## missing or not wired as the site-wide default (issue #703). Role pages must
+## keep their own art.
+check-og-image: site-build
+	python3 .github/scripts/check_og_image.py $(BUILD_DIR)
+
 
 ## Production build, then fail if a Blowhorn Tells placement (data/tells.json) left its page or a Tells link lost its UTM tags.
 check-tells: site-build

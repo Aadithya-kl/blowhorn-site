@@ -1,0 +1,87 @@
+{{- /* Open Graph and Twitter card tags for a public page.
+  The default image is site.Params.og (hugo.toml), the 1200x630 horizontal
+  Crowhorn lockup. A page keeps its own image when it sets Params.images,
+  Params.image or Params.og_image, or when it is a role, use-case or
+  solution page whose art comes from the data file (issue #703). */ -}}
+{{- $page := . -}}
+{{- $image := "" -}}
+{{- $width := 0 -}}
+{{- $height := 0 -}}
+{{- $alt := "" -}}
+{{- with $page.Params.og_image }}{{ $image = . }}{{ end }}
+{{- if not $image }}{{ with $page.Params.image }}{{ $image = . }}{{ end }}{{ end }}
+{{- if not $image }}{{ with $page.Params.images }}{{ $image = index . 0 }}{{ end }}{{ end }}
+{{- $kind := "" -}}
+{{- $item := dict -}}
+{{- if or (eq $page.Layout "role") (eq $page.Type "role") }}{{ $kind = "role" }}{{ end }}
+{{- if or (eq $page.Layout "use-case") (eq $page.Type "use-case") }}{{ $kind = "use-case" }}{{ end }}
+{{- if or (eq $page.Layout "solution") (eq $page.Type "solution") }}{{ $kind = "solution" }}{{ end }}
+{{- if $kind }}
+  {{- $item = partial "role-data.html" (dict "page" $page "kind" $kind) -}}
+  {{- if not $image }}
+    {{- with $item.art }}
+      {{- $image = .src -}}
+      {{- $alt = .alt | default $alt -}}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- if not $image }}
+  {{- $image = site.Params.og.image -}}
+  {{- $width = site.Params.og.image_width -}}
+  {{- $height = site.Params.og.image_height -}}
+  {{- if not $alt }}{{ $alt = site.Params.og.image_alt }}{{ end }}
+{{- else }}
+  {{- with $page.Params.og_image_width }}{{ $width = . }}{{ end }}
+  {{- with $page.Params.og_image_height }}{{ $height = . }}{{ end }}
+  {{- if not $alt }}{{ with $page.Params.og_image_alt }}{{ $alt = . }}{{ end }}{{ end }}
+  {{- if not $alt }}{{ $alt = $page.Title }}{{ end }}
+{{- end }}
+{{- $title := $page.Params.seo_title | default $page.Title -}}
+{{- if $page.IsHome }}
+  {{- $title = site.Params.og.home_title | default $page.Title -}}
+{{- else if and (not $page.Params.seo_title) (not $kind) }}
+  {{- $title = printf "%s: %s" $page.Title site.Title -}}
+{{- end }}
+{{- $desc := $page.Description | default $page.Summary | default site.Params.description -}}
+{{- if $page.IsHome }}
+  {{- $hero := partial "hero-variant.html" . -}}
+  {{- $desc = printf "%s %s" $hero.headline ($hero.subhead | default site.Data.hero.tagline) -}}
+{{- else if and $kind $item }}
+  {{- $desc = $page.Description | default $item.description | default $desc -}}
+{{- end }}
+{{- $url := "" -}}
+{{- if ne $page.Kind "404" }}
+  {{- $url = partial "canonical.html" $page -}}
+{{- end }}
+{{- $imageURL := $image -}}
+{{- if and $image (not (or (hasPrefix $image "http://") (hasPrefix $image "https://"))) }}
+  {{- $imageURL = $image | absURL -}}
+{{- end }}
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Blowhorn">
+    <meta property="og:title" content="{{ $title }}">
+    <meta property="og:description" content="{{ $desc }}">
+    {{- if $url }}
+    <meta property="og:url" content="{{ $url }}">
+    {{- end }}
+    {{- if $imageURL }}
+    <meta property="og:image" content="{{ $imageURL }}">
+    {{- if $width }}
+    <meta property="og:image:width" content="{{ $width }}">
+    {{- end }}
+    {{- if $height }}
+    <meta property="og:image:height" content="{{ $height }}">
+    {{- end }}
+    {{- if $alt }}
+    <meta property="og:image:alt" content="{{ $alt }}">
+    {{- end }}
+    {{- end }}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $title }}">
+    <meta name="twitter:description" content="{{ $desc }}">
+    {{- if $imageURL }}
+    <meta name="twitter:image" content="{{ $imageURL }}">
+    {{- if $alt }}
+    <meta name="twitter:image:alt" content="{{ $alt }}">
+    {{- end }}
+    {{- end }}

@@ -59,7 +59,7 @@ PAGES = {
         "main", "your-accounts", "downloads",
     ],
     "brand/index.html": [
-        "main", "logo", "clear-space", "color", "type", "major", "thunderlung", "usage",
+        "main", "logo", "clear-space", "color", "type", "major", "thunderlung", "banners", "usage",
     ],
     "agents/index.html": [
         "main", "agents-title", "pick-title",
@@ -337,6 +337,7 @@ FILES = [
     "assets/brand/LICENSES.md",
     "assets/brand/cards.css",
     "assets/brand/marketing/blowhorn-social-banner-16x9.png",
+    "assets/brand/marketing/blowhorn-og-1200x630.png",
     "assets/brand/logo/blowhorn-favicon-32.svg",
     "assets/brand/logo/blowhorn-apple-touch-icon-180.png",
     "brand/blowhorn-brand-kit.zip",

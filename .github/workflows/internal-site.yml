@@ -118,7 +118,13 @@ jobs:
             marketing/cast
             marketing/store
             marketing/press
+            marketing/scenes
+            marketing/video
+            marketing/archive
             marketing/assets.manifest.json
+            desktop/assets
+            desktop/src/renderer/assets
+            extension
             internal/engineering
             internal/design
             internal/specs
@@ -151,6 +157,7 @@ jobs:
           test -f public-internal/internal/engineering/index.html || { echo "::error::The internal build produced no engineering index."; exit 1; }
           pages="$(find public-internal -name '*.html' | wc -l | tr -d ' ')"
           echo "Built $pages HTML pages."
+          make site-internal-catalog-check
           rm -rf .internal-src
 
       - name: Point the internal worker at its D1 databases (signups, fleet stats)

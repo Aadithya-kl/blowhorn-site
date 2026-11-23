@@ -1429,10 +1429,11 @@ html[data-hero-art="fan"] .platforms-fan { display: none; }
   padding-bottom: var(--space-8);
   border-bottom: var(--stroke-hairline) solid var(--line);
 }
-/* The header's lockup at 128 px, above the Brand page's 96 px minimum, with
-   half the icon's height (16 px) clear before the tagline. */
+/* The footer lockup at 168 px, matching the four social icon tiles below
+   and above the Brand page's 96 px minimum. */
 .footer-logo { display: inline-flex; margin-bottom: var(--space-4); }
-.footer-logo img { width: 128px; height: auto; }
+/* Match the footer logo width to the four social icon tiles. */
+.footer-logo img { width: 168px; height: auto; }
 .footer-tagline {
   margin: 0;
   font-family: var(--font-display);
@@ -1874,6 +1875,9 @@ body { background: var(--surface); }
 .asset-stage-square img { width: 50%; max-height: 50%; }
 .asset-stage-short { aspect-ratio: 2 / 1; }
 .asset-stage-short img { width: 64%; }
+/* Full-bleed composed banners that already fill their frame (store marquee, social card). */
+.asset-stage-native { aspect-ratio: auto; padding: 0; overflow: hidden; }
+.asset-stage-native img { width: 100%; max-height: none; }
 .stage-cream.asset-stage { aspect-ratio: 1 / 1; }
 .stage-cream.asset-stage img { width: 84%; max-height: 84%; }
 .asset-meta {
@@ -4087,12 +4091,42 @@ a.docs-card.platform-card[href$="/facebook/"]::before { background-image: url(".
 .support-form input::placeholder,
 .support-form textarea::placeholder { color: var(--ink-muted); }
 .support-form-actions { margin: 0; }
-.support-links { padding: 0; list-style: none; }
-.support-links li { display: grid; }
-.support-links a { text-decoration: none; color: var(--ink); }
-.support-links a .h3 { color: var(--ink); }
-.support-links a:hover .h3 { color: var(--link); }
-.support-links a > * { margin-top: 0; }
+.support-links {
+  padding: 0;
+  list-style: none;
+}
+
+.support-links > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}
+
+.support-links > li > a {
+  min-width: 0;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.support-links a .h3 {
+  color: var(--ink);
+}
+
+.support-links a:hover .h3 {
+  color: var(--link);
+}
+
+.support-links a > * {
+  margin-top: 0;
+}
+
+/* Preserve readable card widths at intermediate desktop sizes. */
+@media (min-width: 960px) and (max-width: 1079px) {
+  .support-links.grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .support-major {
   display: grid;
   gap: var(--grid-gap);
