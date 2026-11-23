@@ -3,9 +3,14 @@ name: Build DMG
 # Builds, signs, notarizes and verifies the private product's desktop DMG on
 # this public repository's free macos-latest runner (#2558, #2624).
 #
-# Triggers: workflow_dispatch and repository_dispatch (event type build-dmg)
-# only. Never pull_request or push. Linux gates (product-ci.yml) run first on
-# ubuntu-latest, then the Mac job.
+# Triggers: workflow_dispatch, repository_dispatch (event type build-dmg),
+# and workflow_call from cut-desktop-release.yml (which is itself started
+# on master). Never pull_request or push. Linux gates (product-ci.yml) run
+# first on ubuntu-latest, then the Mac job. A release-published run's ref
+# is the tag, so this workflow is never called directly from that run:
+# cut-desktop-release.yml is dispatched with --ref master first, and that
+# master run is what calls this file, so macos-dmg-signing's master-only
+# policy applies to master-pinned workflow code.
 #
 # developer-id runs use the macos-dmg-signing environment, which is restricted
 # to this repository's master branch (custom policy: master is not a protected
@@ -55,6 +60,35 @@ on:
   repository_dispatch:
     types:
       - build-dmg
+  workflow_call:
+    inputs:
+      ref:
+        description: "Product commit (full 40-character SHA)"
+        required: true
+        type: string
+      version:
+        description: "Desktop version (X.Y.Z, no leading v)"
+        required: true
+        type: string
+      mode:
+        description: "adhoc or developer-id"
+        required: true
+        type: string
+    secrets:
+      DMG_SOURCE_TOKEN:
+        required: true
+      DEVELOPER_ID_P12:
+        required: false
+      DEVELOPER_ID_P12_PASSPHRASE:
+        required: false
+      APPLE_API_KEY:
+        required: false
+      APPLE_TEAM_ID:
+        required: false
+      APPLE_API_KEY_ID:
+        required: false
+      APPLE_API_ISSUER:
+        required: false
 
 run-name: Build DMG ${{ inputs.version || github.event.client_payload.version }} ${{ inputs.ref || github.event.client_payload.ref }}
 

@@ -59,14 +59,39 @@ Pages hosts only the marketing site and small static files.
 ## Building the desktop DMG
 
 The signed disk image is built on this repository's free `macos-latest` runner
-by `.github/workflows/build-dmg.yml`, not on a maintainer's Mac. `make release`
-in the product repository tags the commit and dispatches this workflow; the
-local sign and notarize path is an explicit fallback (`make release LOCAL_SIGN=1`).
+by `.github/workflows/build-dmg.yml`, not on a maintainer's Mac.
 
-**Triggers:** `workflow_dispatch` and `repository_dispatch` with event type
-`build-dmg` only. The workflow does not run on `pull_request` or `push`. Linux
-gates (`product-ci.yml`) run first on `ubuntu-latest`, then the Mac job builds
-the image.
+**Preferred entry:** publish a public GitHub release on this repository whose
+tag is `vX.Y.Z` (optional prerelease suffix, schema:
+`.github/schemas/desktop-release-published.schema.json`). That fires
+`release-desktop.yml`, which only validates the tag and the publisher, then
+dispatches `cut-desktop-release.yml` with `--ref master`. The master run
+bumps and tags `desktop-vX.Y.Z` in the private product repository, calls
+`build-dmg.yml` for Linux gates and the signed DMG, and attaches the image
+to both the private `desktop-vX.Y.Z` release and this public `vX.Y.Z`
+release. `axi-v*` publishes are skipped; any other tag is rejected.
+
+The published-release run's `github.ref` is the tag, not `master`, so
+`release-desktop.yml` does not run the signed job and does not see
+`BLOWHORN_RELEASE_TOKEN` or the signing secrets. Those stay on the
+master-pinned `cut-desktop-release.yml` run, which is what
+`macos-dmg-signing`'s master-only policy applies to.
+`BLOWHORN_RELEASE_TOKEN` is a blowhorn-ai organization secret, selected
+for the `blowhorn` and `blowhorn-site` repositories, and is passed only
+to the steps that push to the private product repository (the product
+checkout and the private release attach).
+
+`make release` in the product repository can still bump, tag and dispatch
+`build-dmg.yml` from a laptop (the previous default). `make release LOCAL_SIGN=1`
+remains the local sign and notarize fallback. `make release-request VERSION=X.Y.Z`
+creates and publishes the public `vX.Y.Z` release, which is enough to start
+the preferred path.
+
+**Triggers for `build-dmg.yml`:** `workflow_dispatch`, `repository_dispatch`
+with event type `build-dmg`, and `workflow_call` from
+`cut-desktop-release.yml`. The workflow does not run on `pull_request` or
+`push`. Linux gates (`product-ci.yml`) run first on `ubuntu-latest`, then
+the Mac job builds the image.
 
 **Modes:** `adhoc` is an unsigned timing build. `developer-id` signs, notarizes
 and staples. A signed run is allowed only when the product commit is the one
