@@ -26,15 +26,45 @@ on:
         description: "Product commit to test (full 40-character SHA)"
         required: true
         type: string
+  workflow_call:
+    inputs:
+      ref:
+        description: "Product commit to test (full 40-character SHA)"
+        required: true
+        type: string
+      caller:
+        description: >
+          Calling workflow id (set by build-dmg). A non-empty value gives this
+          run its own concurrency group and never cancels another. Leave unset
+          for a manual Product CI run.
+        required: false
+        type: string
+        default: ""
+    secrets:
+      DMG_SOURCE_TOKEN:
+        required: true
 
 run-name: Product CI ${{ inputs.ref }}
 
 permissions:
   contents: read
 
+# Manual Product CI still cancels an in-progress run of the same ref.
+# A build-dmg call passes `caller` so this run gets its own group (caller plus
+# this run id) and cancel-in-progress is false. Adhoc and signed calls of the
+# same SHA therefore cannot cancel each other, and neither can cancel a manual
+# Product CI run of that SHA.
+#
+# Do not detect a reusable call with github.event_name. In a called workflow
+# that value is the caller's event (workflow_dispatch or repository_dispatch
+# for build-dmg), never workflow_call, so a run-id suffix keyed on
+# event_name == 'workflow_call' is never added. github.event.workflow is also
+# not enough: it is set for workflow_dispatch, but a repository_dispatch
+# payload has no workflow field, and that is the path make release uses.
+# Pin: .github/scripts/test_product_ci_run.py (ProductCiConcurrencyTest).
 concurrency:
-  group: product-ci-${{ inputs.ref }}
-  cancel-in-progress: true
+  group: product-ci-${{ inputs.ref }}-${{ inputs.caller && format('{0}-{1}', inputs.caller, github.run_id) || 'manual' }}
+  cancel-in-progress: ${{ !inputs.caller }}
 
 jobs:
   python:

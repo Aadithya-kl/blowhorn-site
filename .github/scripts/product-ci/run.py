@@ -50,6 +50,14 @@ FILE_COMMANDS = frozenset({"GITHUB_ENV", "GITHUB_OUTPUT", "GITHUB_PATH", "GITHUB
 #: `make` and compare the output: an inherited MAKELEVEL adds "Entering
 #: directory" lines and MAKEFLAGS passes this make's variables down.
 MAKE_STATE = frozenset({"MAKEFLAGS", "MAKELEVEL", "MFLAGS", "MAKEOVERRIDES"})
+# Checkout tokens must never reach the product's pytest, pnpm or cargo.
+SECRET_ENV = frozenset({
+    "DMG_SOURCE_TOKEN",
+    "INPUT_PRODUCT_TOKEN",
+    "INPUT_TOKEN",
+    "GH_TOKEN",
+    "GITHUB_TOKEN",
+})
 
 
 @dataclass(frozen=True)
@@ -172,7 +180,8 @@ COUNTERS = {"pytest": pytest_counts, "vitest": vitest_counts, "cargo": cargo_cou
 def run_steps(steps: list[Step], product: Path, log: Path, out=sys.stdout) -> int:
     """Run *steps* in order inside *product*, every byte of output to *log*; stop at the first failure."""
     log.parent.mkdir(parents=True, exist_ok=True)
-    env = {name: value for name, value in os.environ.items() if name not in FILE_COMMANDS | MAKE_STATE}
+    env = {name: value for name, value in os.environ.items()
+           if name not in FILE_COMMANDS | MAKE_STATE | SECRET_ENV}
     with log.open("ab") as sink:
         for step in steps:
             started = time.monotonic()

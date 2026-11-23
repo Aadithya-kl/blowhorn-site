@@ -157,6 +157,27 @@ class RunStepsTest(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertIn("MAKE_STATE=[None, None, None, None]", self.log.read_text())
 
+    def test_a_step_does_not_inherit_checkout_tokens(self):
+        show = (
+            "import os; print('TOKENS=' + repr([os.environ.get(n) for n in "
+            "('DMG_SOURCE_TOKEN', 'INPUT_PRODUCT_TOKEN', 'INPUT_TOKEN', 'GH_TOKEN', 'GITHUB_TOKEN')]))"
+        )
+        secrets = {
+            "DMG_SOURCE_TOKEN": "source-token-value",
+            "INPUT_PRODUCT_TOKEN": "source-token-value",
+            "INPUT_TOKEN": "source-token-value",
+            "GH_TOKEN": "source-token-value",
+            "GITHUB_TOKEN": "source-token-value",
+            "KEEP": "kept",
+        }
+        with mock.patch.dict("os.environ", secrets):
+            status, _out = self._run([run.Step("tokens", _py(show + "; print('KEEP=' + os.environ.get('KEEP', ''))"))])
+        self.assertEqual(status, 0)
+        logged = self.log.read_text()
+        self.assertIn("TOKENS=[None, None, None, None, None]", logged)
+        self.assertIn("KEEP=kept", logged)
+        self.assertNotIn("source-token-value", logged)
+
     def test_steps_run_in_their_own_directory_of_the_product(self):
         (self.product / "desktop").mkdir()
         status, _out = self._run([run.Step("here", _py("open('marker', 'w').write('x')"), cwd="desktop")])
@@ -236,6 +257,57 @@ class MakeTargetTest(unittest.TestCase):
                 self.assertIn(f"{label}: ok", done.stdout)
             self.assertIn("[tests: 5 passed]", done.stdout)
             self.assertIn("hunter2", log.read_text())
+
+
+# These expressions must stay identical to product-ci.yml. github.event_name in
+# a called workflow is the caller's event, never workflow_call, so detection
+# uses the explicit `caller` input that build-dmg passes.
+CONCURRENCY_GROUP = (
+    "product-ci-${{ inputs.ref }}-"
+    "${{ inputs.caller && format('{0}-{1}', inputs.caller, github.run_id) || 'manual' }}"
+)
+CONCURRENCY_CANCEL = "${{ !inputs.caller }}"
+
+
+def product_ci_concurrency(ref: str, caller: str = "", run_id: str = "") -> tuple[str, bool]:
+    """Group and cancel-in-progress for one Product CI run. Matches the YAML."""
+    suffix = f"{caller}-{run_id}" if caller else "manual"
+    return f"product-ci-{ref}-{suffix}", not bool(caller)
+
+
+class ProductCiConcurrencyTest(unittest.TestCase):
+    REF = "0123456789abcdef0123456789abcdef01234567"
+
+    def test_yaml_uses_the_caller_input_not_event_name(self):
+        text = (ROOT / ".github" / "workflows" / "product-ci.yml").read_text()
+        self.assertIn(f"group: {CONCURRENCY_GROUP}", text)
+        self.assertIn(f"cancel-in-progress: {CONCURRENCY_CANCEL}", text)
+        self.assertNotIn("github.event_name == 'workflow_call'", text)
+        self.assertNotIn("github.event_name != 'workflow_call'", text)
+        self.assertIn("never workflow_call", text)
+        self.assertIn("caller:", text)
+        caller = (ROOT / ".github" / "workflows" / "build-dmg.yml").read_text()
+        self.assertIn("caller: build-dmg", caller)
+
+    def test_adhoc_and_signed_calls_of_the_same_ref_do_not_share_a_group(self):
+        adhoc, cancel_a = product_ci_concurrency(self.REF, caller="build-dmg", run_id="11")
+        signed, cancel_s = product_ci_concurrency(self.REF, caller="build-dmg", run_id="22")
+        self.assertNotEqual(adhoc, signed)
+        self.assertFalse(cancel_a)
+        self.assertFalse(cancel_s)
+
+    def test_manual_runs_of_the_same_ref_share_a_group_and_cancel(self):
+        first, cancel_a = product_ci_concurrency(self.REF, run_id="11")
+        second, cancel_b = product_ci_concurrency(self.REF, run_id="22")
+        self.assertEqual(first, second)
+        self.assertEqual(first, f"product-ci-{self.REF}-manual")
+        self.assertTrue(cancel_a)
+        self.assertTrue(cancel_b)
+
+    def test_a_manual_run_does_not_share_a_group_with_a_build_dmg_call(self):
+        manual, _ = product_ci_concurrency(self.REF)
+        called, _ = product_ci_concurrency(self.REF, caller="build-dmg", run_id="11")
+        self.assertNotEqual(manual, called)
 
 
 if __name__ == "__main__":
