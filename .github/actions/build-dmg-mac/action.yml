@@ -13,13 +13,14 @@ runs:
   using: composite
   steps:
     - name: Check out the product commit (sparse, read-only)
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       with:
         repository: blowhorn-ai/blowhorn
         ref: ${{ inputs.ref }}
         token: ${{ inputs.product_token }}
         path: product
         persist-credentials: false
+        filter: blob:none
         sparse-checkout-cone-mode: false
         sparse-checkout: |
           /*
@@ -45,15 +46,15 @@ runs:
       run: python3 .github/scripts/build-dmg/checkout_guard.py product
 
     - name: Set up Python 3.14
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
       with:
         python-version: "3.14"
 
-    - uses: pnpm/action-setup@v4
+    - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
       with:
         version: 11.1.1
 
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
       with:
         node-version: 22
 
@@ -75,7 +76,12 @@ runs:
       run: |
         set +x
         set -euo pipefail
-        .github/scripts/build-dmg/materialize_signing.sh
+        # Signing files are written by the job's materialize step, which is the
+        # only step that receives the raw environment secrets.
+        if [[ ! -f "$RUNNER_TEMP/blowhorn-signing/env.sh" ]]; then
+          echo "signing material is missing; the job must run materialize_signing.sh first"
+          exit 1
+        fi
         # shellcheck disable=SC1091
         source "$RUNNER_TEMP/blowhorn-signing/env.sh"
         product/desktop/scripts/ci-import-signing-keychain.sh \
@@ -84,47 +90,60 @@ runs:
           --p8 "$SIGNING_P8" \
           --keychain "$SIGNING_KEYCHAIN" \
           --password-file "$SIGNING_KEYCHAIN_PASSWORD_FILE"
-        {
-          echo "BLOWHORN_SIGNING_KEYCHAIN=$SIGNING_KEYCHAIN"
-          echo "BLOWHORN_SIGNING_KEYCHAIN_PASS_FILE=$SIGNING_KEYCHAIN_PASSWORD_FILE"
-        } >> "$GITHUB_ENV"
 
     - name: Build, sign, notarize and verify (output withheld)
       shell: bash
       env:
         BLOWHORN_BUILD_CLEANUP: "1"
+        BUILD_VERSION: ${{ inputs.version }}
+        BUILD_MODE: ${{ inputs.mode }}
       run: |
         set +x
         set -euo pipefail
         python3 .github/scripts/build-dmg/run_build.py \
           --product product \
           --log "$RUNNER_TEMP/build-dmg/build.log" \
-          --version "${{ inputs.version }}" \
-          --mode "${{ inputs.mode }}"
+          --version "$BUILD_VERSION" \
+          --mode "$BUILD_MODE"
 
     - name: Stage the DMG and the manifest
       shell: bash
+      env:
+        EXPECT_REF: ${{ inputs.ref }}
+        EXPECT_VERSION: ${{ inputs.version }}
+        EXPECT_MODE: ${{ inputs.mode }}
       run: |
         set -euo pipefail
         mkdir -p dist
         python3 - <<'PY'
-        import shutil, sys
+        import hashlib, os, shutil, sys
         from pathlib import Path
         sys.path.insert(0, ".github/scripts/build-dmg")
         from manifest import parse_manifest
         src = Path("product/desktop/release-prod")
         manifest = parse_manifest((src / "build-dmg-manifest.json").read_text())
+        if manifest["ref"] != os.environ["EXPECT_REF"]:
+            raise SystemExit("manifest ref does not match the requested commit")
+        if manifest["version"] != os.environ["EXPECT_VERSION"]:
+            raise SystemExit("manifest version does not match the requested version")
+        if manifest["signing_mode"] != os.environ["EXPECT_MODE"]:
+            raise SystemExit("manifest signing_mode does not match the requested mode")
         dmg = src / manifest["dmg_name"]
         if not dmg.is_file():
             raise SystemExit("built DMG is missing from the product checkout")
+        digest = hashlib.sha256(dmg.read_bytes()).hexdigest()
+        if digest != manifest["sha256"]:
+            raise SystemExit("sha256 of the staged DMG does not match the manifest")
+        if dmg.stat().st_size != manifest["size_bytes"]:
+            raise SystemExit("size of the staged DMG does not match the manifest")
         dest = Path("dist")
         shutil.copy2(dmg, dest / manifest["dmg_name"])
         shutil.copy2(src / "build-dmg-manifest.json", dest / "build-dmg-manifest.json")
         print(f"staged {manifest['dmg_name']} ({manifest['size_bytes']} bytes)")
         PY
 
-    - name: Upload the signed DMG artifact
-      uses: actions/upload-artifact@v4
+    - name: Upload the DMG artifact
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       with:
         name: blowhorn-desktop-dmg
         path: |
@@ -139,11 +158,24 @@ runs:
       shell: bash
       run: |
         set +x
-        set -euo pipefail
-        product/desktop/scripts/ci-teardown-signing-keychain.sh \
-          --keychain "${SIGNING_KEYCHAIN:-}" \
-          --password-file "${SIGNING_KEYCHAIN_PASSWORD_FILE:-}" \
-          --p12 "${SIGNING_P12:-}" \
-          --p8 "${SIGNING_P8:-}" \
-          --passphrase-file "${SIGNING_PASSPHRASE_FILE:-}" \
-          || true
+        set -uo pipefail
+        status=0
+        if [[ -n "${SIGNING_KEYCHAIN:-}" && -x product/desktop/scripts/ci-teardown-signing-keychain.sh ]]; then
+          product/desktop/scripts/ci-teardown-signing-keychain.sh \
+            --keychain "${SIGNING_KEYCHAIN:-}" \
+            --password-file "${SIGNING_KEYCHAIN_PASSWORD_FILE:-}" \
+            --p12 "${SIGNING_P12:-}" \
+            --p8 "${SIGNING_P8:-}" \
+            --passphrase-file "${SIGNING_PASSPHRASE_FILE:-}" \
+            || status=$?
+        fi
+        if [[ -n "${SIGNING_KEYCHAIN:-}" ]]; then
+          security delete-keychain "$SIGNING_KEYCHAIN" 2>/dev/null || true
+        fi
+        if [[ -n "${RUNNER_TEMP:-}" && -d "$RUNNER_TEMP/blowhorn-signing" ]]; then
+          rm -rf "$RUNNER_TEMP/blowhorn-signing" || status=1
+        fi
+        if [[ "$status" -ne 0 ]]; then
+          echo "signing teardown reported a failure; the temporary directory has been removed"
+          exit "$status"
+        fi

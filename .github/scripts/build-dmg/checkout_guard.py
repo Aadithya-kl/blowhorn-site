@@ -27,7 +27,11 @@ def parse_internal_paths(text: str) -> list[str]:
         line = raw.strip()
         if not line or line.startswith("#"):
             continue
-        paths.append(line if line.endswith("/") else f"{line}/")
+        rel = line if line.endswith("/") else f"{line}/"
+        as_path = Path(rel)
+        if as_path.is_absolute() or ".." in as_path.parts:
+            raise SystemExit("internal-paths.txt has an entry that is not a relative checkout path")
+        paths.append(rel)
     return paths
 
 
@@ -73,7 +77,7 @@ def main(argv: list[str] | None = None) -> int:
         print("refusing: release/signing/ was present in the product checkout and has been removed", file=sys.stderr)
         return 1
     if present:
-        print("refusing: internal paths were present in the product checkout: " + ", ".join(present), file=sys.stderr)
+        print(f"refusing: {len(present)} internal path(s) were present in the product checkout and have been removed", file=sys.stderr)
         return 1
     print("checkout guard: ok")
     return 0

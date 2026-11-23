@@ -41,11 +41,15 @@ run-name: Product CI ${{ inputs.ref }}
 permissions:
   contents: read
 
-# Include the event in the group so a manual Product CI run cannot cancel the
-# linux-green gate of a build-dmg release, and the other way around.
+# Manual Product CI still cancels an in-progress run of the same ref.
+# A build-dmg call uses a distinct group (the caller's workflow name and this
+# run id) so it cannot cancel, or be cancelled by, a manual Product CI run,
+# and adhoc and signed calls of the same SHA do not cancel each other.
+# Under workflow_call, github.event_name is the caller's event, so it is not
+# enough on its own to tell the two apart.
 concurrency:
-  group: product-ci-${{ inputs.ref }}-${{ github.event_name }}
-  cancel-in-progress: true
+  group: product-ci-${{ inputs.ref }}-${{ github.workflow }}${{ github.event_name == 'workflow_call' && format('-{0}', github.run_id) || '' }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_call' }}
 
 jobs:
   python:

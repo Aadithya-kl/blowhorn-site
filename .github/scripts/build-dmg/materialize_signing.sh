@@ -4,12 +4,6 @@
 # the #2759 rotation stores new values here).
 set +x
 set -euo pipefail
-# Disable GitHub Actions command echoing for this step if the runner honors it.
-echo "::add-mask::${DEVELOPER_ID_P12_PASSPHRASE:-}"
-echo "::add-mask::${APPLE_API_KEY_ID:-}"
-echo "::add-mask::${APPLE_TEAM_ID:-}"
-echo "::add-mask::${APPLE_API_ISSUER:-}"
-
 die_unconfigured() {
   echo "macos-dmg-signing secrets are not configured yet. New values land here after the #2759 rotation; this job does not load the keys that are in the private repository."
   exit 2
@@ -58,6 +52,9 @@ SIGNING_P8=$dir/api-key.p8
 SIGNING_KEYCHAIN=$dir/ci-signing.keychain-db
 SIGNING_KEYCHAIN_PASSWORD_FILE=$dir/keychain.pass
 APPLE_API_KEY=$dir/api-key.p8
+APPLE_TEAM_ID=$APPLE_TEAM_ID
+APPLE_API_KEY_ID=$APPLE_API_KEY_ID
+APPLE_API_ISSUER=$APPLE_API_ISSUER
 ENV
 chmod 600 "$github_vars"
 sed 's/^/export /' "$github_vars" >"$env_sh"

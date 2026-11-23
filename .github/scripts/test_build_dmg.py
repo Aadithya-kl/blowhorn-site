@@ -15,6 +15,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 sys.path.insert(0, str(HERE / "build-dmg"))
 import checkout_guard  # noqa: E402
+import require_signed_ref  # noqa: E402
 import manifest as manifest_mod  # noqa: E402
 import payload as payload_mod  # noqa: E402
 
@@ -98,6 +99,27 @@ class CheckoutGuardTest(unittest.TestCase):
         self.assertNotIn("no", buf.getvalue())  # never print the file contents
         self.assertFalse(signing.exists())
 
+    def test_other_internal_paths_are_refused_without_naming_them(self):
+        hidden = self.product / "internal"
+        hidden.mkdir()
+        (hidden / "secret.md").write_text("no")
+        (self.product / "release").mkdir()
+        (self.product / "release" / "internal-paths.txt").write_text("internal/\n")
+        buf = io.StringIO()
+        with mock.patch("sys.stderr", buf):
+            status = checkout_guard.main([str(self.product)])
+        self.assertEqual(status, 1)
+        self.assertIn("1 internal path(s)", buf.getvalue())
+        self.assertNotIn("internal/", buf.getvalue())
+        self.assertNotIn("secret.md", buf.getvalue())
+        self.assertFalse(hidden.exists())
+
+    def test_rejects_parent_directory_entries_in_internal_paths(self):
+        (self.product / "release").mkdir()
+        (self.product / "release" / "internal-paths.txt").write_text("../etc/\n")
+        with self.assertRaises(SystemExit):
+            checkout_guard.parse_internal_paths((self.product / "release" / "internal-paths.txt").read_text())
+
     def test_excludes_start_with_signing(self):
         paths = checkout_guard.read_excludes()
         self.assertEqual(paths[0], "release/signing/")
@@ -139,6 +161,50 @@ class RunBuildTest(unittest.TestCase):
         self.assertNotIn("MAKELEVEL", env)
         self.assertEqual(env["BLOWHORN_BUILD_CLEANUP"], "1")
         self.assertEqual(env["PATH"], "/bin")
+
+    def test_child_env_drops_signing_secrets_and_the_product_token(self):
+        env = run_build.child_env({
+            "PATH": "/bin",
+            "DEVELOPER_ID_P12": "p12",
+            "DEVELOPER_ID_P12_PASSPHRASE": "pw",
+            "DMG_SOURCE_TOKEN": "tok",
+            "INPUT_PRODUCT_TOKEN": "tok",
+            "APPLE_API_KEY": "/tmp/key.p8",
+        })
+        self.assertNotIn("DEVELOPER_ID_P12", env)
+        self.assertNotIn("DEVELOPER_ID_P12_PASSPHRASE", env)
+        self.assertNotIn("DMG_SOURCE_TOKEN", env)
+        self.assertNotIn("INPUT_PRODUCT_TOKEN", env)
+        self.assertEqual(env["APPLE_API_KEY"], "/tmp/key.p8")
+
+
+class RequireSignedRefTest(unittest.TestCase):
+    REF = "0123456789abcdef0123456789abcdef01234567"
+    OTHER = "abcdef0123456789abcdef0123456789abcdef01"
+
+    def test_accepts_the_desktop_tag_or_the_temporary_release_ref(self):
+        def lookup(_token, name):
+            return {"tags/desktop-v2.14.1": self.REF}.get(name)
+
+        self.assertEqual(
+            require_signed_ref.require_signed_ref(self.REF, "2.14.1", "t", lookup=lookup),
+            "tags/desktop-v2.14.1",
+        )
+
+        def lookup_tmp(_token, name):
+            return {"releases/desktop-v2.14.1": self.REF}.get(name)
+
+        self.assertEqual(
+            require_signed_ref.require_signed_ref(self.REF, "2.14.1", "t", lookup=lookup_tmp),
+            "releases/desktop-v2.14.1",
+        )
+
+    def test_refuses_a_commit_the_version_refs_do_not_name(self):
+        def lookup(_token, name):
+            return {"tags/desktop-v2.14.1": self.OTHER}.get(name)
+
+        with self.assertRaises(require_signed_ref.RefError):
+            require_signed_ref.require_signed_ref(self.REF, "2.14.1", "t", lookup=lookup)
 
 
 class SchemaSyncTest(unittest.TestCase):

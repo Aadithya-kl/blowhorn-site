@@ -8,12 +8,17 @@ name: Build DMG
 # ubuntu-latest, then the Mac job.
 #
 # developer-id runs use the macos-dmg-signing environment, which is restricted
-# to this repository's default branch (master) and protected tags, so pull
-# requests and forks cannot reach it. There are no required reviewers: a
-# signed run on an allowed ref proceeds without an approval. Signing secret
-# values are stored after the #2759 rotation; this workflow does not load the
-# keys that are committed in the private repository. Until those values are
+# to this repository's master branch (custom policy: master is not a protected
+# branch, so protected_branches would block every deploy). Pull requests,
+# forks and other branches cannot reach it. There are no required reviewers:
+# a signed run on master proceeds without an approval. Signing secret values
+# are stored after the #2759 rotation; this workflow does not load the keys
+# that are committed in the private repository. Until those values are
 # present, a developer-id job fails with a fixed "not configured yet" message.
+# Signing secrets are passed only to the materialize step, never as job-level
+# env, so setup, rustup and the product build do not inherit the raw p12.
+# A developer-id ref must be the commit named by product tag desktop-vVERSION
+# or refs/releases/desktop-vVERSION (the refs make release pushes first).
 #
 # Private source is checked out sparsely (release/signing/ and other internal
 # paths excluded). Logs never print, upload or cache private output. The only
@@ -60,7 +65,7 @@ jobs:
       version: ${{ steps.resolve.outputs.version }}
       mode: ${{ steps.resolve.outputs.mode }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
 
@@ -85,13 +90,22 @@ jobs:
           print(f"payload: ok {payload['mode']} {payload['version']}")
           PY
 
+      - name: Require a product release ref for signed builds
+        if: steps.resolve.outputs.mode == 'developer-id'
+        env:
+          GH_TOKEN: ${{ secrets.DMG_SOURCE_TOKEN }}
+          IN_REF: ${{ steps.resolve.outputs.ref }}
+          IN_VERSION: ${{ steps.resolve.outputs.version }}
+        run: python3 .github/scripts/build-dmg/require_signed_ref.py
+
   linux-green:
     name: Linux gates
     needs: validate
     uses: ./.github/workflows/product-ci.yml
     with:
       ref: ${{ needs.validate.outputs.ref }}
-    secrets: inherit
+    secrets:
+      DMG_SOURCE_TOKEN: ${{ secrets.DMG_SOURCE_TOKEN }}
 
   build-mac-adhoc:
     name: Mac adhoc build
@@ -100,7 +114,7 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
 
@@ -118,17 +132,20 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 120
     environment: macos-dmg-signing
-    env:
-      DEVELOPER_ID_P12: ${{ secrets.DEVELOPER_ID_P12 }}
-      DEVELOPER_ID_P12_PASSPHRASE: ${{ secrets.DEVELOPER_ID_P12_PASSPHRASE }}
-      APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-      APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
+
+      - name: Materialize signing files
+        env:
+          DEVELOPER_ID_P12: ${{ secrets.DEVELOPER_ID_P12 }}
+          DEVELOPER_ID_P12_PASSPHRASE: ${{ secrets.DEVELOPER_ID_P12_PASSPHRASE }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: .github/scripts/build-dmg/materialize_signing.sh
 
       - uses: ./.github/actions/build-dmg-mac
         with:

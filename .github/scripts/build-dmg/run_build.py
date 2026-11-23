@@ -17,12 +17,22 @@ from pathlib import Path
 
 FILE_COMMANDS = frozenset({"GITHUB_ENV", "GITHUB_OUTPUT", "GITHUB_PATH", "GITHUB_STATE", "GITHUB_STEP_SUMMARY"})
 MAKE_STATE = frozenset({"MAKEFLAGS", "MAKELEVEL", "MFLAGS", "MAKEOVERRIDES"})
+# Raw key material and checkout tokens must never reach node, pnpm or cargo.
+SECRET_ENV = frozenset({
+    "DEVELOPER_ID_P12",
+    "DEVELOPER_ID_P12_PASSPHRASE",
+    "DMG_SOURCE_TOKEN",
+    "INPUT_PRODUCT_TOKEN",
+    "GH_TOKEN",
+    "GITHUB_TOKEN",
+})
 
 
 def child_env(src: dict[str, str] | None = None) -> dict[str, str]:
     env = dict(os.environ if src is None else src)
-    for name in FILE_COMMANDS | MAKE_STATE:
-        env.pop(name, None)
+    for name in list(env):
+        if name in FILE_COMMANDS or name in MAKE_STATE or name in SECRET_ENV:
+            env.pop(name, None)
     env["BLOWHORN_BUILD_CLEANUP"] = "1"
     return env
 
