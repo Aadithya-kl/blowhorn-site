@@ -10,7 +10,7 @@ the exit code and the first words of the error; leave out credentials,
 session files and anything from your Google Chrome profile directories. A
 security problem goes to security@blowhorn.ai, never a public issue.
 
-The contact form stores your reason and response preference in the support queue. A fix-update preference is a request to the team, not an automatic notification.
+The contact form stores your reason and response preference in the support queue.
 
 ## Let your AI help with the details
 

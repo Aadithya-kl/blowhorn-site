@@ -17,7 +17,7 @@ test('contact fields follow choice, including restored browser state', () => {
   assert.equal(email.disabled, true);
   assert.equal(name.disabled, true);
   assert.equal(email.required, false);
-  for (const choice of ['reply', 'fix-update']) {
+  for (const choice of ['reply']) {
     preference.value = choice;
     handlers.change();
     assert.equal(fields.hidden, false);

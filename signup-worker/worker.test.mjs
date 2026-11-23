@@ -797,7 +797,8 @@ test('support message stores one row and forwards to the queue', async () => {
   const row = db.supportRows[0];
   assert.equal(row.name, 'Ada Lovelace');
   assert.equal(row.email, 'ada@example.com');
-  assert.equal(row.subject, 'Cannot sign in');
+  assert.match(row.case_number, /^[0-9a-f-]{36}$/);
+  assert.equal(row.subject, `Feedback [${row.case_number}]`);
   assert.equal(row.details, 'blowhorn login\nexit code 3');
   assert.equal(row.source_page, '/support/');
   assert.ok(row.forwarded_at);
@@ -805,7 +806,8 @@ test('support message stores one row and forwards to the queue', async () => {
   assert.equal(calls[0].url, forward.url);
   assert.equal(calls[0].body.email, 'ada@example.com');
   assert.equal(calls[0].body.name, 'Ada Lovelace');
-  assert.equal(calls[0].body.subject, '[Blowhorn support] Cannot sign in');
+  assert.equal(calls[0].body.subject, `[Blowhorn support] ${row.subject}`);
+  assert.ok(calls[0].body.subject.length <= 218);
   assert.match(calls[0].body.message, /The app refuses my profile\./);
   assert.match(calls[0].body.message, /exit code 3/);
   assert.deepEqual(Object.keys(calls[0].body).sort(), ['email', 'message', 'name', 'subject']);
@@ -825,8 +827,6 @@ test('support validation rejects missing and over-long fields', async () => {
   for (const body of [
     supportBody({ name: 'x'.repeat(101) }),
     supportBody({ email: 'not-an-email' }),
-    supportBody({ subject: 'x'.repeat(200) }),
-    supportBody({ subject: 'x'.repeat(201) }),
     supportBody({ message: '' }),
     supportBody({ message: 'x'.repeat(5001) }),
     supportBody({ details: 'x'.repeat(5001) }),
@@ -937,7 +937,7 @@ test('anonymous choice discards contact fields before storage and forwarding', a
   assert.equal(db.supportRows[0].name, '');
   assert.equal(db.supportRows[0].contact_preference, 'anonymous');
   assert.equal(db.supportRows[0].reason, 'issue');
-  assert.equal(db.supportRows[0].subject, 'Problem report');
+  assert.equal(db.supportRows[0].subject, `Problem report [${db.supportRows[0].case_number}]`);
   assert.equal(db.supportRows[0].diagnostics_reference, 'local-report-123');
   assert.equal(payload.email, '');
   assert.equal(payload.name, '');
@@ -954,8 +954,8 @@ test('minimal anonymous submission needs only a message', async () => {
   assert.equal(db.supportRows[0].contact_preference, 'anonymous');
 });
 
-test('response choices require email, not name, and preserve fix preference', async () => {
-  for (const choice of ['reply', 'fix-update']) {
+test('response requires email, not name', async () => {
+  for (const choice of ['reply']) {
     const db = fakeDb();
     const handle = createHandler(db);
     const invalid = await handle(post('/api/support', supportBody({ contact_preference: choice, email: '' })));
@@ -971,7 +971,7 @@ test('response choices require email, not name, and preserve fix preference', as
 test('support rejects invalid preferences, reasons and diagnostic references', async () => {
   const handle = createHandler(fakeDb());
   for (const overrides of [
-    { reason: 'other-unknown' }, { reason: '__proto__' }, { contact_preference: 'subscribe' },
+    { reason: 'other-unknown' }, { reason: '__proto__' }, { contact_preference: 'subscribe' }, { contact_preference: 'fix-update' },
     { diagnostics_reference: 'x'.repeat(501) }, { diagnostics_reference: 'one\ntwo' },
     { contact_preference: 'reply', email: 'bad' },
   ]) {
@@ -1014,7 +1014,7 @@ test('support migration preserves existing rows and adapter stores anonymous met
   }; } }; } });
   const id = await adapter.insertSupportMessage({ name: '', email: '', subject: 'Feedback', message: 'Hello',
     details: '', created_at: '2026-11-23', source_page: '/support/', reason: 'feedback',
-    contact_preference: 'anonymous', diagnostics_reference: 'local-123' });
+    contact_preference: 'anonymous', diagnostics_reference: 'local-123', case_number: crypto.randomUUID() });
   await adapter.markSupportForwarded(id);
   const row = sqlite.prepare('SELECT * FROM support_messages WHERE id=?').get(id);
   assert.equal(row.name, '');
@@ -1023,4 +1023,28 @@ test('support migration preserves existing rows and adapter stores anonymous met
   assert.equal(row.diagnostics_reference, 'local-123');
   assert.ok(row.forwarded_at);
   sqlite.close();
+});
+
+test('case numbers are server generated, unique, and subjects ignore client overrides', async () => {
+  const db = fakeDb();
+  const calls = [];
+  const forward = { url: 'https://cloud.example.test/intake', fetchImpl: async (url, init) => {
+    calls.push(JSON.parse(init.body)); return { ok: true };
+  } };
+  const handle = createHandler(db, { forward });
+  for (const reason of ['feedback', 'issue', 'product', 'pricing', 'connect']) {
+    const res = await handle(post('/api/support', supportBody({ reason,
+      subject: 'User-supplied subject must not be used'.repeat(20), case_number: 'attacker-selected-id',
+    })));
+    assert.equal(res.status, 200);
+  }
+  const ids = db.supportRows.map(row => row.case_number);
+  assert.equal(new Set(ids).size, 5);
+  for (const [i, row] of db.supportRows.entries()) {
+    assert.match(row.case_number, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+    assert.ok(row.subject.includes(row.case_number));
+    assert.equal(calls[i].subject, `[Blowhorn support] ${row.subject}`);
+    assert.ok(calls[i].subject.length <= 218);
+    assert.doesNotMatch(row.subject, /User-supplied|attacker-selected/);
+  }
 });

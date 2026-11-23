@@ -4143,3 +4143,19 @@ a.docs-card.platform-card[href$="/facebook/"]::before { background-image: url(".
 
 /* Prompts are prose: keep the copyable text readable on narrow screens. */
 .support-prompt pre, .support-prompt code, .support-prompt .line { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* Native arrows hug the border on some platforms. Draw a padded chevron. */
+.support-select { display: block; position: relative; }
+.support-select select { appearance: none; padding-right: var(--space-10); }
+.support-select::after {
+  content: "";
+  position: absolute;
+  right: var(--space-4);
+  top: 50%;
+  width: var(--space-2);
+  height: var(--space-2);
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  transform: translateY(-75%) rotate(45deg);
+  pointer-events: none;
+}

@@ -12,17 +12,17 @@ the row token.
 `POST /api/support` accepts a required `message` (5,000 characters), and:
 
 - `reason`: `feedback` (default), `issue`, `product`, `pricing`, `connect`.
-- `contact_preference`: `anonymous` (default without email), `reply`, `fix-update`.
+- `contact_preference`: `anonymous` (default without email), `reply`.
   A response requires a valid email; name is optional. Anonymous discards name
   and email on the server even if a client submits them. For old clients that
   omit the preference, an email implies `reply`.
-- Optional `subject` (199 characters, defaults to the reason label), `details`
+- Server-generated `subject` (reason plus a unique UUID case number); any submitted subject is ignored. Optional `details`
   (5,000 characters), `diagnostics_reference` (single line, 500 characters).
   References are unverified text, never fetched. Files are not accepted.
 
 The D1 table `support_messages` is the record (migrations 0003 and 0004).
 Apply migration 0004 before deploying the Worker. It adds reason, response
-preference and diagnostic reference; old rows default to feedback/reply.
+preference, diagnostic reference and a unique case number; old rows default to feedback/reply.
 The Worker forwards to `SUPPORT_FORWARD_URL`, tagged `[Blowhorn support]`.
 Reason, preference and reference are included in the message body. Empty
 identity stays empty, never a placeholder email.
@@ -31,7 +31,7 @@ identity stays empty, never a placeholder email.
 Tracking: https://github.com/layer5io/meshery-cloud/issues/6533.
 Do not deploy this change until the Cloud contract accepts anonymous and
 email-only submissions. Its existing notification flag is not changed here.
-A fix-update preference is a triage request, not an automatic subscription.
+The form records whether a response is requested, not a notification subscription.
 The team still needs an owned response workflow and a verified notification
 path before promising automated fix emails.
 

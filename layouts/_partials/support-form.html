@@ -3,13 +3,13 @@
 <form class="support-form" name="support" method="post" action="https://api.blowhorn.ai/api/support">
   <p class="support-form-field">
     <label for="support-reason">What brings you here?</label>
-    <select id="support-reason" name="reason">
+    <span class="support-select"><select id="support-reason" name="reason">
       <option value="feedback" selected>Share feedback</option>
       <option value="issue">Report a problem</option>
       <option value="product">Ask about the product</option>
       <option value="pricing">Pricing or licensing</option>
       <option value="connect">Get in touch</option>
-    </select>
+    </select></span>
   </p>
   <p class="support-form-field">
     <label for="support-message">Your message</label>
@@ -17,11 +17,10 @@
   </p>
   <p class="support-form-field">
     <label for="support-contact">Would you like a response?</label>
-    <select id="support-contact" name="contact_preference" aria-describedby="support-contact-note">
-      <option value="anonymous" selected>Send anonymously</option>
-      <option value="reply">Yes, reply to me</option>
-      <option value="fix-update">Fix update by email</option>
-    </select>
+    <span class="support-select"><select id="support-contact" name="contact_preference" aria-describedby="support-contact-note">
+      <option value="anonymous" selected>No, send anonymously</option>
+      <option value="reply">Yes, respond to me</option>
+    </select></span>
     <span id="support-contact-note" class="caption muted">Anonymous means no name or email is saved. The service still receives your IP address. Leave identifying details out of your message.</span>
   </p>
   <div class="support-form-pair" data-support-contact-fields>
@@ -36,12 +35,8 @@
     </p>
   </div>
   <details class="support-extra">
-    <summary>Add a subject or diagnostics <span class="muted">(optional)</span></summary>
+    <summary>Add diagnostics <span class="muted">(optional)</span></summary>
     <div class="support-extra-fields">
-      <p class="support-form-field">
-        <label for="support-subject">Subject</label>
-        <input type="text" id="support-subject" name="subject" maxlength="199" placeholder="Defaults to your reason for reaching out">
-      </p>
       <p class="support-form-field">
         <label for="support-details">Error or diagnostic summary</label>
         <textarea id="support-details" name="details" rows="3" maxlength="5000" placeholder="Blowhorn version, operating system, exit code and the error's first words. No passwords, tokens, cookies or Chrome profile files."></textarea>
