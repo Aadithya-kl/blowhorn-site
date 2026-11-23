@@ -11,10 +11,16 @@ name: Build DMG
 # to this repository's master branch (custom policy: master is not a protected
 # branch, so protected_branches would block every deploy). Pull requests,
 # forks and other branches cannot reach it. There are no required reviewers:
-# a signed run on master proceeds without an approval. Signing secret values
-# are stored after the #2759 rotation; this workflow does not load the keys
-# that are committed in the private repository. Until those values are
-# present, a developer-id job fails with a fixed "not configured yet" message.
+# a signed run on master proceeds without an approval. Signing secrets are
+# blowhorn-ai organization secrets, selected for the blowhorn and
+# blowhorn-site repositories, with these exact names: DEVELOPER_ID_P12,
+# DEVELOPER_ID_P12_PASSPHRASE, APPLE_API_KEY, APPLE_TEAM_ID, APPLE_API_KEY_ID,
+# APPLE_API_ISSUER. They resolve in this environment job even though the
+# environment has no environment-scoped secrets. This workflow does not load
+# keys from the private product repository. The #2759 rotation was canceled;
+# the existing keys were moved unrotated to those org secrets. If a required
+# secret is missing, the materialize step fails with a fixed "not configured"
+# message.
 # Signing secrets are passed only to the materialize step, never as job-level
 # env, so setup, rustup and the product build do not inherit the raw p12.
 # DMG_SOURCE_TOKEN is passed only to checkout-product (and to validate's

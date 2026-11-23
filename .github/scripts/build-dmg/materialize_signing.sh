@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
-# Write environment signing secrets into RUNNER_TEMP files. Never prints a
-# secret. Exits 2 when the environment is not configured yet (expected until
-# the #2759 rotation stores new values here).
+# Write signing secrets into RUNNER_TEMP files. Never prints a secret.
+# The values are blowhorn-ai org secrets (selected for blowhorn and
+# blowhorn-site) that resolve in the macos-dmg-signing environment job.
+# Exits 2 when a required secret is missing. This job does not load keys
+# from the private product repository.
 set +x
 set -euo pipefail
 die_unconfigured() {
-  echo "macos-dmg-signing secrets are not configured yet. New values land here after the #2759 rotation; this job does not load the keys that are in the private repository."
+  echo "macos-dmg-signing secrets are not configured. Expected blowhorn-ai org secrets DEVELOPER_ID_P12, DEVELOPER_ID_P12_PASSPHRASE, APPLE_API_KEY, APPLE_TEAM_ID, APPLE_API_KEY_ID and APPLE_API_ISSUER, selected for blowhorn and blowhorn-site. This job does not load keys from the private product repository."
   exit 2
 }
 
@@ -29,7 +31,7 @@ except Exception:
     sys.stderr.write("macos-dmg-signing: DEVELOPER_ID_P12 is not valid base64\n")
     sys.exit(1)
 if not data:
-    sys.stderr.write("macos-dmg-signing secrets are not configured yet.\n")
+    sys.stderr.write("macos-dmg-signing secrets are not configured.\n")
     sys.exit(2)
 path = os.path.join(os.environ["RUNNER_TEMP"], "blowhorn-signing", "developer-id.p12")
 with open(path, "wb") as handle:

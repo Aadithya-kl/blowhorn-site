@@ -78,8 +78,14 @@ restricted to this repository's `master` branch (a custom policy, because
 cannot reach it. There are no required reviewers: a signed run on `master`
 proceeds without an approval. That is Yi Nuo's call: any team member listed
 in the Firstmate roster can initiate a release on their own recognizance.
-Signing secret values are stored after the #2759 rotation; the workflow does
-not load keys from the private product repository.
+Signing secret values are blowhorn-ai organization secrets, selected for
+the `blowhorn` and `blowhorn-site` repositories: `DEVELOPER_ID_P12`,
+`DEVELOPER_ID_P12_PASSPHRASE`, `APPLE_API_KEY`, `APPLE_TEAM_ID`,
+`APPLE_API_KEY_ID`, and `APPLE_API_ISSUER`. They resolve in the
+`macos-dmg-signing` environment job even though that environment has no
+environment-scoped secrets. The workflow does not load keys from the
+private product repository. The #2759 rotation was canceled; the existing
+keys were moved unrotated to those org secrets.
 
 **Artifacts:** the only upload is the DMG and its sha256 manifest, retained for
 1 day. Build logs stay under `RUNNER_TEMP` and are never printed, uploaded or
