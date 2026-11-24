@@ -8,7 +8,9 @@ name: Product CI
 # The logs here are public, so they must never show private code:
 #   - every command's output goes to a log under RUNNER_TEMP that is never
 #     printed, uploaded or cached (.github/scripts/product-ci/run.py)
-#   - the step output is fixed labels, exit statuses and pass/fail counts only
+#   - the step output is fixed labels, exit statuses and pass/fail counts, plus
+#     failing pytest/cargo/vitest test names and vitest Unhandled Errors headings
+#     (names only; never assertion text, stacks or source)
 #   - no cache, no artifact, no job summary (the commands run without
 #     GITHUB_STEP_SUMMARY and the other file-command variables); the checkout
 #     keeps no credential
