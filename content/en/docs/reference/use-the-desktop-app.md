@@ -350,3 +350,4 @@ again** resumes the same case. See
 - [Reviewed support packages](/docs/reference/support-packages/) - what a support package holds.
 - [How Blowhorn works](/docs/explanation/how-it-works/) - app, engine, extension and store.
 - [Install the app](/docs/how-to/set-up/install-the-app/) - get the app onto a Mac.
+- [The Chrome extension, at a glance](/docs/reference/use-the-chrome-extension/) - the side panel, its layout, and the toolbar button.
