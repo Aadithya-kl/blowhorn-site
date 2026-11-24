@@ -190,6 +190,13 @@ jobs:
           test -f product/engine/rust/rust-toolchain.toml
           cd product/engine/rust && timeout 600 rustup toolchain install
 
+      # The live Chrome background-tab test (product engine/rust/cdp/tests/live_chrome.rs)
+      # runs headed under xvfb-run and reads the selected tab from the window title
+      # with xdotool, which it requires on Linux. The runner image ships Google
+      # Chrome and xvfb but not xdotool.
+      - name: Install xdotool
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends xdotool >/dev/null
+
       - name: Rust suite (output withheld)
         env:
           BLOWHORN_CONTRACT_PYTHON: python
