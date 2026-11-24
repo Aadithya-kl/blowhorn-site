@@ -226,6 +226,14 @@ class PublicLogAuditTest(unittest.TestCase):
         self.assertNotIn("product_token:", workflow)
         self.assertIn("uses: ./.github/actions/checkout-product", workflow)
 
+
+    def test_the_mac_action_installs_the_product_toolchain_file_not_a_copied_version(self):
+        action = (ROOT / ".github" / "actions" / "build-dmg-mac" / "action.yml").read_text()
+        self.assertIn("product/engine/rust/rust-toolchain.toml", action)
+        self.assertIn("rustup toolchain install", action)
+        self.assertNotIn("1.85", action)
+        self.assertNotRegex(action, r"default-toolchain [0-9]")
+
     def test_materialize_does_not_write_github_env(self):
         script = (ROOT / ".github" / "scripts" / "build-dmg" / "materialize_signing.sh").read_text()
         self.assertNotIn('>>"$GITHUB_ENV"', script)

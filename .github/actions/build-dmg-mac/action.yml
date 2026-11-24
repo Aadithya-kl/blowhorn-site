@@ -33,17 +33,21 @@ runs:
       with:
         node-version: 22
 
-    - name: Install Rust and both macOS targets
+    - name: Install the product's pinned Rust toolchain and both macOS targets
       shell: bash
       run: |
         set -euo pipefail
-        if ! command -v rustup >/dev/null; then
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.85.1
-          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+        if ! command -v rustup >/dev/null 2>&1; then
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain none
         fi
+        echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
         # rustup may already be on PATH after the echo above in later steps only.
         export PATH="$HOME/.cargo/bin:$PATH"
-        rustup target add aarch64-apple-darwin x86_64-apple-darwin
+        test -f product/engine/rust/rust-toolchain.toml
+        # The pin is product/engine/rust/rust-toolchain.toml; never a second copy here.
+        # target add runs in that directory so rustup attaches the macOS
+        # targets to the pin, not to whatever default toolchain the runner has.
+        (cd product/engine/rust && rustup toolchain install && rustup target add aarch64-apple-darwin x86_64-apple-darwin)
 
     - name: Import the temporary signing keychain
       if: inputs.mode == 'developer-id'
