@@ -395,7 +395,11 @@ function supportForwardFromEnv(env) {
   const url = env && typeof env.SUPPORT_CASES_URL === 'string' ? env.SUPPORT_CASES_URL.trim() : '';
   const clientKey = env && typeof env.SUPPORT_CASES_CLIENT_KEY === 'string' ? env.SUPPORT_CASES_CLIENT_KEY.trim() : '';
   if (!url || !clientKey) return null;
-  return { url, clientKey, fetchImpl: fetch };
+  // Wrapped, not `fetch` itself: Workers throws "Illegal invocation" when
+  // fetch runs with a `this` other than the global scope, and forwardSupport
+  // calls it as forward.fetchImpl(...). The throw was caught as a failed
+  // forward, so no submission ever reached Cloud.
+  return { url, clientKey, fetchImpl: (input, init) => fetch(input, init) };
 }
 
 export function createHandler(db, options = {}) {
