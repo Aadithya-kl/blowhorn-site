@@ -9,17 +9,38 @@ the row token.
 
 ## Support messages
 
-`POST /api/support` takes the /support/ page's contact form (name, email,
-subject, message, optional details of what was run and what it printed).
-The D1 table `support_messages` is the record (migrations/0003). The worker
-also forwards each message to the Layer5 Cloud form queue at
-`SUPPORT_FORWARD_URL` (wrangler.json `[vars]`, the public marketing form
-API's blowhorn-support form type, shared with layer5.io's forms), tagged
-`[Blowhorn support]`. The forward is best-effort: a failure (the queue
-refusing or down) still answers success, and the row keeps a NULL
-`forwarded_at` so it can be replayed. Set `SUPPORT_FORWARD_URL` empty to
-store only. The honeypot, rate limit and CORS rules are the same as the
-signup endpoints; form posts are redirected to `/support/thanks/`.
+`POST /api/support` accepts a required `message` (5,000 characters), and:
+
+- `reason`: `feedback` (default), `issue`, `product`, `pricing`, `connect`.
+- `contact_preference`: `anonymous` (default without email), `reply`.
+  A response requires a valid email; name is optional. Anonymous discards name
+  and email on the server even if a client submits them. For old clients that
+  omit the preference, an email implies `reply`.
+- Server-generated `subject` (reason plus a unique UUID case number); any submitted subject is ignored. Optional `details`
+  (5,000 characters), `diagnostics_reference` (single line, 500 characters).
+  References are unverified text, never fetched. Files are not accepted.
+
+The D1 table `support_messages` is the record (migrations 0003 and 0004).
+Apply migration 0004 before deploying the Worker. It adds reason, response
+preference, diagnostic reference and a unique case number; old rows default to feedback/reply.
+The Worker forwards to `SUPPORT_FORWARD_URL`, tagged `[Blowhorn support]`.
+Reason, preference and reference are included in the message body. Empty
+identity stays empty, never a placeholder email.
+
+**Release dependency:** the current Cloud intake requires name and email.
+Tracking: https://github.com/layer5io/meshery-cloud/issues/6533.
+Do not deploy this change until the Cloud contract accepts anonymous and
+email-only submissions. Its existing notification flag is not changed here.
+The form records whether a response is requested, not a notification subscription.
+The team still needs an owned response workflow and a verified notification
+path before promising automated fix emails.
+
+Forwarding is best-effort: a failure leaves `forwarded_at` NULL in D1 for
+replay. This change does not add a replay worker. Test forwarding and inspect
+the destination before claiming end-to-end delivery. Setting the URL empty
+stores only. Honeypot, per-IP rate limit and CORS are unchanged. Form posts
+redirect to `/support/thanks/`. Anonymous does not mean network anonymity:
+the Worker receives an IP for rate limiting, and free text can identify people.
 
 ## Hosting
 

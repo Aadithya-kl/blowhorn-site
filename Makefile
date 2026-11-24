@@ -445,8 +445,12 @@ test-image-lightbox:
 test-platforms-clip:
 	node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test assets/js/platforms-clip.test.mjs
 
+## Test support intake validation/forwarding and progressive contact fields.
+test-support:
+	node --test signup-worker/worker.test.mjs assets/js/support-form.test.mjs
+
 ## Run the unit tests for the check scripts in .github/scripts/, then the hero activity feed, download page, asset catalog, image lightbox and platforms clip tests.
-test-scripts: test-internal-worker test-activity-feed test-download test-asset-catalog test-image-lightbox test-platforms-clip
+test-scripts: test-internal-worker test-activity-feed test-download test-asset-catalog test-image-lightbox test-platforms-clip test-support
 	python3 -m unittest discover -s .github/scripts -p 'test_*.py'
 
 ## Mark a Copilot draft PR ready and approve pending runs for its current head. Requires GH_TOKEN, GITHUB_REPOSITORY and PR_NUMBER.
