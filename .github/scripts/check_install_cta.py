@@ -19,11 +19,9 @@ fails when:
   and is allowed.
 
 Docs pages are synced from the product repository and are skipped. The home
-page is exempt from the primary-count and old-label rules (PENDING_HOME) until
-its rebuild (#418) lands: remove it from PENDING_HOME then. The Reveille home
-preview (home-reveille/index.html) is exempt for the same reason: it is the
-same home page under the other theme. The Enlist rule has no exemption, so it
-covers the home page, where all four Enlist buttons live.
+page (and its Reveille preview) is exempt from the single-primary limit
+(PRIMARY_EXEMPT) because it holds hero, machine-panel and closing CTAs;
+old install labels and the Enlist rule are checked across every page.
 
 Usage: check_install_cta.py [BUILD_DIR]
 """
@@ -46,7 +44,7 @@ OLD_LABELS = (
 )
 OLD_PRIMARY_LABELS = ("Install the CLI",)
 SKIP_PREFIXES = ("docs/",)
-PENDING_HOME = ("index.html", "home-reveille/index.html")
+PRIMARY_EXEMPT = ("index.html", "home-reveille/index.html")
 
 
 class Controls(HTMLParser):
@@ -71,6 +69,7 @@ class Controls(HTMLParser):
             self._open.append({
                 "tag": tag,
                 "href": attributes.get("href"),
+                "has_href": "href" in attributes,
                 "type": attributes.get("type"),
                 "enlist": "data-enlist" in attributes,
                 "primary": PRIMARY_CLASS in classes,
@@ -104,7 +103,7 @@ def is_enlist_button(control: dict) -> bool:
         control["tag"] == "button"
         and control["type"] == "button"
         and control["enlist"]
-        and control["href"] is None
+        and not control.get("has_href")
     )
 
 
@@ -130,10 +129,11 @@ def problems_in(rel: str, html: str) -> list[str]:
     parser = Controls()
     parser.feed(html)
     problems = []
-    primaries = [c for c in parser.controls if c["primary"] and c["in_main"] and not c["in_form"]]
-    if len(primaries) > 1:
-        labels = ", ".join(repr(c["label"]) for c in primaries)
-        problems.append(f"{rel}: {len(primaries)} primary buttons in main ({labels}); a view has one")
+    if rel not in PRIMARY_EXEMPT:
+        primaries = [c for c in parser.controls if c["primary"] and c["in_main"] and not c["in_form"]]
+        if len(primaries) > 1:
+            labels = ", ".join(repr(c["label"]) for c in primaries)
+            problems.append(f"{rel}: {len(primaries)} primary buttons in main ({labels}); a view has one")
     for control in parser.controls:
         label = control["label"]
         if label in OLD_LABELS or (control["primary"] and label in OLD_PRIMARY_LABELS):
@@ -149,8 +149,6 @@ def check(build_dir: Path) -> list[str]:
             continue
         html = path.read_text(encoding="utf-8", errors="replace")
         problems.extend(enlist_problems_in(rel, html))
-        if rel in PENDING_HOME:
-            continue
         problems.extend(problems_in(rel, html))
     return problems
 

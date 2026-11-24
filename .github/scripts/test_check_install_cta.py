@@ -103,6 +103,10 @@ class EnlistControlTest(unittest.TestCase):
         html = page('<button type="button" data-enlist href="/download/">Enlist a computer</button>')
         self.assertEqual(len(self.problems(html)), 1)
 
+    def test_a_button_with_a_bare_href_fails(self):
+        html = page('<button type="button" data-enlist href>Enlist a computer</button>')
+        self.assertEqual(len(self.problems(html)), 1)
+
     def test_a_button_without_the_enlist_marker_fails(self):
         self.assertEqual(len(self.problems(page('<button type="button">Enlist a computer</button>'))), 1)
 
@@ -127,8 +131,11 @@ class CheckTreeTest(unittest.TestCase):
                 path.write_text(body, encoding="utf-8")
             return check.check(root)
 
-    def test_home_is_exempt_from_the_primary_rule_while_pending(self):
+    def test_home_allows_multiple_primaries_but_checks_labels(self):
         self.assertEqual(self.run_on({"index.html": page(PRIMARY + PRIMARY + ENLIST)}), [])
+        problems = self.run_on({"index.html": page(PRIMARY + '<a href="/download/">Download free</a>')})
+        self.assertEqual(len(problems), 1)
+        self.assertIn("Download free", problems[0])
 
     def test_home_is_covered_by_the_enlist_rule(self):
         problems = self.run_on({"index.html": page(PRIMARY + '<a class="button" href="/download/">Enlist a computer</a>')})
@@ -143,7 +150,7 @@ class CheckTreeTest(unittest.TestCase):
     def test_docs_pages_skip_the_enlist_rule(self):
         self.assertEqual(self.run_on({"docs/x/index.html": page('<a href="/download/">Enlist a computer</a>')}), [])
 
-    def test_home_reveille_preview_is_exempt_while_pending(self):
+    def test_home_reveille_preview_allows_multiple_primaries(self):
         self.assertEqual(self.run_on({"home-reveille/index.html": page(PRIMARY + PRIMARY)}), [])
 
     def test_docs_pages_are_skipped(self):
