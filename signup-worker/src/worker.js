@@ -35,6 +35,15 @@ const SUPPORT_REASONS = {
 const CONTACT_PREFERENCES = ['anonymous', 'reply'];
 export const MAX_BODY_BYTES = 10 * 1024;
 
+// Per-case creation proof: 256 bits as 64 lowercase hex, sent to Cloud as
+// X-Support-Creation-Proof and stored on the row so a replay stays
+// idempotent. Never returned to the browser.
+function randomCreationProof() {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
 function randomToken() {
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
@@ -91,9 +100,9 @@ export function d1Db(db) {
     async insertSupportMessage(row) {
       const res = await db
         .prepare(
-          'INSERT INTO support_messages (name, email, subject, message, details, created_at, source_page, reason, contact_preference, diagnostics_reference, case_number) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)',
+          'INSERT INTO support_messages (name, email, subject, message, details, created_at, source_page, reason, contact_preference, diagnostics_reference, case_number, creation_proof) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)',
         )
-        .bind(row.name, row.email, row.subject, row.message, row.details, row.created_at, row.source_page, row.reason, row.contact_preference, row.diagnostics_reference, row.case_number)
+        .bind(row.name, row.email, row.subject, row.message, row.details, row.created_at, row.source_page, row.reason, row.contact_preference, row.diagnostics_reference, row.case_number, row.creation_proof)
         .run();
       return res.meta && typeof res.meta.last_row_id === 'number' ? res.meta.last_row_id : null;
     },
@@ -336,44 +345,57 @@ function validateSupport(fields) {
   return { name, email, subject, caseNumber, message, details, sourcePage, reason, contactPreference, diagnosticsReference };
 }
 
-// The support queue lives in Layer5 Cloud's public marketing form API as the
-// blowhorn-support form type (POST /api/marketing/forms/blowhorn-support:
-// email, name, subject, message; no scope). The forward is best-effort: the
-// D1 row is the record, and a failed forward leaves forwarded_at NULL so the
-// message can be replayed once the queue accepts it.
-async function forwardSupport(forward, valid) {
-  if (!forward || !forward.url) return { attempted: false, ok: false };
+// Every support submission becomes a durable Cloud support case
+// (POST /api/support/cases; the contract lives in meshery-cloud's
+// docs/reference/support-cases.md). The row's case number is the caseId and
+// the per-case creation proof authenticates an idempotent replay, so
+// retrying an unchanged row returns 200 and never duplicates the case or
+// its private GitHub issue. The forward stays best-effort: the D1 row is
+// the local record, and a failed create leaves forwarded_at NULL so the
+// case can be replayed. Anonymous rows carry no email or name.
+async function forwardSupport(forward, valid, creationProof) {
+  if (!forward || !forward.url || !forward.clientKey) return { attempted: false, ok: false };
   const body = {
-    email: valid.email,
-    name: valid.name,
-    subject: `[Blowhorn support] ${valid.subject}`,
+    caseId: valid.caseNumber,
+    reason: valid.reason,
+    contactPreference: valid.contactPreference,
     message: [
-      `Reason: ${SUPPORT_REASONS[valid.reason]}`,
-      `Response preference: ${valid.contactPreference}`,
       valid.message,
       valid.details ? `Diagnostic summary:\n${valid.details}` : '',
       valid.diagnosticsReference ? `Diagnostic reference (unverified, not fetched): ${valid.diagnosticsReference}` : '',
     ].filter(Boolean).join('\n\n'),
   };
+  if (valid.email) body.email = valid.email;
+  if (valid.name) body.name = valid.name;
   try {
     const res = await forward.fetchImpl(forward.url, {
       method: 'POST',
-      headers: { 'content-type': 'application/json', accept: 'application/json' },
+      headers: {
+        'content-type': 'application/json',
+        accept: 'application/json',
+        'x-client-key': forward.clientKey,
+        'x-support-creation-proof': creationProof,
+      },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(10000),
     });
-    return { attempted: true, ok: res.ok };
+    // 201 created the case; 200 is the identical-payload replay. Both mean
+    // the case durably exists. A 409 (same caseId, different payload) or
+    // any other status leaves the row unforwarded for investigation.
+    return { attempted: true, ok: res.status === 201 || res.status === 200 };
   } catch {
     return { attempted: true, ok: false };
   }
 }
 
-// SUPPORT_FORWARD_URL in wrangler.json [vars] wires the forward. An empty
-// SUPPORT_FORWARD_URL stores to D1 only.
+// SUPPORT_CASES_URL in wrangler.json [vars] is the Cloud support-cases
+// route. SUPPORT_CASES_CLIENT_KEY is a wrangler secret: the website client
+// key provisioned in Cloud. Either missing stores to D1 only.
 function supportForwardFromEnv(env) {
-  const url = env && typeof env.SUPPORT_FORWARD_URL === 'string' ? env.SUPPORT_FORWARD_URL.trim() : '';
-  if (!url) return null;
-  return { url, fetchImpl: fetch };
+  const url = env && typeof env.SUPPORT_CASES_URL === 'string' ? env.SUPPORT_CASES_URL.trim() : '';
+  const clientKey = env && typeof env.SUPPORT_CASES_CLIENT_KEY === 'string' ? env.SUPPORT_CASES_CLIENT_KEY.trim() : '';
+  if (!url || !clientKey) return null;
+  return { url, clientKey, fetchImpl: fetch };
 }
 
 export function createHandler(db, options = {}) {
@@ -516,6 +538,7 @@ export function createHandler(db, options = {}) {
       }
       const validSupport = validateSupport(supportFields);
       if (validSupport.error) return fail(request, 400, validSupport.error, validSupport.sourcePage || supportFields.source_page);
+      const creationProof = randomCreationProof();
       let supportId = null;
       try {
         supportId = await db.insertSupportMessage({
@@ -530,11 +553,12 @@ export function createHandler(db, options = {}) {
           contact_preference: validSupport.contactPreference,
           diagnostics_reference: validSupport.diagnosticsReference,
           case_number: validSupport.caseNumber,
+          creation_proof: creationProof,
         });
       } catch {
         return fail(request, 500, 'Something went wrong.', validSupport.sourcePage);
       }
-      const forwarded = await forwardSupport(forward, validSupport);
+      const forwarded = await forwardSupport(forward, validSupport, creationProof);
       if (forwarded.attempted && forwarded.ok && supportId !== null) {
         try {
           await db.markSupportForwarded(supportId);
