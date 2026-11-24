@@ -310,5 +310,23 @@ class ProductCiConcurrencyTest(unittest.TestCase):
         self.assertNotEqual(manual, called)
 
 
+
+
+class ProductCiRustToolchainTest(unittest.TestCase):
+    """The rust job installs whatever product/engine/rust/rust-toolchain.toml pins.
+
+    The version must not be copied into this public repo: when the product
+    raises the pin, this workflow has to follow without a second edit.
+    """
+
+    def test_the_workflow_installs_the_toolchain_from_the_product_file(self):
+        text = (ROOT / ".github" / "workflows" / "product-ci.yml").read_text()
+        self.assertIn("cd product/engine/rust && timeout 600 rustup toolchain install", text)
+        self.assertIn("product/engine/rust/rust-toolchain.toml", text)
+        self.assertNotIn("1.85", text)
+        self.assertNotIn("default-toolchain 1.85", text)
+        self.assertNotRegex(text, r"default-toolchain [0-9]")
+        self.assertNotRegex(text, r"name: rust \([0-9]")
+
 if __name__ == "__main__":
     unittest.main()
