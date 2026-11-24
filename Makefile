@@ -369,7 +369,7 @@ site-check: check-schemas validate-html check-links check-third-party check-urls
 check-download-links: site-build
 	python3 .github/scripts/check_download_links.py $(BUILD_DIR)
 
-## Production build, then fail if a page shows more than one teal primary in its main content, or an old install label (issue #420), or if an "Enlist a computer" control is anything but the in-page button (issue #720). Docs are skipped; the home page is exempt from the primary and old-label rules until its rebuild (#418), but not from the Enlist rule.
+## Production build, then fail if a page shows more than one teal primary in its main content, or an old install label (issue #420), or if an "Enlist a computer" control is anything but the in-page button (issue #720). Docs are skipped; the home page is exempt from the single-primary limit (PRIMARY_EXEMPT), but not from old install labels or the Enlist rule.
 check-install-cta: site-build
 	python3 .github/scripts/check_install_cta.py $(BUILD_DIR)
 
