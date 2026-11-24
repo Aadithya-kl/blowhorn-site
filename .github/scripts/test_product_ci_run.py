@@ -6,6 +6,7 @@ Run with `make test-scripts` (CI runs it too).
 
 import importlib.util
 import io
+import json
 import os
 import shutil
 import subprocess
@@ -104,6 +105,27 @@ class RunStepsTest(unittest.TestCase):
         code = "print('FAILED tests/test_a.py::test_b - flaky rerun'); print('== 5 passed in 1.00s ==')"
         _status, out = self._run([run.Step("test suite", _py(code), counts="pytest")])
         self.assertNotIn("tests/test_a.py", out)
+
+    def test_a_failing_subtest_names_its_test_and_drops_its_description(self):
+        # pytest-subtests' short summary line, as the product's suite prints it
+        # (pytest -rfE with xdist): the subtest's description comes first.
+        code = ("import sys;"
+                "print(\"(command='hunter2 run') SUBFAIL tests/test_private_module.py::Case::test_secret - AssertionError: hunter2\");"
+                "print(\"(command='other') SUBFAIL tests/test_private_module.py::Case::test_secret - AssertionError:...\");"
+                "print('[hunter2] (x=1) SUBFAIL tests/test_fn.py::test_fn - assert False');"
+                "print('FAILED tests/test_p.py::test_param[a]hunter2] - assert False');"
+                "print('(x=1) SUBFAIL /abs/hunter2.py::t - boom');"
+                "print('== 4 failed, 5 passed in 1.00s ==');"
+                "sys.exit(1)")
+        _status, out = self._run([run.Step("test suite", _py(code), counts="pytest")])
+        listed = [line.strip() for line in out.splitlines() if line.startswith("  ")]
+        self.assertEqual(listed, [
+            "failed tests/test_private_module.py::Case::test_secret",
+            "failed tests/test_fn.py::test_fn",
+            "failed tests/test_p.py::test_param",
+        ])
+        self.assertNotIn("hunter2", out)
+        self.assertNotIn("SUBFAIL", out)
 
     def test_failing_test_names_are_capped(self):
         lines = [f"FAILED tests/test_m.py::test_{i}" for i in range(run.MAX_FAILED_IDS + 5)]
@@ -385,6 +407,235 @@ class RunStepsTest(unittest.TestCase):
         self.assertTrue(steps[2].argv[8].startswith("PYTEST_WORKERS="))
         self.assertGreaterEqual(int(steps[2].argv[8].split("=", 1)[1]), 2)
         self.assertEqual(steps[2].counts, "pytest")
+
+
+def _fake_age(directory: Path, behaviour: str) -> Path:
+    """An `age` on PATH that records its argv and then behaves as asked.
+
+    encrypt: writes the age header and opaque bytes to --output (as real age does)
+    copy:    writes the plaintext input to --output (a broken or hostile age)
+    prefix:  writes the age header without its newline, then the plaintext
+    fail:    exits 1 after writing a partial file
+    """
+    directory.mkdir(parents=True, exist_ok=True)
+    script = directory / "age"
+    script.write_text(f"""#!{sys.executable}
+import json, sys
+from pathlib import Path
+args = sys.argv[1:]
+Path({str(directory / "age-argv.json")!r}).write_text(json.dumps(args))
+output = Path(args[args.index("--output") + 1])
+source = Path(args[-1])
+behaviour = {behaviour!r}
+if behaviour == "encrypt":
+    output.write_bytes(b"age-encryption.org/v1\\n-> X25519 opaque\\n" + bytes(reversed(source.read_bytes())))
+elif behaviour == "copy":
+    output.write_bytes(source.read_bytes())
+elif behaviour == "prefix":
+    plain = source.read_bytes().lstrip(b"\\n")
+    output.write_bytes(b"age-encryption.org/v1" + plain)
+else:
+    output.write_bytes(b"age-encryption.org/v1\\n")
+    sys.exit(1)
+""")
+    script.chmod(0o755)
+    return script
+
+
+def _every_file(directory: Path) -> list[Path]:
+    return sorted(p for p in directory.rglob("*") if p.is_file()) if directory.exists() else []
+
+
+class EncryptedLogTest(unittest.TestCase):
+    """A failed suite's log leaves the runner only as age ciphertext, in its own directory."""
+
+    FAIL = f"import sys; print({SECRET!r}); print('== 1 failed in 1.00s =='); sys.exit(1)"
+    PASS = f"print({SECRET!r}); print('== 1 passed in 1.00s ==')"
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        root = Path(self.tmp.name)
+        self.product = root / "product"
+        self.product.mkdir()
+        self.log = root / "product-ci" / "python.log"
+        self.upload = root / "product-ci-encrypted"
+        self.bin = root / "bin"
+        self.bin.mkdir()
+        self.env = mock.patch.dict(os.environ, {
+            "PATH": os.pathsep.join([str(self.bin), "/usr/bin", "/bin"]),
+            "GITHUB_RUN_ATTEMPT": "2",
+            "GITHUB_RUN_ID": "1234",
+        })
+        self.env.start()
+
+    def tearDown(self):
+        self.env.stop()
+        self.tmp.cleanup()
+
+    def _run(self, code, upload=None):
+        out = io.StringIO()
+        status = run.run_steps([run.Step("test suite", _py(code), counts="pytest")], self.product, self.log,
+                               out=out, suite="python", encrypted_dir=upload or self.upload)
+        return status, out.getvalue()
+
+    def _assert_no_plaintext_uploaded(self):
+        for path in _every_file(self.upload):
+            self.assertNotIn(b"hunter2", path.read_bytes(), path)
+
+    def test_a_failed_suite_is_encrypted_to_the_recipient_and_only_the_ciphertext_is_written(self):
+        _fake_age(self.bin, "encrypt")
+        status, out = self._run(self.FAIL)
+        self.assertEqual(status, 1)
+        argv = json.loads((self.bin / "age-argv.json").read_text())
+        self.assertEqual(argv[argv.index("--recipient") + 1],
+                         "age14zuswrahtrqh7ksyjjv7u0vxqsrxzykhymfavt6x9yvuram67p9se6ngeq")
+        self.assertEqual(Path(argv[-1]), self.log.resolve())
+        self.assertNotIn("--armor", argv)
+        self.assertEqual([p.name for p in _every_file(self.upload)], ["python.log.age"])
+        self.assertTrue((self.upload / "python.log.age").read_bytes().startswith(b"age-encryption.org/v1\n"))
+        self._assert_no_plaintext_uploaded()
+        self.assertIn("Encrypted log: available as artifact product-ci-python-log-attempt2, "
+                      "readable only with the maintainers' key (make product-ci-log RUN=1234 SUITE=python).\n", out)
+        self.assertNotIn("hunter2", out)
+        self.assertIn("hunter2", self.log.read_text())
+
+    def test_without_age_nothing_is_written_for_upload(self):
+        status, out = self._run(self.FAIL)
+        self.assertEqual(status, 1)
+        self.assertEqual(_every_file(self.upload), [])
+        self.assertIn("Encrypted log: none (age is not installed on this runner).\n", out)
+
+    def test_an_age_failure_or_a_plaintext_output_writes_nothing_for_upload(self):
+        for behaviour, reason in (("fail", "age failed with exit 1"),
+                                  ("copy", "age wrote something that is not age ciphertext"),
+                                  ("prefix", "age wrote something that is not age ciphertext")):
+            with self.subTest(behaviour=behaviour):
+                _fake_age(self.bin, behaviour)
+                _status, out = self._run(self.FAIL)
+                self.assertEqual(_every_file(self.upload), [])
+                self.assertIn(f"Encrypted log: none ({reason}).\n", out)
+                self.assertNotIn("artifact", out)
+
+    def test_a_passing_suite_writes_nothing_and_never_starts_age(self):
+        _fake_age(self.bin, "encrypt")
+        status, out = self._run(self.PASS)
+        self.assertEqual(status, 0)
+        self.assertEqual(_every_file(self.upload), [])
+        self.assertFalse((self.bin / "age-argv.json").exists())
+        self.assertNotIn("Encrypted log", out)
+
+    def test_the_upload_directory_may_not_hold_or_sit_beside_the_plaintext_log(self):
+        _fake_age(self.bin, "encrypt")
+        for upload in (self.log.parent, self.log.parent / "encrypted"):
+            with self.subTest(upload=upload.name):
+                _status, out = self._run(self.FAIL, upload=upload)
+                self.assertEqual([p for p in _every_file(self.log.parent) if p != self.log], [])
+                self.assertIn("Encrypted log: none (the upload directory must not hold or sit beside "
+                              "the plaintext log).\n", out)
+        self.assertFalse((self.bin / "age-argv.json").exists())
+
+
+class ProductCiEncryptedLogWorkflowTest(unittest.TestCase):
+    """Each job installs age and uploads only its suite's ciphertext, under run.py's name."""
+
+    def test_each_job_uploads_only_the_ciphertext_its_run_py_names(self):
+        for job_id, job in _product_ci_jobs().items():
+            with self.subTest(job=job_id):
+                steps = job["steps"]
+                names = [step.get("name", "") for step in steps]
+                suite = next(step for step in steps if "make product-ci SUITE=" in str(step.get("run", "")))
+                self.assertIn(f"SUITE={job_id} ", suite["run"])
+                self.assertIn('PRODUCT_CI_ENCRYPTED_DIR="$RUNNER_TEMP/product-ci-encrypted"', suite["run"])
+                install = steps[names.index("Install age")]
+                self.assertIn("apt-get install -y -qq --no-install-recommends age", install["run"])
+                self.assertIn(">/dev/null", install["run"])
+                self.assertIs(install.get("continue-on-error"), True)
+                self.assertTrue(install.get("timeout-minutes"))
+                self.assertLess(names.index("Install age"), steps.index(suite))
+                uploads = [step for step in steps if "upload-artifact" in str(step.get("uses", ""))]
+                self.assertEqual(len(uploads), 1)
+                upload = uploads[0]
+                self.assertEqual(steps.index(upload), len(steps) - 1)
+                self.assertEqual(upload["uses"], "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9")
+                self.assertEqual(upload["if"], "failure()")
+                name = upload["with"]["name"]
+                self.assertEqual(name, f"product-ci-{job_id}-log-attempt${{{{ github.run_attempt }}}}")
+                self.assertEqual(upload["with"], {
+                    "name": name,
+                    "path": "${{ runner.temp }}/product-ci-encrypted/*.age",
+                    "retention-days": 3,
+                    "if-no-files-found": "ignore",
+                    "compression-level": 0,
+                })
+                self.assertFalse(any("cache" in str(step.get("uses", "")) for step in steps))
+
+
+class FetchLogTest(unittest.TestCase):
+    """make product-ci-log decrypts into a temp directory outside the repo and prints only a path."""
+
+    def setUp(self):
+        spec = importlib.util.spec_from_file_location("product_ci_fetch_log", HERE / "product-ci" / "fetch_log.py")
+        self.fetch_log = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(self.fetch_log)
+        self.tmp = tempfile.TemporaryDirectory()
+        root = Path(self.tmp.name)
+        self.bin = root / "bin"
+        self.bin.mkdir()
+        self.key = root / "key.txt"
+        self.workdir = root / "work"
+        self.workdir.mkdir()
+        gh = self.bin / "gh"
+        # A downloaded run with attempts 1 and 2: each artifact in its own directory, as gh does for -p.
+        gh.write_text(f"""#!{sys.executable}
+import sys
+from pathlib import Path
+args = sys.argv[1:]
+Path({str(root / "gh-argv")!r}).write_text(" ".join(args))
+dest = Path(args[args.index("-D") + 1])
+for attempt in (1, 2):
+    folder = dest / f"product-ci-python-log-attempt{{attempt}}"
+    folder.mkdir(parents=True)
+    (folder / "python.log.age").write_text(f"CIPHER attempt {{attempt}} hunter2")
+""")
+        gh.chmod(0o755)
+        age = self.bin / "age"
+        age.write_text(f"""#!{sys.executable}
+import sys
+from pathlib import Path
+args = sys.argv[1:]
+Path(args[args.index("--output") + 1]).write_text(Path(args[-1]).read_text().replace("CIPHER", "PLAIN"))
+""")
+        age.chmod(0o755)
+        self.env = mock.patch.dict(os.environ, {"PATH": os.pathsep.join([str(self.bin), "/usr/bin", "/bin"])})
+        self.env.start()
+
+    def tearDown(self):
+        self.env.stop()
+        self.tmp.cleanup()
+
+    def test_a_missing_key_is_refused_before_anything_is_downloaded(self):
+        err = io.StringIO()
+        with mock.patch("sys.stderr", err):
+            status = self.fetch_log.main(["--run", "42", "--suite", "python", "--key", str(self.key)])
+        self.assertEqual(status, 2)
+        self.assertIn("No private key at", err.getvalue())
+        self.assertFalse((Path(self.tmp.name) / "gh-argv").exists())
+
+    def test_the_latest_attempt_is_decrypted_outside_the_repo_and_only_its_path_printed(self):
+        self.key.write_text("AGE-SECRET-KEY-FAKE")
+        with mock.patch.object(self.fetch_log.tempfile, "tempdir", str(self.workdir)):
+            out = io.StringIO()
+            with mock.patch("sys.stdout", out):
+                status = self.fetch_log.main(["--run", "42", "--suite", "python", "--key", str(self.key)])
+        self.assertEqual(status, 0)
+        self.assertIn("-p product-ci-python-log-attempt* ", (Path(self.tmp.name) / "gh-argv").read_text())
+        files = _every_file(self.workdir)
+        self.assertEqual(len(files), 1, files)
+        self.assertEqual(files[0].name, "python-run42-attempt2.log")
+        self.assertEqual(files[0].read_text(), "PLAIN attempt 2 hunter2")
+        self.assertFalse(files[0].resolve().is_relative_to(ROOT))
+        self.assertIn(f"Decrypted log: {files[0].resolve()}\n", out.getvalue())
+        self.assertNotIn("hunter2", out.getvalue())
 
 
 class MakeTargetTest(unittest.TestCase):

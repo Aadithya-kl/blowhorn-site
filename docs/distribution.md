@@ -112,9 +112,35 @@ environment-scoped secrets. The workflow does not load keys from the
 private product repository. The #2759 rotation was canceled; the existing
 keys were moved unrotated to those org secrets.
 
-**Artifacts:** the only upload is the DMG and its sha256 manifest, retained for
-1 day. Build logs stay under `RUNNER_TEMP` and are never printed, uploaded or
-cached. Private source is checked out sparsely, with internal paths excluded.
+**Artifacts:** the only uploads are the DMG and its sha256 manifest, retained for
+1 day, and, when a Linux gate fails, that suite's log as `age` ciphertext
+(below), retained for 3 days. Build logs stay under `RUNNER_TEMP` and are never
+printed, cached or uploaded as plaintext. Private source is checked out
+sparsely, with internal paths excluded.
+
+### Reading a failed Product CI log
+
+The Linux gates (`product-ci.yml`, run on its own or by `build-dmg.yml`) print
+only step results, counts and failing test ids, because this repository's logs
+are public. When a suite fails, `.github/scripts/product-ci/run.py` encrypts
+its full log with [age](https://age-encryption.org) to the public recipient
+`LOG_RECIPIENT` in that script, and the job uploads only the ciphertext as the
+artifact `product-ci-<suite>-log-attempt<n>`, kept 3 days. The public log says
+so in one line (`Encrypted log: available as artifact ...`). A passing suite
+uploads nothing, and a runner without `age` says so and uploads nothing.
+
+The private key is never in a repository, a secret or a runner; a maintainer
+who holds it reads a log with:
+
+```bash
+make product-ci-log RUN=<run id> SUITE=python   # KEY=<identity file>, default ~/.config/blowhorn/ci-log.agekey
+```
+
+The target downloads the artifact (the latest attempt, or `ATTEMPT=<n>`) with
+`gh run download` into a new temporary directory outside the repository,
+decrypts it there, deletes the ciphertext and prints the plaintext file's path,
+never its contents. The log holds private product code: read it locally, never
+paste it into an issue, pull request or chat, and delete the directory when done.
 
 ## Publishing a DMG
 

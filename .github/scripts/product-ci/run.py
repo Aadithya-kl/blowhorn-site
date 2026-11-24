@@ -4,7 +4,8 @@
 This repository is public, so its Actions logs are public. The product
 repository is private: its test names, file paths, assertion diffs and source
 lines must never reach a log here. Every command's output goes to a log file
-outside the workspace that is never printed or uploaded. The only lines
+outside the workspace that is never printed, and never uploaded except as age
+ciphertext (below). The only lines
 printed are this script's fixed step labels, each step's exit status, and the
 pass/fail counts parsed out of the test runners' summary lines (numbers and a
 fixed set of words, nothing copied verbatim), plus, for a failed pytest, cargo or
@@ -18,10 +19,19 @@ cannot write a job summary, step output or environment change either, and
 without the calling make's state (MAKEFLAGS, MAKELEVEL), so they run as the
 product's own CI runs them.
 
-Usage: run.py --product DIR --log FILE python|desktop|rust
+When a step fails and --encrypted-dir is given, the suite's full log is
+encrypted with age to LOG_RECIPIENT (the public half of the maintainers' key;
+the private half is kept off the runner, in no repository) into
+<encrypted-dir>/<suite>.log.age. That ciphertext is the one thing
+product-ci.yml uploads, as a short-lived artifact. The upload directory never
+holds the plaintext log, a copy of it, or age's own output text: age writes to
+a hidden partial file there, and only output that starts with the age header is
+renamed into place. Read it with `make product-ci-log RUN=<run id> SUITE=<suite>`.
+
+Usage: run.py --product DIR --log FILE [--encrypted-dir DIR] python|desktop|rust
 Exit status: 0 when every step passed, else the failing step's status.
-To see why a step failed, run the same suite locally in the product checkout
-(`make tests`).
+To see why a step failed, decrypt the log artifact, or run the same suite
+locally in the product checkout (`make tests`).
 """
 
 from __future__ import annotations
@@ -29,6 +39,7 @@ from __future__ import annotations
 import argparse
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -39,8 +50,14 @@ ANSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
 PYTEST_SUMMARY = re.compile(r"^=*\s*(.*?) in \d+(?:\.\d+)?s(?: \(\d+:\d\d:\d\d\))?\s*=*\s*$")
 PYTEST_COUNT = re.compile(r"\b(\d+) (passed|failed|skipped|xfailed|xpassed|errors?|deselected|warnings?)\b")
 #: pytest's short summary ("-rfE"): "FAILED tests/x.py::Case::test_y - message".
-#: Only the node id is kept, and only when it is a plain path::name id.
-PYTEST_FAILED = re.compile(r"^(FAILED|ERROR) (tests/(?:[A-Za-z0-9_-]+/)*[A-Za-z0-9_-]+\.py(?:::[A-Za-z0-9_]+){1,3})(?:\[[^\]]*\])?(?: - .*)?$")
+#: A failed subtest (pytest-subtests, which the product uses) puts its
+#: description first: "(command='x') SUBFAIL tests/x.py::Case::test_y - message".
+#: Only the node id is kept, and only when it is a plain path::name id: the
+#: subtest description, the parametrize id and the message are all dropped.
+PYTEST_FAILED = re.compile(
+    r"^(?:(FAILED|ERROR)|.*? SUBFAIL) "
+    r"(tests/(?:[A-Za-z0-9_-]+/)*[A-Za-z0-9_-]+\.py(?:::[A-Za-z0-9_]+){1,3})(?:\[.*?\])?(?: - .*)?$"
+)
 MAX_FAILED_IDS = 20
 VITEST_LINE = re.compile(r"^\s*(Test Files|Tests|Errors)\s+(.*)$")
 VITEST_COUNT = re.compile(r"\b(\d+) (passed|failed|skipped|todo|errors?)\b")
@@ -71,6 +88,13 @@ CARGO_RUNNING_CMD = re.compile(
 )
 CARGO_TEST_FAILED = re.compile(rf"^test ({CARGO_TEST_PATH}) \.\.\. FAILED\s*$")
 CARGO_FAILURES_ITEM = re.compile(rf"^    ({CARGO_TEST_PATH})\s*$")
+#: The public half of the maintainers' age key. A failed suite's full log is
+#: encrypted to it; only the holder of the private half (kept off the runner,
+#: in no repository) can read the artifact. Safe to print and commit.
+LOG_RECIPIENT = "age14zuswrahtrqh7ksyjjv7u0vxqsrxzykhymfavt6x9yvuram67p9se6ngeq"
+#: The first line of every binary age file. Anything else is not uploaded.
+AGE_HEADER = b"age-encryption.org/v1\n"
+AGE_TIMEOUT_S = 300
 FILE_COMMANDS = frozenset({"GITHUB_ENV", "GITHUB_OUTPUT", "GITHUB_PATH", "GITHUB_STATE", "GITHUB_STEP_SUMMARY"})
 #: `make product-ci` starts this script, so its environment carries the calling
 #: make's state. The product's own CI runs pytest directly, and its tests run
@@ -155,7 +179,8 @@ def pytest_failed_ids(text: str) -> list[str]:
     for line in ANSI.sub("", text).splitlines():
         match = PYTEST_FAILED.match(line.strip())
         if match:
-            _add_failed_id(ids, f"{match.group(1).lower()} {match.group(2)}")
+            word = (match.group(1) or "FAILED").lower()  # a SUBFAIL is a failed test
+            _add_failed_id(ids, f"{word} {match.group(2)}")
     return ids[:MAX_FAILED_IDS]
 
 
@@ -300,8 +325,76 @@ COUNTERS = {"pytest": pytest_counts, "vitest": vitest_counts, "cargo": cargo_cou
 FAILED_IDS = {"pytest": pytest_failed_ids, "vitest": vitest_failed_ids, "cargo": cargo_failed_ids}
 
 
-def run_steps(steps: list[Step], product: Path, log: Path, out=sys.stdout) -> int:
-    """Run *steps* in order inside *product*, every byte of output to *log*; stop at the first failure."""
+def log_artifact_name(suite: str, attempt: str | None = None) -> str:
+    """The artifact product-ci.yml uploads a failed suite's encrypted log as.
+
+    The workflow names it product-ci-<suite>-log-attempt${{ github.run_attempt }};
+    test_product_ci_run.py holds the two to the same name.
+    """
+    attempt = attempt if attempt is not None else os.environ.get("GITHUB_RUN_ATTEMPT", "")
+    if not attempt.isdigit():
+        attempt = "1"
+    return f"product-ci-{suite}-log-attempt{attempt}"
+
+
+def encrypt_log(log: Path, suite: str, encrypted_dir: Path, env: dict[str, str], out=sys.stdout) -> bool:
+    """Encrypt *log* to LOG_RECIPIENT as <encrypted_dir>/<suite>.log.age; print one fixed line.
+
+    Writes nothing to *encrypted_dir* but age ciphertext: age writes to a hidden
+    partial file (the upload's *.age pattern never matches it), and only output
+    that starts with the age header is renamed into place. Any other outcome
+    removes the partial file and leaves the directory without a .age file.
+    """
+    def unavailable(reason: str) -> bool:
+        print(f"Encrypted log: none ({reason}).", file=out, flush=True)
+        return False
+
+    log = log.resolve()
+    encrypted_dir = encrypted_dir.resolve()
+    if log.is_relative_to(encrypted_dir) or encrypted_dir.is_relative_to(log.parent):
+        return unavailable("the upload directory must not hold or sit beside the plaintext log")
+    age = shutil.which("age", path=env.get("PATH"))
+    if age is None:
+        return unavailable("age is not installed on this runner")
+    encrypted_dir.mkdir(parents=True, exist_ok=True)
+    target = encrypted_dir / f"{suite}.log.age"
+    partial = encrypted_dir / f".{suite}.log.age.partial"
+    for stale in (target, partial):
+        stale.unlink(missing_ok=True)
+    try:
+        status = subprocess.run((age, "--encrypt", "--recipient", LOG_RECIPIENT, "--output", str(partial), str(log)),
+                                env=env, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                stderr=subprocess.DEVNULL, timeout=AGE_TIMEOUT_S).returncode
+        reason = "" if status == 0 else f"age failed with exit {status}"
+    except subprocess.TimeoutExpired:
+        reason = f"age timed out after {AGE_TIMEOUT_S} s"
+    except OSError as exc:
+        reason = f"age could not start: {type(exc).__name__}"
+    if not reason:
+        try:
+            with partial.open("rb") as written:
+                if written.read(len(AGE_HEADER)) != AGE_HEADER:
+                    reason = "age wrote something that is not age ciphertext"
+        except OSError:
+            reason = "age wrote no output"
+    if reason:
+        partial.unlink(missing_ok=True)
+        return unavailable(reason)
+    os.replace(partial, target)
+    run_id = os.environ.get("GITHUB_RUN_ID", "")
+    run_arg = run_id if run_id.isdigit() else "<run id>"
+    print(f"Encrypted log: available as artifact {log_artifact_name(suite)}, readable only with the "
+          f"maintainers' key (make product-ci-log RUN={run_arg} SUITE={suite}).", file=out, flush=True)
+    return True
+
+
+def run_steps(steps: list[Step], product: Path, log: Path, out=sys.stdout, *,
+              suite: str = "", encrypted_dir: Path | None = None) -> int:
+    """Run *steps* in order inside *product*, every byte of output to *log*; stop at the first failure.
+
+    On a failure, when *encrypted_dir* is given, the whole log is encrypted
+    there (encrypt_log) for the workflow to upload.
+    """
     log.parent.mkdir(parents=True, exist_ok=True)
     env = {name: value for name, value in os.environ.items()
            if name not in FILE_COMMANDS | MAKE_STATE | SECRET_ENV}
@@ -336,6 +429,8 @@ def run_steps(steps: list[Step], product: Path, log: Path, out=sys.stdout) -> in
             if status != 0:
                 print("Output is withheld because the product repository is private; "
                       "run the same suite in a local checkout to see it.", file=out, flush=True)
+                if encrypted_dir is not None:
+                    encrypt_log(log, suite, encrypted_dir, env, out=out)
                 return status
     return 0
 
@@ -345,6 +440,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("suite", choices=("python", "desktop", "rust"))
     parser.add_argument("--product", required=True, type=Path, help="the product repository checkout")
     parser.add_argument("--log", required=True, type=Path, help="private log file, never printed")
+    parser.add_argument("--encrypted-dir", type=Path,
+                        help="on a failure, write the log's age ciphertext here (the workflow uploads it)")
     parser.add_argument("--python", default=sys.executable)
     args = parser.parse_args(argv)
     if args.suite == "python":
@@ -353,7 +450,7 @@ def main(argv: list[str] | None = None) -> int:
         steps = desktop_steps()
     else:
         steps = rust_steps()
-    return run_steps(steps, args.product, args.log)
+    return run_steps(steps, args.product, args.log, suite=args.suite, encrypted_dir=args.encrypted_dir)
 
 
 if __name__ == "__main__":

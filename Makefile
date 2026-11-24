@@ -102,6 +102,12 @@ include .github/build/Makefile.show-help.mk
 #                      The steps of publish-dmg.yml (see docs/distribution.md).
 #   npm-fetch, npm-verify, npm-publish, npm-confirm
 #                      The steps of publish-blowhorn-axi.yml (see docs/distribution.md).
+#   product-ci         Run one suite of the private product repo's CI, printing
+#                      only results and failing test ids:
+#                      make product-ci SUITE=python|desktop|rust.
+#   product-ci-log     Download and decrypt a failed suite's encrypted log:
+#                      make product-ci-log RUN=<run id> SUITE=<suite>
+#                      (see docs/distribution.md).
 #   docs-sync          Sync the user docs from a blowhorn checkout
 #                      into content/en/docs/: make docs-sync REF=<tag|branch|sha>
 #                      (see docs/deploy.md).
@@ -505,14 +511,28 @@ cloud-auth-smoke:
 	  BLOWHORN_PREDATES_CLOUD_FIXES=$$predates "$(ENGINE)/bin/python" .github/scripts/cloud-auth-smoke/drive.py $(CHECK) --engine "$(ENGINE)" --cloud "$(CLOUD_URL)" $(if $(SIGNUP_TAG),--signup-tag $(SIGNUP_TAG)); \
 	fi
 
-## Run the private product repository's CI on a checkout of it, printing only step results and
-## pass/fail counts (its output goes to PRODUCT_CI_LOG, never printed; product-ci.yml runs this):
+## Run the private product repository's CI on a checkout of it, printing only step results,
+## pass/fail counts and failing test ids (its output goes to PRODUCT_CI_LOG, never printed;
+## product-ci.yml runs this).
+## A failed suite's log is also encrypted with age into PRODUCT_CI_ENCRYPTED_DIR, which the
+## workflow uploads (the ciphertext only; read it with product-ci-log):
 ## make product-ci SUITE=python|desktop|rust PRODUCT_DIR=<blowhorn checkout> [PRODUCT_CI_LOG=<file>]
 PRODUCT_DIR ?= product
 PRODUCT_CI_LOG ?= $(or $(RUNNER_TEMP),/tmp)/product-ci/$(SUITE).log
+PRODUCT_CI_ENCRYPTED_DIR ?= $(or $(RUNNER_TEMP),/tmp)/product-ci-encrypted
 product-ci:
 	@test -n "$(SUITE)" || (echo "usage: make product-ci SUITE=python|desktop|rust PRODUCT_DIR=<checkout>"; exit 1)
-	python3 .github/scripts/product-ci/run.py $(SUITE) --product "$(PRODUCT_DIR)" --log "$(PRODUCT_CI_LOG)"
+	python3 .github/scripts/product-ci/run.py $(SUITE) --product "$(PRODUCT_DIR)" --log "$(PRODUCT_CI_LOG)" \
+		--encrypted-dir "$(PRODUCT_CI_ENCRYPTED_DIR)"
+
+## Download a failed Product CI suite's encrypted log and decrypt it into a new temporary directory
+## outside the repository; prints the file's path, never its contents. Needs gh, age and the private key:
+## make product-ci-log RUN=<run id> SUITE=python|desktop|rust [KEY=<age identity file>] [ATTEMPT=<n>]
+PRODUCT_CI_LOG_KEY ?= $(HOME)/.config/blowhorn/ci-log.agekey
+product-ci-log:
+	@test -n "$(RUN)" -a -n "$(SUITE)" || (echo "usage: make product-ci-log RUN=<run id> SUITE=python|desktop|rust [KEY=<age identity file>] [ATTEMPT=<n>]"; exit 1)
+	@python3 .github/scripts/product-ci/fetch_log.py --run "$(RUN)" --suite "$(SUITE)" \
+		--key "$(or $(KEY),$(PRODUCT_CI_LOG_KEY))" $(if $(ATTEMPT),--attempt "$(ATTEMPT)")
 
 ## Sync the user docs from a blowhorn checkout at $(SOURCE_DIR) into $(DOCS_DIR): make docs-sync REF=<tag|branch|sha> (see docs/deploy.md).
 docs-sync:
@@ -650,6 +670,7 @@ clean:
 	cloud-auth-smoke \
 	cloud-auth-smoke-mount \
 	product-ci \
+	product-ci-log \
 	dmg-resolve \
 	dmg-download \
 	dmg-package \

@@ -127,6 +127,14 @@ regenerate them. Claims on every page come from the product repository's
   change it there, then sync.
 - **The product repository is private.** Never link its files, issues or pull requests
   from a page; every reader would get a 404.
+- **Product CI shows no private output.** `product-ci.yml` (also `build-dmg.yml`'s Linux gates)
+  runs the private product repo's suites here, in public logs: `.github/scripts/product-ci/run.py`
+  prints only fixed labels, counts and failing test ids, never a message or source line, and keeps
+  the full log under `RUNNER_TEMP`. No cache, no job summary, no plaintext artifact. Exactly one
+  artifact exception: a failed suite's log as `age` ciphertext (`product-ci-<suite>-log-attempt<n>`,
+  3-day retention), encrypted to the public recipient `LOG_RECIPIENT` in `run.py`; the private key is
+  in no repository, secret or runner. A key holder reads it with `make product-ci-log RUN=<run id>
+  SUITE=<suite>` ([docs/distribution.md](docs/distribution.md#reading-a-failed-product-ci-log)).
 - **Every Hugo run cleans its destination.** Each `hugo` invocation in `package.json`
   and the `Makefile` passes `--cleanDestinationDir`, builds and servers alike, so a
   stale file from an earlier build can never linger in `public/` or `public-internal/`
