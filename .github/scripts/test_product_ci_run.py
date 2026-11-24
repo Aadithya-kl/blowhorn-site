@@ -414,6 +414,7 @@ def _fake_age(directory: Path, behaviour: str) -> Path:
 
     encrypt: writes the age header and opaque bytes to --output (as real age does)
     copy:    writes the plaintext input to --output (a broken or hostile age)
+    prefix:  writes a proper prefix of the age header plus the plaintext
     fail:    exits 1 after writing a partial file
     """
     directory.mkdir(parents=True, exist_ok=True)
@@ -430,6 +431,8 @@ if behaviour == "encrypt":
     output.write_bytes(b"age-encryption.org/v1\\n-> X25519 opaque\\n" + bytes(reversed(source.read_bytes())))
 elif behaviour == "copy":
     output.write_bytes(source.read_bytes())
+elif behaviour == "prefix":
+    output.write_bytes(b"age" + source.read_bytes())
 else:
     output.write_bytes(b"age-encryption.org/v1\\n")
     sys.exit(1)
@@ -488,7 +491,7 @@ class EncryptedLogTest(unittest.TestCase):
         self.assertEqual(Path(argv[-1]), self.log.resolve())
         self.assertNotIn("--armor", argv)
         self.assertEqual([p.name for p in _every_file(self.upload)], ["python.log.age"])
-        self.assertTrue((self.upload / "python.log.age").read_bytes().startswith(run.AGE_HEADER))
+        self.assertTrue((self.upload / "python.log.age").read_bytes().startswith(b"age-encryption.org/v1\n"))
         self._assert_no_plaintext_uploaded()
         self.assertIn("Encrypted log: available as artifact product-ci-python-log-attempt2, "
                       "readable only with the maintainers' key (make product-ci-log RUN=1234 SUITE=python).\n", out)
@@ -503,7 +506,8 @@ class EncryptedLogTest(unittest.TestCase):
 
     def test_an_age_failure_or_a_plaintext_output_writes_nothing_for_upload(self):
         for behaviour, reason in (("fail", "age failed with exit 1"),
-                                  ("copy", "age wrote something that is not age ciphertext")):
+                                  ("copy", "age wrote something that is not age ciphertext"),
+                                  ("prefix", "age wrote something that is not age ciphertext")):
             with self.subTest(behaviour=behaviour):
                 _fake_age(self.bin, behaviour)
                 _status, out = self._run(self.FAIL)
@@ -549,7 +553,7 @@ class ProductCiEncryptedLogWorkflowTest(unittest.TestCase):
                 self.assertEqual(len(uploads), 1)
                 upload = uploads[0]
                 self.assertEqual(steps.index(upload), len(steps) - 1)
-                self.assertRegex(upload["uses"], r"^actions/upload-artifact@[0-9a-f]{40}$")
+                self.assertEqual(upload["uses"], "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9")
                 self.assertEqual(upload["if"], "failure()")
                 name = upload["with"]["name"]
                 self.assertEqual(name, f"product-ci-{job_id}-log-attempt${{{{ github.run_attempt }}}}")
