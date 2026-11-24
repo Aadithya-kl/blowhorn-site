@@ -780,14 +780,15 @@ function supportBody(overrides = {}) {
   };
 }
 
-test('support message stores one row and forwards to the queue', async () => {
+test('support message stores one row and creates the durable case', async () => {
   const db = fakeDb();
   const calls = [];
   const forward = {
-    url: 'https://cloud.example.test/api/marketing/forms/blowhorn-support',
+    url: 'https://cloud.example.test/api/support/cases',
+    clientKey: 'website-key',
     fetchImpl: async (url, init) => {
-      calls.push({ url, body: JSON.parse(init.body) });
-      return { ok: true };
+      calls.push({ url, headers: init.headers, body: JSON.parse(init.body) });
+      return { ok: true, status: 201 };
     },
   };
   const res = await createHandler(db, { forward })(post('/api/support', supportBody()));
@@ -801,16 +802,61 @@ test('support message stores one row and forwards to the queue', async () => {
   assert.equal(row.subject, `Feedback [${row.case_number}]`);
   assert.equal(row.details, 'blowhorn login\nexit code 3');
   assert.equal(row.source_page, '/support/');
+  assert.match(row.creation_proof, /^[0-9a-f]{64}$/);
   assert.ok(row.forwarded_at);
   assert.equal(calls.length, 1);
   assert.equal(calls[0].url, forward.url);
+  assert.equal(calls[0].headers['x-client-key'], 'website-key');
+  assert.equal(calls[0].headers['x-support-creation-proof'], row.creation_proof);
+  assert.equal(calls[0].body.caseId, row.case_number);
+  assert.equal(calls[0].body.reason, 'feedback');
+  assert.equal(calls[0].body.contactPreference, 'reply');
   assert.equal(calls[0].body.email, 'ada@example.com');
   assert.equal(calls[0].body.name, 'Ada Lovelace');
-  assert.equal(calls[0].body.subject, `[Blowhorn support] ${row.subject}`);
-  assert.ok(calls[0].body.subject.length <= 218);
   assert.match(calls[0].body.message, /The app refuses my profile\./);
   assert.match(calls[0].body.message, /exit code 3/);
-  assert.deepEqual(Object.keys(calls[0].body).sort(), ['email', 'message', 'name', 'subject']);
+  assert.deepEqual(Object.keys(calls[0].body).sort(), ['caseId', 'contactPreference', 'email', 'message', 'name', 'reason']);
+});
+
+test('an identical-payload replay (200) also marks the row forwarded', async () => {
+  const db = fakeDb();
+  const forward = {
+    url: 'https://cloud.example.test/api/support/cases',
+    clientKey: 'website-key',
+    fetchImpl: async () => ({ ok: true, status: 200 }),
+  };
+  const res = await createHandler(db, { forward })(post('/api/support', supportBody()));
+  assert.equal(res.status, 200);
+  assert.ok(db.supportRows[0].forwarded_at);
+});
+
+test('a payload conflict (409) leaves the row unforwarded for investigation', async () => {
+  const db = fakeDb();
+  const forward = {
+    url: 'https://cloud.example.test/api/support/cases',
+    clientKey: 'website-key',
+    fetchImpl: async () => ({ ok: false, status: 409 }),
+  };
+  const res = await createHandler(db, { forward })(post('/api/support', supportBody()));
+  assert.equal(res.status, 200);
+  assert.equal(db.supportRows[0].forwarded_at, null);
+});
+
+test('a configured URL without the client key stores only', async () => {
+  const db = fakeDb();
+  let called = 0;
+  const forward = {
+    url: 'https://cloud.example.test/api/support/cases',
+    clientKey: '',
+    fetchImpl: async () => {
+      called += 1;
+      return { ok: true, status: 201 };
+    },
+  };
+  const res = await createHandler(db, { forward })(post('/api/support', supportBody()));
+  assert.equal(res.status, 200);
+  assert.equal(called, 0);
+  assert.equal(db.supportRows[0].forwarded_at, null);
 });
 
 test('support form post redirects to the support thanks page', async () => {
@@ -842,10 +888,11 @@ test('support honeypot answers success without storing or forwarding', async () 
   const db = fakeDb();
   let called = 0;
   const forward = {
-    url: 'https://cloud.example.test/api/marketing/forms/blowhorn-support',
+    url: 'https://cloud.example.test/api/support/cases',
+    clientKey: 'website-key',
     fetchImpl: async () => {
       called += 1;
-      return { ok: true };
+      return { ok: true, status: 201 };
     },
   };
   const res = await createHandler(db, { forward })(
@@ -865,7 +912,8 @@ test('support honeypot answers success without storing or forwarding', async () 
 test('a failed forward keeps the row and leaves forwarded_at null', async () => {
   const db = fakeDb();
   const forward = {
-    url: 'https://cloud.example.test/api/marketing/forms/blowhorn-support',
+    url: 'https://cloud.example.test/api/support/cases',
+    clientKey: 'website-key',
     fetchImpl: async () => ({ ok: false, status: 401 }),
   };
   const res = await createHandler(db, { forward })(post('/api/support', supportBody()));
@@ -873,7 +921,8 @@ test('a failed forward keeps the row and leaves forwarded_at null', async () => 
   assert.equal(db.supportRows.length, 1);
   assert.equal(db.supportRows[0].forwarded_at, null);
   const throwing = {
-    url: 'https://cloud.example.test/api/marketing/forms/blowhorn-support',
+    url: 'https://cloud.example.test/api/support/cases',
+    clientKey: 'website-key',
     fetchImpl: async () => {
       throw new Error('network down');
     },
@@ -898,7 +947,8 @@ test('the forward sends the full name as typed', async () => {
   const db = fakeDb();
   const calls = [];
   const forward = {
-    url: 'https://cloud.example.test/api/marketing/forms/blowhorn-support',
+    url: 'https://cloud.example.test/api/support/cases',
+    clientKey: 'website-key',
     fetchImpl: async (url, init) => {
       calls.push(JSON.parse(init.body));
       return { ok: false, status: 400 };
@@ -906,7 +956,7 @@ test('the forward sends the full name as typed', async () => {
   };
   await createHandler(db, { forward })(post('/api/support', supportBody({ name: 'Madonna' })));
   assert.equal(calls[0].name, 'Madonna');
-  assert.deepEqual(Object.keys(calls[0]).sort(), ['email', 'message', 'name', 'subject']);
+  assert.deepEqual(Object.keys(calls[0]).sort(), ['caseId', 'contactPreference', 'email', 'message', 'name', 'reason']);
   assert.equal(db.supportRows[0].forwarded_at, null);
 });
 
@@ -925,8 +975,8 @@ test('support shares the per-IP rate limit', async () => {
 test('anonymous choice discards contact fields before storage and forwarding', async () => {
   const db = fakeDb();
   let payload;
-  const forward = { url: 'https://cloud.example.test/intake', fetchImpl: async (url, init) => {
-    payload = JSON.parse(init.body); return { ok: true };
+  const forward = { url: 'https://cloud.example.test/api/support/cases', clientKey: 'website-key', fetchImpl: async (url, init) => {
+    payload = JSON.parse(init.body); return { ok: true, status: 201 };
   } };
   const res = await createHandler(db, { forward })(post('/api/support', supportBody({
     contact_preference: 'anonymous', email: 'accidental@example.com', name: 'Do not retain',
@@ -939,9 +989,10 @@ test('anonymous choice discards contact fields before storage and forwarding', a
   assert.equal(db.supportRows[0].reason, 'issue');
   assert.equal(db.supportRows[0].subject, `Problem report [${db.supportRows[0].case_number}]`);
   assert.equal(db.supportRows[0].diagnostics_reference, 'local-report-123');
-  assert.equal(payload.email, '');
-  assert.equal(payload.name, '');
-  assert.match(payload.message, /Response preference: anonymous/);
+  assert.equal(payload.contactPreference, 'anonymous');
+  assert.equal(payload.reason, 'issue');
+  assert.ok(!('email' in payload));
+  assert.ok(!('name' in payload));
   assert.match(payload.message, /local-report-123/);
   assert.doesNotMatch(JSON.stringify(payload), /accidental|Do not retain/);
 });
@@ -1009,18 +1060,22 @@ test('support migration preserves existing rows and adapter stores anonymous met
   assert.equal(old.email, 'old@example.com');
   assert.equal(old.contact_preference, 'reply');
   assert.equal(old.reason, 'feedback');
+  sqlite.exec(readFileSync(join(here, 'migrations/0005_support_case_proof.sql'), 'utf8'));
+  assert.equal(sqlite.prepare('SELECT creation_proof FROM support_messages WHERE id=1').get().creation_proof, null);
   const adapter = d1Db({ prepare(sql) { return { bind(...params) { return {
     run() { const result = sqlite.prepare(sql).run(...params); return { meta: { last_row_id: Number(result.lastInsertRowid) } }; },
   }; } }; } });
   const id = await adapter.insertSupportMessage({ name: '', email: '', subject: 'Feedback', message: 'Hello',
     details: '', created_at: '2026-11-23', source_page: '/support/', reason: 'feedback',
-    contact_preference: 'anonymous', diagnostics_reference: 'local-123', case_number: crypto.randomUUID() });
+    contact_preference: 'anonymous', diagnostics_reference: 'local-123', case_number: crypto.randomUUID(),
+    creation_proof: 'a'.repeat(64) });
   await adapter.markSupportForwarded(id);
   const row = sqlite.prepare('SELECT * FROM support_messages WHERE id=?').get(id);
   assert.equal(row.name, '');
   assert.equal(row.email, '');
   assert.equal(row.contact_preference, 'anonymous');
   assert.equal(row.diagnostics_reference, 'local-123');
+  assert.equal(row.creation_proof, 'a'.repeat(64));
   assert.ok(row.forwarded_at);
   sqlite.close();
 });
@@ -1028,8 +1083,8 @@ test('support migration preserves existing rows and adapter stores anonymous met
 test('case numbers are server generated, unique, and subjects ignore client overrides', async () => {
   const db = fakeDb();
   const calls = [];
-  const forward = { url: 'https://cloud.example.test/intake', fetchImpl: async (url, init) => {
-    calls.push(JSON.parse(init.body)); return { ok: true };
+  const forward = { url: 'https://cloud.example.test/api/support/cases', clientKey: 'website-key', fetchImpl: async (url, init) => {
+    calls.push(JSON.parse(init.body)); return { ok: true, status: 201 };
   } };
   const handle = createHandler(db, { forward });
   for (const reason of ['feedback', 'issue', 'product', 'pricing', 'connect']) {
@@ -1043,8 +1098,8 @@ test('case numbers are server generated, unique, and subjects ignore client over
   for (const [i, row] of db.supportRows.entries()) {
     assert.match(row.case_number, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
     assert.ok(row.subject.includes(row.case_number));
-    assert.equal(calls[i].subject, `[Blowhorn support] ${row.subject}`);
-    assert.ok(calls[i].subject.length <= 218);
-    assert.doesNotMatch(row.subject, /User-supplied|attacker-selected/);
+    assert.equal(calls[i].caseId, row.case_number);
+    assert.equal(calls[i].reason, row.reason);
+    assert.doesNotMatch(JSON.stringify(calls[i]), /User-supplied|attacker-selected/);
   }
 });
