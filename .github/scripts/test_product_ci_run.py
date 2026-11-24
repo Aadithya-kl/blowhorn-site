@@ -15,6 +15,8 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+import yaml
+
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 SPEC = importlib.util.spec_from_file_location("product_ci_run", HERE / "product-ci" / "run.py")
@@ -327,6 +329,40 @@ class ProductCiRustToolchainTest(unittest.TestCase):
         self.assertNotIn("default-toolchain 1.85", text)
         self.assertNotRegex(text, r"default-toolchain [0-9]")
         self.assertNotRegex(text, r"name: rust \([0-9]")
+
+
+def _product_ci_jobs():
+    """The Product CI workflow, parsed as GitHub Actions YAML (jobs only)."""
+    return yaml.safe_load((ROOT / ".github" / "workflows" / "product-ci.yml").read_text())["jobs"]
+
+
+class ProductCiRustPythonEngineTest(unittest.TestCase):
+    """The rust job can run the contract suite against the Python engine.
+
+    make cli-rust-tests starts with BLOWHORN_CONTRACT_ENGINE=python, and
+    Engine::from_env looks for checkout venv/bin/python unless
+    BLOWHORN_CONTRACT_PYTHON is set. The product's own rust CI sets that
+    to the setup-python interpreter after installing engine/requirements-dev.txt.
+    Without the same setup here, every_case_is_at_contract fails immediately
+    with "no virtualenv in the checkout" (0 passed, 1 failed).
+    """
+
+    def test_the_rust_job_gives_the_contract_suite_a_python_3_14_with_dev_deps(self):
+        rust = _product_ci_jobs()["rust"]
+        setup = [step for step in rust["steps"] if str(step.get("uses", "")).startswith("actions/setup-python@")]
+        self.assertEqual(len(setup), 1, "the rust job should set up one Python")
+        self.assertEqual(setup[0]["with"]["python-version"], "3.14")
+        install = [step for step in rust["steps"] if "product/engine/requirements-dev.txt" in str(step.get("run", ""))]
+        self.assertEqual(len(install), 1, "the rust job should install the product engine deps")
+        suite = [step for step in rust["steps"] if step.get("name") == "Rust suite (output withheld)"]
+        self.assertEqual(len(suite), 1)
+        self.assertEqual((suite[0].get("env") or {}).get("BLOWHORN_CONTRACT_PYTHON"), "python")
+        setup_index = rust["steps"].index(setup[0])
+        install_index = rust["steps"].index(install[0])
+        suite_index = rust["steps"].index(suite[0])
+        self.assertLess(setup_index, install_index)
+        self.assertLess(install_index, suite_index)
+
 
 if __name__ == "__main__":
     unittest.main()
