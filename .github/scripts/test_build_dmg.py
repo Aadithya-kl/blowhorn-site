@@ -5,11 +5,15 @@ import importlib.util
 import io
 import json
 import os
+import re
+import shlex
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
+
+import yaml
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
@@ -18,6 +22,10 @@ import checkout_guard  # noqa: E402
 import require_signed_ref  # noqa: E402
 import manifest as manifest_mod  # noqa: E402
 import payload as payload_mod  # noqa: E402
+
+import timed_run  # noqa: E402
+
+real_popen = timed_run.subprocess.Popen
 
 SPEC = importlib.util.spec_from_file_location("build_dmg_run", HERE / "build-dmg" / "run_build.py")
 run_build = importlib.util.module_from_spec(SPEC)
@@ -137,23 +145,56 @@ class RunBuildTest(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def test_a_failure_does_not_print_private_output(self):
-        def fake_run(cmd, cwd, env, stdout, stderr):
-            stdout.write(SECRET.encode())
-            return type("R", (), {"returncode": 1})()
-
+    def _main(self, popen, *extra):
         buf = io.StringIO()
-        with mock.patch.object(run_build.subprocess, "run", fake_run), mock.patch("sys.stdout", buf):
+        with mock.patch.object(timed_run.subprocess, "Popen", popen), mock.patch("sys.stdout", buf):
             status = run_build.main([
                 "--product", str(self.product),
                 "--log", str(self.log),
                 "--version", "2.14.1",
                 "--mode", "adhoc",
+                *extra,
             ])
+        return status, buf.getvalue()
+
+    def test_a_failure_does_not_print_private_output(self):
+        def popen(cmd, cwd, env, stdout, stderr, start_new_session):
+            return real_popen([sys.executable, "-c", f"print({SECRET!r}); raise SystemExit(1)"], stdout=stdout, stderr=stderr, start_new_session=start_new_session)
+
+        status, out = self._main(popen)
         self.assertEqual(status, 1)
-        self.assertIn("build-dmg: failed", buf.getvalue())
-        self.assertNotIn("hunter2", buf.getvalue())
+        self.assertIn("build-dmg: failed (exit 1", out)
+        self.assertNotIn("hunter2", out)
         self.assertIn(SECRET, self.log.read_text())
+
+    def test_progress_lines_reach_stdout_and_nothing_else_does(self):
+        script = (
+            "print('==> dmg'); print('Submission ID received');"
+            "print('  id: 2d8f1c3a-1111-2222-3333-444455556666');"
+            "print('  path: /Users/runner/private.dmg');"
+            "print('Current status: In Progress...', end='\\r'); print('Current status: Accepted....');"
+            f"print({SECRET!r}); raise SystemExit(1)"
+        )
+
+        def popen(cmd, cwd, env, stdout, stderr, start_new_session):
+            return real_popen([sys.executable, "-c", script], stdout=stdout, stderr=stderr, start_new_session=start_new_session)
+
+        status, out = self._main(popen)
+        self.assertEqual(status, 1)
+        for expected in ("build: phase dmg", "notarization: submitted", "notarization: submission id 2d8f1c3a-1111-2222-3333-444455556666", "notarization: status In Progress", "notarization: status Accepted"):
+            self.assertIn(expected, out)
+        self.assertNotIn("private.dmg", out)
+        self.assertNotIn("hunter2", out)
+
+    def test_a_hung_build_is_killed_at_its_limit_with_a_clear_message(self):
+        def popen(cmd, cwd, env, stdout, stderr, start_new_session):
+            return real_popen([sys.executable, "-c", "import time; print('==> engine', flush=True); time.sleep(60)"], stdout=stdout, stderr=stderr, start_new_session=start_new_session)
+
+        status, out = self._main(popen, "--timeout-minutes", "0.02")
+        self.assertEqual(status, 124)
+        self.assertIn("build: phase engine", out)
+        self.assertIn("timed out after", out)
+        self.assertIn("build-dmg: failed (timed out", out)
 
     def test_child_env_drops_github_file_commands(self):
         env = run_build.child_env({"GITHUB_STEP_SUMMARY": "/tmp/sum", "PATH": "/bin", "MAKELEVEL": "1"})
@@ -217,6 +258,41 @@ class SchemaSyncTest(unittest.TestCase):
         self.assertEqual(set(result["required"]), {"version", "ref", "signing_mode", "sha256", "size_bytes", "dmg_name"})
 
 
+def _shell_statements(script):
+    statements = []
+    pending = ""
+    for line in script.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if stripped.endswith("\\"):
+            pending += stripped[:-1] + " "
+            continue
+        pending += stripped
+        statements.append(pending)
+        pending = ""
+    if pending:
+        statements.append(pending)
+    return statements
+
+
+def _python_argv(script, program):
+    found = []
+    for statement in _shell_statements(script):
+        words = shlex.split(statement, posix=True)
+        for index, word in enumerate(words):
+            if word == "python3" and index + 1 < len(words) and words[index + 1] == program:
+                found.append(words[index + 1:])
+    if len(found) != 1:
+        raise AssertionError(f"{program} invoked {len(found)} times")
+    return found[0]
+
+
+def _flag(argv, name):
+    index = argv.index(name)
+    return argv[index + 1]
+
+
 class PublicLogAuditTest(unittest.TestCase):
     def test_build_dmg_mac_does_not_take_a_product_token(self):
         action = (ROOT / ".github" / "actions" / "build-dmg-mac" / "action.yml").read_text()
@@ -233,6 +309,47 @@ class PublicLogAuditTest(unittest.TestCase):
         self.assertIn("rustup toolchain install", action)
         self.assertNotIn("1.85", action)
         self.assertNotRegex(action, r"default-toolchain [0-9]")
+
+    def test_the_keychain_import_and_the_build_run_under_a_time_limit(self):
+        # Oracle: intent requires a 5-minute keychain import, a 100-minute
+        # build, and a cargo cache of registry index, registry cache, and git
+        # db keyed on runner OS, arch, the installed toolchain, and Cargo.lock.
+        # A 100-minute import, or a target-dir cache path, must fail.
+        action = yaml.safe_load((ROOT / ".github" / "actions" / "build-dmg-mac" / "action.yml").read_text())
+        steps = action["runs"]["steps"]
+
+        import_step = next(step for step in steps if step.get("name") == "Import the temporary signing keychain")
+        self.assertEqual(import_step["if"], "inputs.mode == 'developer-id'")
+        import_argv = _python_argv(import_step["run"], ".github/scripts/build-dmg/timed_run.py")
+        self.assertEqual(_flag(import_argv, "--timeout-minutes"), "5")
+        self.assertEqual(_flag(import_argv, "--label"), "keychain import")
+        self.assertNotIn("100", import_argv)
+
+        build_step = next(step for step in steps if step.get("name") == "Build, sign, notarize and verify (output withheld)")
+        self.assertNotIn("if", build_step)
+        build_argv = _python_argv(build_step["run"], ".github/scripts/build-dmg/run_build.py")
+        self.assertEqual(_flag(build_argv, "--timeout-minutes"), "100")
+
+        cache = next(step for step in steps if str(step.get("uses", "")).startswith("actions/cache@"))
+        paths = [line.strip() for line in cache["with"]["path"].splitlines() if line.strip()]
+        self.assertEqual(paths, [
+            "~/.cargo/registry/index",
+            "~/.cargo/registry/cache",
+            "~/.cargo/git/db",
+        ])
+        expressions = re.findall(r"\$\{\{\s*(.*?)\s*\}\}", cache["with"]["key"])
+        self.assertEqual(expressions, [
+            "runner.os",
+            "runner.arch",
+            "env.RUST_TOOLCHAIN_ID",
+            "hashFiles('product/engine/rust/Cargo.lock')",
+        ])
+
+    def test_progress_line_lets_through_only_fixed_vocabulary(self):
+        self.assertEqual(timed_run.progress_line("==> remote-dmg"), "phase remote-dmg")
+        self.assertEqual(timed_run.progress_line("  status: Invalid"), "notarization: status Invalid")
+        for private in ("  path: /tmp/x.dmg", "==> " + "x" * 60, "  id: not-a-uuid", "status: Accepted token=abc", SECRET):
+            self.assertIsNone(timed_run.progress_line(private))
 
     def test_materialize_does_not_write_github_env(self):
         script = (ROOT / ".github" / "scripts" / "build-dmg" / "materialize_signing.sh").read_text()
