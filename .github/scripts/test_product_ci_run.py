@@ -483,7 +483,8 @@ class EncryptedLogTest(unittest.TestCase):
         status, out = self._run(self.FAIL)
         self.assertEqual(status, 1)
         argv = json.loads((self.bin / "age-argv.json").read_text())
-        self.assertEqual(argv[argv.index("--recipient") + 1], run.LOG_RECIPIENT)
+        self.assertEqual(argv[argv.index("--recipient") + 1],
+                         "age14zuswrahtrqh7ksyjjv7u0vxqsrxzykhymfavt6x9yvuram67p9se6ngeq")
         self.assertEqual(Path(argv[-1]), self.log.resolve())
         self.assertNotIn("--armor", argv)
         self.assertEqual([p.name for p in _every_file(self.upload)], ["python.log.age"])
@@ -551,7 +552,7 @@ class ProductCiEncryptedLogWorkflowTest(unittest.TestCase):
                 self.assertRegex(upload["uses"], r"^actions/upload-artifact@[0-9a-f]{40}$")
                 self.assertEqual(upload["if"], "failure()")
                 name = upload["with"]["name"]
-                self.assertEqual(name.replace("${{ github.run_attempt }}", "7"), run.log_artifact_name(job_id, "7"))
+                self.assertEqual(name, f"product-ci-{job_id}-log-attempt${{{{ github.run_attempt }}}}")
                 self.assertEqual(upload["with"], {
                     "name": name,
                     "path": "${{ runner.temp }}/product-ci-encrypted/*.age",
