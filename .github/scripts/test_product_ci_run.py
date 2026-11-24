@@ -207,6 +207,87 @@ class RunStepsTest(unittest.TestCase):
         self.assertNotIn("blowhorn-host", out)
         self.assertNotIn("[", out)
 
+    def test_a_failing_cargo_run_names_its_failing_tests_and_nothing_else(self):
+        code = (
+            "import sys\n"
+            "print('     Running unittests src/lib.rs (target/debug/deps/blowhorn_host-0123456789abcdef)')\n"
+            "print('running 3 tests')\n"
+            "print('test python_json::tests::nonfinite_constants_are_json ... \\x1b[31mFAILED\\x1b[0m')\n"
+            "print('test ok_one ... ok')\n"
+            "print()\n"
+            "print('failures:')\n"
+            "print()\n"
+            "print('---- python_json::tests::nonfinite_constants_are_json stdout ----')\n"
+            "print(\"thread 'python_json::tests::nonfinite_constants_are_json' panicked at engine/rust/src/secret.rs:12:5:\")\n"
+            "print(\"assertion failed: token == 'hunter2'\")\n"
+            "print('test injected::should_not_appear ... FAILED')\n"
+            "print()\n"
+            "print('failures:')\n"
+            "print('    python_json::tests::nonfinite_constants_are_json')\n"
+            "print()\n"
+            "print('test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s')\n"
+            "print('     Running tests/contract.rs (target/debug/deps/contract_suite-aabbccddeeff0011)')\n"
+            "print('test every_case_is_at_contract ... FAILED')\n"
+            "print('failures:')\n"
+            "print('    every_case_is_at_contract')\n"
+            "print('test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s')\n"
+            "print('error: test failed, to rerun pass `--test contract_suite`')\n"
+            "sys.exit(101)\n"
+        )
+        status, out = self._run([run.Step("test suite", _py(code), counts="cargo")])
+        self.assertEqual(status, 101)
+        self.assertIn("  failed blowhorn_host::python_json::tests::nonfinite_constants_are_json\n", out)
+        self.assertIn("  failed contract_suite::every_case_is_at_contract\n", out)
+        self.assertEqual(out.count("failed blowhorn_host::python_json"), 1)
+        self.assertNotIn("hunter2", out)
+        self.assertNotIn("secret.rs", out)
+        self.assertNotIn("src/lib.rs", out)
+        self.assertNotIn("injected", out)
+        self.assertNotIn("engine/rust", out)
+        self.assertIn("withheld", out)
+        self.assertIn("[2 passed, 2 failed]", out)
+
+    def test_a_passing_cargo_run_names_no_tests(self):
+        code = (
+            "print('     Running unittests src/lib.rs (target/debug/deps/blowhorn_host-0123456789abcdef)')\n"
+            "print('test python_json::tests::nonfinite_constants_are_json ... FAILED')\n"
+            "print('test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s')"
+        )
+        _status, out = self._run([run.Step("test suite", _py(code), counts="cargo")])
+        self.assertNotIn("python_json", out)
+        self.assertNotIn("blowhorn_host", out)
+
+    def test_failing_cargo_test_names_are_capped(self):
+        header = "     Running unittests src/lib.rs (target/debug/deps/crate_a-0123456789abcdef)\n"
+        lines = [f"test test_{i} ... FAILED" for i in range(run.MAX_FAILED_IDS + 5)]
+        self.assertEqual(len(run.cargo_failed_ids(header + "\n".join(lines))), run.MAX_FAILED_IDS)
+
+    def test_cargo_failed_ids_drop_source_paths_and_unsafe_names(self):
+        text = (
+            "     Running unittests src/lib.rs (target/debug/deps/okbin-0123456789abcdef)\n"
+            "test src/lib.rs ... FAILED\n"
+            "test ../etc/passwd ... FAILED\n"
+            "test path/with/slash ... FAILED\n"
+            "     Running `/tmp/hunter2/target/debug/deps/from_cmd-deadbeef --exact`\n"
+            "test only_safe_name ... FAILED\n"
+        )
+        self.assertEqual(run.cargo_failed_ids(text), ["failed from_cmd::only_safe_name"])
+        self.assertNotIn("hunter2", " ".join(run.cargo_failed_ids(text)))
+        self.assertNotIn("passwd", " ".join(run.cargo_failed_ids(text)))
+
+    def test_cargo_failed_ids_read_the_failures_list_when_progress_lines_are_absent(self):
+        text = (
+            "     Running tests/legacy_host.rs (target/aarch64-unknown-linux-gnu/debug/deps/legacy_host-abcdef0123456789)\n"
+            "failures:\n"
+            "    the_exact_path_is_listed_and_a_lookalike_is_not\n"
+            "\n"
+            "test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n"
+        )
+        self.assertEqual(
+            run.cargo_failed_ids(text),
+            ["failed legacy_host::the_exact_path_is_listed_and_a_lookalike_is_not"],
+        )
+
     def test_rust_steps_run_make_cli_rust_tests(self):
         steps = run.rust_steps()
         self.assertEqual(len(steps), 1)

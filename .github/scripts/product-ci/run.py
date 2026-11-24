@@ -7,9 +7,10 @@ lines must never reach a log here. Every command's output goes to a log file
 outside the workspace that is never printed or uploaded. The only lines
 printed are this script's fixed step labels, each step's exit status, and the
 pass/fail counts parsed out of the test runners' summary lines (numbers and a
-fixed set of words, nothing copied verbatim), plus, for a failed pytest run, the
-node id of each failing test (path and test name only, checked against a strict
-pattern; never its message, diff or source lines). The commands run without the
+fixed set of words, nothing copied verbatim), plus, for a failed pytest or cargo run, the
+id of each failing test (path and test name only for pytest; crate or test
+binary and test name only for cargo; each checked against a strict pattern;
+never its message, diff, assertion text or source lines). The commands run without the
 runner's file-command variables (GITHUB_STEP_SUMMARY and the like), so they
 cannot write a job summary, step output or environment change either, and
 without the calling make's state (MAKEFLAGS, MAKELEVEL), so they run as the
@@ -44,6 +45,21 @@ VITEST_COUNT = re.compile(r"\b(\d+) (passed|failed|skipped|todo)\b")
 CARGO_RESULT = re.compile(
     r"^test result: (?:ok|FAILED)\. (\d+) passed; (\d+) failed; (\d+) ignored; (\d+) measured; (\d+) filtered out"
 )
+#: cargo/libtest identifiers: a crate or test binary, or a ::-separated test path.
+#: No slashes, dots or spaces, so source paths and assertion text cannot pass.
+CARGO_IDENT = r"[A-Za-z_][A-Za-z0-9_]*"
+CARGO_TEST_PATH = rf"(?:{CARGO_IDENT}::){{0,8}}{CARGO_IDENT}"
+#: "     Running unittests src/lib.rs (target/debug/deps/crate-abc123)"
+#: The source path is ignored; only the deps/binary-hash name is kept.
+CARGO_RUNNING = re.compile(
+    rf"^\s*Running .*\((?:[A-Za-z0-9._-]+/)*deps/({CARGO_IDENT})-[0-9a-f]+\)\s*$"
+)
+#: Verbose: Running `.../deps/crate-abc123 --exact`
+CARGO_RUNNING_CMD = re.compile(
+    rf"^\s*Running `[^`]*?/(?:deps/)?({CARGO_IDENT})-[0-9a-f]+\b[^`]*`\s*$"
+)
+CARGO_TEST_FAILED = re.compile(rf"^test ({CARGO_TEST_PATH}) \.\.\. FAILED\s*$")
+CARGO_FAILURES_ITEM = re.compile(rf"^    ({CARGO_TEST_PATH})\s*$")
 FILE_COMMANDS = frozenset({"GITHUB_ENV", "GITHUB_OUTPUT", "GITHUB_PATH", "GITHUB_STATE", "GITHUB_STEP_SUMMARY"})
 #: `make product-ci` starts this script, so its environment carries the calling
 #: make's state. The product's own CI runs pytest directly, and its tests run
@@ -128,9 +144,7 @@ def pytest_failed_ids(text: str) -> list[str]:
     for line in ANSI.sub("", text).splitlines():
         match = PYTEST_FAILED.match(line.strip())
         if match:
-            entry = f"{match.group(1).lower()} {match.group(2)}"
-            if entry not in ids:
-                ids.append(entry)
+            _add_failed_id(ids, f"{match.group(1).lower()} {match.group(2)}")
     return ids[:MAX_FAILED_IDS]
 
 
@@ -151,8 +165,8 @@ def vitest_counts(text: str) -> str:
 def cargo_counts(text: str) -> str:
     """'40 passed, 2 ignored' aggregated from cargo's 'test result:' lines; '' when there is none.
 
-    Only the counts and a fixed set of words are printed. Crate names and
-    individual test names stay in the private log.
+    Only the counts and a fixed set of words are returned here. Failing test
+    names are collected separately by cargo_failed_ids.
     """
     passed = failed = ignored = 0
     found = False
@@ -174,7 +188,65 @@ def cargo_counts(text: str) -> str:
     return ", ".join(parts)
 
 
+def cargo_failed_ids(text: str) -> list[str]:
+    """Crate or test binary plus test name of failing cargo tests; assertion text and source paths dropped."""
+    ids: list[str] = []
+    binary = ""
+    lines = ANSI.sub("", text).splitlines()
+    i = 0
+    while i < len(lines) and len(ids) < MAX_FAILED_IDS:
+        line = lines[i]
+        running = CARGO_RUNNING.match(line) or CARGO_RUNNING_CMD.match(line)
+        if running:
+            binary = running.group(1)
+            i += 1
+            continue
+        failed = CARGO_TEST_FAILED.match(line)
+        if failed:
+            _add_failed_id(ids, _cargo_failed_entry(binary, failed.group(1)))
+            i += 1
+            continue
+        if line.strip() == "failures:":
+            j = i + 1
+            while j < len(lines) and not lines[j].strip():
+                j += 1
+            if j < len(lines) and lines[j].lstrip().startswith("----"):
+                i = j + 1
+                while i < len(lines):
+                    nxt = lines[i]
+                    if nxt.strip() == "failures:":
+                        break
+                    if CARGO_RUNNING.match(nxt) or CARGO_RUNNING_CMD.match(nxt):
+                        break
+                    if nxt.startswith("test result:"):
+                        break
+                    i += 1
+                continue
+            i += 1
+            while i < len(lines):
+                item = CARGO_FAILURES_ITEM.match(lines[i])
+                if item:
+                    _add_failed_id(ids, _cargo_failed_entry(binary, item.group(1)))
+                    i += 1
+                    continue
+                break
+            continue
+        i += 1
+    return ids[:MAX_FAILED_IDS]
+
+
+def _cargo_failed_entry(binary: str, test: str) -> str:
+    ident = f"{binary}::{test}" if binary else test
+    return f"failed {ident}"
+
+
+def _add_failed_id(ids: list[str], entry: str) -> None:
+    if entry not in ids and len(ids) < MAX_FAILED_IDS:
+        ids.append(entry)
+
+
 COUNTERS = {"pytest": pytest_counts, "vitest": vitest_counts, "cargo": cargo_counts}
+FAILED_IDS = {"pytest": pytest_failed_ids, "cargo": cargo_failed_ids}
 
 
 def run_steps(steps: list[Step], product: Path, log: Path, out=sys.stdout) -> int:
@@ -205,10 +277,10 @@ def run_steps(steps: list[Step], product: Path, log: Path, out=sys.stdout) -> in
                 if counts:
                     line += f" [{counts}]"
             print(line, file=out, flush=True)
-            if status != 0 and step.counts == "pytest":
+            if status != 0 and step.counts in FAILED_IDS:
                 with log.open("rb") as read:
                     read.seek(before)
-                    for entry in pytest_failed_ids(read.read().decode("utf-8", "replace")):
+                    for entry in FAILED_IDS[step.counts](read.read().decode("utf-8", "replace")):
                         print(f"  {entry}", file=out, flush=True)
             if status != 0:
                 print("Output is withheld because the product repository is private; "
