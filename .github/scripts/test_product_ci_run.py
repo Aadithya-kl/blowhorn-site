@@ -414,7 +414,7 @@ def _fake_age(directory: Path, behaviour: str) -> Path:
 
     encrypt: writes the age header and opaque bytes to --output (as real age does)
     copy:    writes the plaintext input to --output (a broken or hostile age)
-    prefix:  writes a proper prefix of the age header plus the plaintext
+    prefix:  writes the age header without its newline, then the plaintext
     fail:    exits 1 after writing a partial file
     """
     directory.mkdir(parents=True, exist_ok=True)
@@ -432,7 +432,8 @@ if behaviour == "encrypt":
 elif behaviour == "copy":
     output.write_bytes(source.read_bytes())
 elif behaviour == "prefix":
-    output.write_bytes(b"age" + source.read_bytes())
+    plain = source.read_bytes().lstrip(b"\\n")
+    output.write_bytes(b"age-encryption.org/v1" + plain)
 else:
     output.write_bytes(b"age-encryption.org/v1\\n")
     sys.exit(1)
@@ -547,6 +548,8 @@ class ProductCiEncryptedLogWorkflowTest(unittest.TestCase):
                 self.assertIn('PRODUCT_CI_ENCRYPTED_DIR="$RUNNER_TEMP/product-ci-encrypted"', suite["run"])
                 install = steps[names.index("Install age")]
                 self.assertIn("apt-get install -y -qq --no-install-recommends age", install["run"])
+                self.assertIn(">/dev/null", install["run"])
+                self.assertIs(install.get("continue-on-error"), True)
                 self.assertTrue(install.get("timeout-minutes"))
                 self.assertLess(names.index("Install age"), steps.index(suite))
                 uploads = [step for step in steps if "upload-artifact" in str(step.get("uses", ""))]
