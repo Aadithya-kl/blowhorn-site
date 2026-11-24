@@ -24,11 +24,15 @@ const MAX_EMAIL = 254;
 const MAX_REMARK = 500;
 const MAX_SOURCE_PAGE = 500;
 const MAX_NAME = 100;
-// The queue budget for the prefixed subject is 218 characters; the
-// '[Blowhorn support] ' prefix takes 19, leaving 199 for the form.
-const MAX_SUBJECT = 199;
+// Subjects are generated from a bounded reason label and UUID case number.
 const MAX_MESSAGE = 5000;
 const MAX_DETAILS = 5000;
+const MAX_DIAGNOSTICS_REFERENCE = 500;
+const SUPPORT_REASONS = {
+  feedback: 'Feedback', issue: 'Problem report', product: 'Product question',
+  pricing: 'Pricing or licensing', connect: 'Get in touch',
+};
+const CONTACT_PREFERENCES = ['anonymous', 'reply'];
 export const MAX_BODY_BYTES = 10 * 1024;
 
 function randomToken() {
@@ -87,9 +91,9 @@ export function d1Db(db) {
     async insertSupportMessage(row) {
       const res = await db
         .prepare(
-          'INSERT INTO support_messages (name, email, subject, message, details, created_at, source_page) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)',
+          'INSERT INTO support_messages (name, email, subject, message, details, created_at, source_page, reason, contact_preference, diagnostics_reference, case_number) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)',
         )
-        .bind(row.name, row.email, row.subject, row.message, row.details, row.created_at, row.source_page)
+        .bind(row.name, row.email, row.subject, row.message, row.details, row.created_at, row.source_page, row.reason, row.contact_preference, row.diagnostics_reference, row.case_number)
         .run();
       return res.meta && typeof res.meta.last_row_id === 'number' ? res.meta.last_row_id : null;
     },
@@ -210,9 +214,11 @@ async function readFields(request) {
       source_page: body.source_page,
       token: body.token,
       name: body.name,
-      subject: body.subject,
       message: body.message,
       details: body.details,
+      reason: body.reason,
+      contact_preference: body.contact_preference,
+      diagnostics_reference: body.diagnostics_reference,
     };
   }
 
@@ -231,9 +237,11 @@ async function readFields(request) {
       source_page: params.get('source_page'),
       token: params.get('token'),
       name: params.get('name'),
-      subject: params.get('subject'),
       message: params.get('message'),
       details: params.get('details'),
+      reason: params.get('reason') ?? undefined,
+      contact_preference: params.get('contact_preference') ?? undefined,
+      diagnostics_reference: params.get('diagnostics_reference'),
     };
   }
 
@@ -258,9 +266,11 @@ async function readFields(request) {
       source_page: form.get('source_page'),
       token: form.get('token'),
       name: form.get('name'),
-      subject: form.get('subject'),
       message: form.get('message'),
       details: form.get('details'),
+      reason: form.get('reason') ?? undefined,
+      contact_preference: form.get('contact_preference') ?? undefined,
+      diagnostics_reference: form.get('diagnostics_reference'),
     };
   }
 
@@ -302,18 +312,28 @@ function validateSignup(kind, fields) {
 }
 
 function validateSupport(fields) {
-  const name = typeof fields.name === 'string' ? fields.name.trim() : '';
-  if (!name || name.length > MAX_NAME) return { error: 'Enter your name (100 characters max).' };
-  const email = typeof fields.email === 'string' ? fields.email.trim().toLowerCase() : '';
-  if (!email || email.length > MAX_EMAIL || !EMAIL_RE.test(email)) return { error: 'Enter a valid email address.' };
-  const subject = typeof fields.subject === 'string' ? fields.subject.trim() : '';
-  if (!subject || subject.length > MAX_SUBJECT) return { error: 'Enter a subject (199 characters max).' };
+  const reason = fields.reason === undefined ? 'feedback' : fields.reason;
+  if (typeof reason !== 'string' || !Object.hasOwn(SUPPORT_REASONS, reason)) return { error: 'Choose a reason for reaching out.' };
+  // Legacy clients supplied email without a preference. New empty submissions
+  // default to anonymous; an explicit anonymous choice always drops identity.
+  const contactPreference = fields.contact_preference === undefined
+    ? (fields.email ? 'reply' : 'anonymous') : fields.contact_preference;
+  if (!CONTACT_PREFERENCES.includes(contactPreference)) return { error: 'Choose a response preference.' };
+  const anonymous = contactPreference === 'anonymous';
+  const name = !anonymous && typeof fields.name === 'string' ? fields.name.trim() : '';
+  if (name.length > MAX_NAME) return { error: 'The name is too long (100 characters max).' };
+  const email = !anonymous && typeof fields.email === 'string' ? fields.email.trim().toLowerCase() : '';
+  if (!anonymous && (!email || email.length > MAX_EMAIL || !EMAIL_RE.test(email))) return { error: 'Enter an email address for a response, or choose anonymous.' };
+  const caseNumber = crypto.randomUUID();
+  const subject = `${SUPPORT_REASONS[reason]} [${caseNumber}]`;
   const message = typeof fields.message === 'string' ? fields.message.trim() : '';
   if (!message || message.length > MAX_MESSAGE) return { error: 'Enter a message (5,000 characters max).' };
   const details = typeof fields.details === 'string' ? fields.details.trim() : '';
   if (details.length > MAX_DETAILS) return { error: 'The details are too long (5,000 characters max).' };
   const sourcePage = typeof fields.source_page === 'string' ? fields.source_page.trim().slice(0, MAX_SOURCE_PAGE) : '';
-  return { name, email, subject, message, details, sourcePage };
+  const diagnosticsReference = typeof fields.diagnostics_reference === 'string' ? fields.diagnostics_reference.trim() : '';
+  if (diagnosticsReference.length > MAX_DIAGNOSTICS_REFERENCE || /[\r\n\x00-\x1f\x7f]/.test(diagnosticsReference)) return { error: 'Enter a single-line diagnostic reference (500 characters max).' };
+  return { name, email, subject, caseNumber, message, details, sourcePage, reason, contactPreference, diagnosticsReference };
 }
 
 // The support queue lives in Layer5 Cloud's public marketing form API as the
@@ -327,9 +347,13 @@ async function forwardSupport(forward, valid) {
     email: valid.email,
     name: valid.name,
     subject: `[Blowhorn support] ${valid.subject}`,
-    message: valid.details
-      ? `${valid.message}\n\nWhat was run / what it printed:\n${valid.details}`
-      : valid.message,
+    message: [
+      `Reason: ${SUPPORT_REASONS[valid.reason]}`,
+      `Response preference: ${valid.contactPreference}`,
+      valid.message,
+      valid.details ? `Diagnostic summary:\n${valid.details}` : '',
+      valid.diagnosticsReference ? `Diagnostic reference (unverified, not fetched): ${valid.diagnosticsReference}` : '',
+    ].filter(Boolean).join('\n\n'),
   };
   try {
     const res = await forward.fetchImpl(forward.url, {
@@ -502,6 +526,10 @@ export function createHandler(db, options = {}) {
           details: validSupport.details,
           created_at: new Date().toISOString(),
           source_page: validSupport.sourcePage,
+          reason: validSupport.reason,
+          contact_preference: validSupport.contactPreference,
+          diagnostics_reference: validSupport.diagnosticsReference,
+          case_number: validSupport.caseNumber,
         });
       } catch {
         return fail(request, 500, 'Something went wrong.', validSupport.sourcePage);

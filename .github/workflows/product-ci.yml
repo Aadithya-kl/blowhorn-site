@@ -26,15 +26,45 @@ on:
         description: "Product commit to test (full 40-character SHA)"
         required: true
         type: string
+  workflow_call:
+    inputs:
+      ref:
+        description: "Product commit to test (full 40-character SHA)"
+        required: true
+        type: string
+      caller:
+        description: >
+          Calling workflow id (set by build-dmg). A non-empty value gives this
+          run its own concurrency group and never cancels another. Leave unset
+          for a manual Product CI run.
+        required: false
+        type: string
+        default: ""
+    secrets:
+      DMG_SOURCE_TOKEN:
+        required: true
 
 run-name: Product CI ${{ inputs.ref }}
 
 permissions:
   contents: read
 
+# Manual Product CI still cancels an in-progress run of the same ref.
+# A build-dmg call passes `caller` so this run gets its own group (caller plus
+# this run id) and cancel-in-progress is false. Adhoc and signed calls of the
+# same SHA therefore cannot cancel each other, and neither can cancel a manual
+# Product CI run of that SHA.
+#
+# Do not detect a reusable call with github.event_name. In a called workflow
+# that value is the caller's event (workflow_dispatch or repository_dispatch
+# for build-dmg), never workflow_call, so a run-id suffix keyed on
+# event_name == 'workflow_call' is never added. github.event.workflow is also
+# not enough: it is set for workflow_dispatch, but a repository_dispatch
+# payload has no workflow field, and that is the path make release uses.
+# Pin: .github/scripts/test_product_ci_run.py (ProductCiConcurrencyTest).
 concurrency:
-  group: product-ci-${{ inputs.ref }}
-  cancel-in-progress: true
+  group: product-ci-${{ inputs.ref }}-${{ inputs.caller && format('{0}-{1}', inputs.caller, github.run_id) || 'manual' }}
+  cancel-in-progress: ${{ !inputs.caller }}
 
 jobs:
   python:
@@ -48,12 +78,12 @@ jobs:
         run: |
           [[ "$REF" =~ ^[0-9a-f]{40}$ ]] || { echo "ref must be a full 40-character commit SHA"; exit 1; }
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
 
       - name: Check out the product commit (read-only)
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           repository: blowhorn-ai/blowhorn
           ref: ${{ inputs.ref }}
@@ -61,7 +91,7 @@ jobs:
           path: product
           persist-credentials: false
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.14"
 
@@ -84,12 +114,12 @@ jobs:
         run: |
           [[ "$REF" =~ ^[0-9a-f]{40}$ ]] || { echo "ref must be a full 40-character commit SHA"; exit 1; }
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
 
       - name: Check out the product commit (read-only)
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           repository: blowhorn-ai/blowhorn
           ref: ${{ inputs.ref }}
@@ -97,11 +127,11 @@ jobs:
           path: product
           persist-credentials: false
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
         with:
           version: 11.1.1
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
 
@@ -119,12 +149,12 @@ jobs:
         run: |
           [[ "$REF" =~ ^[0-9a-f]{40}$ ]] || { echo "ref must be a full 40-character commit SHA"; exit 1; }
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
 
       - name: Check out the product commit (read-only)
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           repository: blowhorn-ai/blowhorn
           ref: ${{ inputs.ref }}
