@@ -16,6 +16,7 @@ runs:
         token: ${{ inputs.token }}
         path: product
         persist-credentials: false
+        submodules: true
         filter: blob:none
         sparse-checkout-cone-mode: false
         sparse-checkout: |

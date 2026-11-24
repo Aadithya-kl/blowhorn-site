@@ -86,6 +86,7 @@ jobs:
           token: ${{ secrets.BLOWHORN_RELEASE_TOKEN }}
           path: product
           persist-credentials: true
+          submodules: true
 
       - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
         with:
