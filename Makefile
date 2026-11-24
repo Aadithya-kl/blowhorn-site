@@ -103,11 +103,12 @@ include .github/build/Makefile.show-help.mk
 #   npm-fetch, npm-verify, npm-publish, npm-confirm
 #                      The steps of publish-blowhorn-axi.yml (see docs/distribution.md).
 #   product-ci         Run one suite of the private product repo's CI, printing
-#                      only results: make product-ci SUITE=python|desktop|rust.
+#                      only results and failing test ids:
+#                      make product-ci SUITE=python|desktop|rust.
 #   product-ci-log     Download and decrypt a failed suite's encrypted log:
 #                      make product-ci-log RUN=<run id> SUITE=<suite>
 #                      (see docs/distribution.md).
-#   docs-sync        Sync the user docs from a blowhorn checkout
+#   docs-sync          Sync the user docs from a blowhorn checkout
 #                      into content/en/docs/: make docs-sync REF=<tag|branch|sha>
 #                      (see docs/deploy.md).
 #   docs-sync-base     Check out the docs-sync branch on the open sync PR's
@@ -510,8 +511,9 @@ cloud-auth-smoke:
 	  BLOWHORN_PREDATES_CLOUD_FIXES=$$predates "$(ENGINE)/bin/python" .github/scripts/cloud-auth-smoke/drive.py $(CHECK) --engine "$(ENGINE)" --cloud "$(CLOUD_URL)" $(if $(SIGNUP_TAG),--signup-tag $(SIGNUP_TAG)); \
 	fi
 
-## Run the private product repository's CI on a checkout of it, printing only step results and
-## pass/fail counts (its output goes to PRODUCT_CI_LOG, never printed; product-ci.yml runs this).
+## Run the private product repository's CI on a checkout of it, printing only step results,
+## pass/fail counts and failing test ids (its output goes to PRODUCT_CI_LOG, never printed;
+## product-ci.yml runs this).
 ## A failed suite's log is also encrypted with age into PRODUCT_CI_ENCRYPTED_DIR, which the
 ## workflow uploads (the ciphertext only; read it with product-ci-log):
 ## make product-ci SUITE=python|desktop|rust PRODUCT_DIR=<blowhorn checkout> [PRODUCT_CI_LOG=<file>]
