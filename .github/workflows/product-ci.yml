@@ -197,7 +197,11 @@ jobs:
       - name: Install xdotool
         run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends xdotool >/dev/null
 
+      # The parity tests (product engine/rust/service/tests/common/mod.rs) run the
+      # Python engine with a cleared environment, so they need an absolute
+      # interpreter path; without it they look for product/venv and fail.
       - name: Rust suite (output withheld)
         env:
           BLOWHORN_CONTRACT_PYTHON: python
+          BLOWHORN_PARITY_PYTHON: ${{ env.pythonLocation }}/bin/python
         run: make product-ci SUITE=rust PRODUCT_DIR=product PRODUCT_CI_LOG="$RUNNER_TEMP/product-ci/rust.log"
