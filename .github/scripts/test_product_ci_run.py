@@ -123,6 +123,84 @@ class RunStepsTest(unittest.TestCase):
         self.assertNotIn("private-file", out)
         self.assertIn("[files: 98 passed; tests: 1367 passed, 2 skipped]", out)
 
+    def test_vitest_counts_include_the_errors_line(self):
+        code = ("print(' Test Files  330 passed (330)');"
+                "print('      Tests  6265 passed | 10 skipped (6275)');"
+                "print('     Errors  1 error')")
+        _status, out = self._run([run.Step("test", _py(code), counts="vitest")])
+        self.assertIn("[files: 330 passed; tests: 6265 passed, 10 skipped; errors: 1 error]", out)
+
+    def test_a_failing_vitest_run_names_its_failing_tests_and_nothing_else(self):
+        code = (
+            "import sys;"
+            "print('\\x1b[41m\\x1b[1m FAIL \\x1b[0m tests/cli-answers.test.ts > reports a run that timed out');"
+            "print('AssertionError: expected hunter2 to be 0');"
+            "print('  \\u276f tests/cli-answers.test.ts:154:7');"
+            "print(' FAIL  tests/sub/other.test.ts > Case > test_param [ tests/sub/other.test.ts ]');"
+            "print(' FAIL  tests/../etc/passwd.test.ts > x');"
+            "print(' FAIL  /abs/hunter2.test.ts > t');"
+            "print(' Test Files  1 failed | 329 passed (330)');"
+            "print('      Tests  1 failed | 6264 passed (6265)');"
+            "sys.exit(1)"
+        )
+        _status, out = self._run([run.Step("test", _py(code), counts="vitest")])
+        self.assertIn("  failed tests/cli-answers.test.ts > reports a run that timed out\n", out)
+        self.assertIn("  failed tests/sub/other.test.ts > Case > test_param\n", out)
+        self.assertNotIn("hunter2", out)
+        self.assertNotIn("passwd", out)
+        self.assertNotIn(":154", out)
+        self.assertIn("withheld", out)
+
+    def test_a_passing_vitest_run_names_no_tests(self):
+        code = ("print(' FAIL  tests/cli-answers.test.ts > leftover from a retry');"
+                "print(' Test Files  330 passed (330)');"
+                "print('      Tests  6265 passed (6265)')")
+        _status, out = self._run([run.Step("test", _py(code), counts="vitest")])
+        self.assertNotIn("cli-answers", out)
+        self.assertNotIn("failed tests/", out)
+
+    def test_failing_vitest_test_names_are_capped(self):
+        lines = [f"FAIL  tests/m.test.ts > test_{i}" for i in range(run.MAX_FAILED_IDS + 5)]
+        self.assertEqual(len(run.vitest_failed_ids("\n".join(lines))), run.MAX_FAILED_IDS)
+
+    def test_a_vitest_run_with_unhandled_errors_prints_the_heading_and_no_source(self):
+        banner = "⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯"
+        per_error = "⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯"
+        code = (
+            "import sys;"
+            f"print({banner!r});"
+            "print('Vitest caught 1 unhandled error during the test run.');"
+            f"print({per_error!r});"
+            "print('Error: worker exited unexpectedly hunter2');"
+            "print('  \\u276f /home/runner/work/blowhorn/desktop/tests/secret.test.ts:12:3');"
+            "print(' Test Files  330 passed (330)');"
+            "print('      Tests  6265 passed | 10 skipped (6275)');"
+            "print('     Errors  1 error');"
+            "sys.exit(1)"
+        )
+        _status, out = self._run([run.Step("test", _py(code), counts="vitest")])
+        self.assertIn("[files: 330 passed; tests: 6265 passed, 10 skipped; errors: 1 error]", out)
+        self.assertIn("  unhandled errors\n", out)
+        self.assertIn("  unhandled error\n", out)
+        self.assertNotIn("hunter2", out)
+        self.assertNotIn("secret.test.ts", out)
+        self.assertNotIn("worker exited", out)
+        self.assertIn("withheld", out)
+
+    def test_vitest_failed_ids_drop_source_paths_and_unsafe_names(self):
+        text = (
+            " FAIL  tests/../etc/passwd.test.ts > x\n"
+            " FAIL  /abs/hunter2.test.ts > t\n"
+            " FAIL  src/not-under-tests.test.ts > t\n"
+            "Error: hunter2 at /etc/passwd:1\n"
+            "⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯\n"
+        )
+        ids = run.vitest_failed_ids(text)
+        self.assertEqual(ids, ["unhandled rejection"])
+        self.assertNotIn("hunter2", " ".join(ids))
+        self.assertNotIn("passwd", " ".join(ids))
+
+
     def test_a_hung_step_times_out_and_fails(self):
         status, out = self._run([run.Step("hang", _py("import time; time.sleep(30)"), timeout_s=1)])
         self.assertEqual(status, 124)

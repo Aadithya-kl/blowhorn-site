@@ -7,10 +7,12 @@ lines must never reach a log here. Every command's output goes to a log file
 outside the workspace that is never printed or uploaded. The only lines
 printed are this script's fixed step labels, each step's exit status, and the
 pass/fail counts parsed out of the test runners' summary lines (numbers and a
-fixed set of words, nothing copied verbatim), plus, for a failed pytest or cargo run, the
-id of each failing test (path and test name only for pytest; crate or test
-binary and test name only for cargo; each checked against a strict pattern;
-never its message, diff, assertion text or source lines). The commands run without the
+fixed set of words, nothing copied verbatim), plus, for a failed pytest, cargo or
+vitest run, the id of each failing test (path and test name only for pytest;
+crate or test binary and test name only for cargo; tests/ path and title only
+for vitest) and, for vitest, the 'Unhandled Errors' / 'Unhandled Error' /
+'Unhandled Rejection' heading names; each checked against a strict pattern;
+never its message, diff, assertion text, stack or source lines). The commands run without the
 runner's file-command variables (GITHUB_STEP_SUMMARY and the like), so they
 cannot write a job summary, step output or environment change either, and
 without the calling make's state (MAKEFLAGS, MAKELEVEL), so they run as the
@@ -40,8 +42,17 @@ PYTEST_COUNT = re.compile(r"\b(\d+) (passed|failed|skipped|xfailed|xpassed|error
 #: Only the node id is kept, and only when it is a plain path::name id.
 PYTEST_FAILED = re.compile(r"^(FAILED|ERROR) (tests/(?:[A-Za-z0-9_-]+/)*[A-Za-z0-9_-]+\.py(?:::[A-Za-z0-9_]+){1,3})(?:\[[^\]]*\])?(?: - .*)?$")
 MAX_FAILED_IDS = 20
-VITEST_LINE = re.compile(r"^\s*(Test Files|Tests)\s+(.*)$")
-VITEST_COUNT = re.compile(r"\b(\d+) (passed|failed|skipped|todo)\b")
+VITEST_LINE = re.compile(r"^\s*(Test Files|Tests|Errors)\s+(.*)$")
+VITEST_COUNT = re.compile(r"\b(\d+) (passed|failed|skipped|todo|errors?)\b")
+VITEST_LABEL = {"Test Files": "files", "Tests": "tests", "Errors": "errors"}
+#: Vitest 4 banners: divider + heading + divider (U+23AF or ASCII/box dashes).
+VITEST_UNHANDLED = re.compile(
+    r"^[⎯─\-]{2,}\s*(Unhandled Errors|Unhandled Error|Unhandled Rejection)\s*[⎯─\-]{2,}\s*$"
+)
+#: A test file under tests/; no '..' or absolute paths.
+VITEST_TEST_FILE = r"tests/(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+\.(?:ts|tsx|js|jsx|mts|cts|mjs|cjs)"
+VITEST_TEST_FILE_RE = re.compile(VITEST_TEST_FILE)
+VITEST_FAIL_SUFFIX = re.compile(rf" \[ ({VITEST_TEST_FILE}) \]$")
 CARGO_RESULT = re.compile(
     r"^test result: (?:ok|FAILED)\. (\d+) passed; (\d+) failed; (\d+) ignored; (\d+) measured; (\d+) filtered out"
 )
@@ -149,7 +160,11 @@ def pytest_failed_ids(text: str) -> list[str]:
 
 
 def vitest_counts(text: str) -> str:
-    """'files: 98 passed; tests: 1367 passed' from vitest's summary; '' when there is none."""
+    """'files: 98 passed; tests: 1367 passed' from vitest's summary; '' when there is none.
+
+    The optional 'Errors N error(s)' line is included when present, so an
+    unhandled-error run is not reported as a clean pass/fail count.
+    """
     parts = []
     for line in ANSI.sub("", text).splitlines():
         match = VITEST_LINE.match(line)
@@ -157,9 +172,45 @@ def vitest_counts(text: str) -> str:
             continue
         found = VITEST_COUNT.findall(match.group(2))
         if found:
-            name = "files" if match.group(1) == "Test Files" else "tests"
+            name = VITEST_LABEL[match.group(1)]
             parts.append(f"{name}: " + ", ".join(f"{n} {word}" for n, word in found))
-    return "; ".join(parts[-2:])
+    return "; ".join(parts[-3:])
+
+
+def vitest_failed_ids(text: str) -> list[str]:
+    """Failing vitest test names and Unhandled Errors headings; stacks and source dropped."""
+    ids: list[str] = []
+    for raw in ANSI.sub("", text).splitlines():
+        line = raw.strip()
+        banner = VITEST_UNHANDLED.match(line)
+        if banner:
+            _add_failed_id(ids, banner.group(1).lower())
+            continue
+        if not line.startswith("FAIL  "):
+            continue
+        rest = line[len("FAIL  "):]
+        suffix = VITEST_FAIL_SUFFIX.search(rest)
+        file_in_suffix = suffix.group(1) if suffix else None
+        if suffix:
+            rest = rest[:suffix.start()]
+        rest = re.sub(r" \(\d+\)$", "", rest)
+        file_in_head = None
+        title = None
+        head = VITEST_TEST_FILE_RE.match(rest)
+        if head and (head.end() == len(rest) or rest[head.end():].startswith(" > ")):
+            file_in_head = head.group(0)
+            if rest[head.end():].startswith(" > "):
+                title = rest[head.end() + 3:]
+        elif file_in_suffix:
+            title = rest or None
+        path = file_in_head or file_in_suffix
+        if not path or ".." in path:
+            continue
+        if title and ".." in title:
+            title = None
+        entry = f"failed {path}" + (f" > {title}" if title else "")
+        _add_failed_id(ids, entry)
+    return ids[:MAX_FAILED_IDS]
 
 
 def cargo_counts(text: str) -> str:
@@ -246,7 +297,7 @@ def _add_failed_id(ids: list[str], entry: str) -> None:
 
 
 COUNTERS = {"pytest": pytest_counts, "vitest": vitest_counts, "cargo": cargo_counts}
-FAILED_IDS = {"pytest": pytest_failed_ids, "cargo": cargo_failed_ids}
+FAILED_IDS = {"pytest": pytest_failed_ids, "vitest": vitest_failed_ids, "cargo": cargo_failed_ids}
 
 
 def run_steps(steps: list[Step], product: Path, log: Path, out=sys.stdout) -> int:
