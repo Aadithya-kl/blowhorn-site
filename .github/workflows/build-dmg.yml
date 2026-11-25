@@ -1,7 +1,9 @@
 name: Build DMG
 
 # Builds, signs, notarizes and verifies the private product's desktop DMG on
-# this public repository's free macos-latest runner (#2558, #2624).
+# this public repository's free macos-26 runner (#2558, #2624). The image
+# is pinned rather than macos-latest so a label migration cannot change the
+# OS or its Xcodes under a release; build-dmg-mac selects the Xcode.
 #
 # Triggers: workflow_dispatch, repository_dispatch (event type build-dmg),
 # and workflow_call from cut-desktop-release.yml (which is itself started
@@ -169,7 +171,7 @@ jobs:
     name: Mac adhoc build
     needs: [validate, linux-green]
     if: needs.validate.outputs.mode == 'adhoc'
-    runs-on: macos-latest
+    runs-on: macos-26
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -203,7 +205,7 @@ jobs:
     name: Mac signed build
     needs: [validate, linux-green]
     if: needs.validate.outputs.mode == 'developer-id'
-    runs-on: macos-latest
+    runs-on: macos-26
     timeout-minutes: 120
     environment: macos-dmg-signing
     steps:
