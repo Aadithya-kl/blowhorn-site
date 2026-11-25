@@ -106,11 +106,32 @@ export function d1Db(db) {
         .run();
       return res.meta && typeof res.meta.last_row_id === 'number' ? res.meta.last_row_id : null;
     },
-    async markSupportForwarded(id) {
+    async markSupportForwarded(id, at = new Date().toISOString()) {
       await db
-        .prepare('UPDATE support_messages SET forwarded_at = ?1 WHERE id = ?2')
-        .bind(new Date().toISOString(), id)
+        .prepare('UPDATE support_messages SET forwarded_at = ?1 WHERE id = ?2 AND forwarded_at IS NULL')
+        .bind(at, id)
         .run();
+    },
+    async recordSupportForwardFailure(id, status, nextAt) {
+      await db
+        .prepare(
+          'UPDATE support_messages SET forward_attempts = forward_attempts + 1, forward_last_status = ?1, next_forward_at = ?2 WHERE id = ?3 AND forwarded_at IS NULL',
+        )
+        .bind(status, nextAt, id)
+        .run();
+    },
+    async listSupportRetries({ now, createdBefore, maxAttempts, limit }) {
+      const res = await db
+        .prepare(
+          'SELECT id, name, email, message, details, reason, contact_preference, diagnostics_reference, case_number, creation_proof, forward_attempts FROM support_messages'
+            + ' WHERE forwarded_at IS NULL AND case_number IS NOT NULL AND creation_proof IS NOT NULL'
+            + ' AND forward_attempts < ?1 AND (forward_last_status IS NULL OR forward_last_status <> 409)'
+            + ' AND (next_forward_at IS NULL OR next_forward_at <= ?2) AND created_at <= ?3'
+            + ' ORDER BY id LIMIT ?4',
+        )
+        .bind(maxAttempts, now, createdBefore, limit)
+        .all();
+      return res.results || [];
     },
   };
 }
@@ -352,21 +373,30 @@ function validateSupport(fields) {
 // retrying an unchanged row returns 200 and never duplicates the case or
 // its private GitHub issue. The forward stays best-effort: the D1 row is
 // the local record, and a failed create leaves forwarded_at NULL so the
-// case can be replayed. Anonymous rows carry no email or name.
-async function forwardSupport(forward, valid, creationProof) {
-  if (!forward || !forward.url || !forward.clientKey) return { attempted: false, ok: false };
+// scheduled retry can re-send it. Anonymous rows carry no email or name.
+//
+// The payload is built only from fields stored on the row, so the request
+// path and the scheduled retry send byte-identical bodies for the same case.
+export function supportCaseBody(row) {
   const body = {
-    caseId: valid.caseNumber,
-    reason: valid.reason,
-    contactPreference: valid.contactPreference,
+    caseId: row.case_number,
+    reason: row.reason,
+    contactPreference: row.contact_preference,
     message: [
-      valid.message,
-      valid.details ? `Diagnostic summary:\n${valid.details}` : '',
-      valid.diagnosticsReference ? `Diagnostic reference (unverified, not fetched): ${valid.diagnosticsReference}` : '',
+      row.message,
+      row.details ? `Diagnostic summary:\n${row.details}` : '',
+      row.diagnostics_reference ? `Diagnostic reference (unverified, not fetched): ${row.diagnostics_reference}` : '',
     ].filter(Boolean).join('\n\n'),
   };
-  if (valid.email) body.email = valid.email;
-  if (valid.name) body.name = valid.name;
+  if (row.email) body.email = row.email;
+  if (row.name) body.name = row.name;
+  return body;
+}
+
+// Returns { attempted, ok, status }. status is the HTTP status, or 0 when
+// the call threw (network error, timeout).
+async function forwardSupport(forward, row) {
+  if (!forward || !forward.url || !forward.clientKey) return { attempted: false, ok: false, status: 0 };
   try {
     const res = await forward.fetchImpl(forward.url, {
       method: 'POST',
@@ -374,18 +404,71 @@ async function forwardSupport(forward, valid, creationProof) {
         'content-type': 'application/json',
         accept: 'application/json',
         'x-client-key': forward.clientKey,
-        'x-support-creation-proof': creationProof,
+        'x-support-creation-proof': row.creation_proof,
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(supportCaseBody(row)),
       signal: AbortSignal.timeout(10000),
     });
     // 201 created the case; 200 is the identical-payload replay. Both mean
     // the case durably exists. A 409 (same caseId, different payload) or
-    // any other status leaves the row unforwarded for investigation.
-    return { attempted: true, ok: res.status === 201 || res.status === 200 };
+    // any other status leaves the row unforwarded.
+    return { attempted: true, ok: res.status === 201 || res.status === 200, status: res.status };
   } catch {
-    return { attempted: true, ok: false };
+    return { attempted: true, ok: false, status: 0 };
   }
+}
+
+// Scheduled retry of unforwarded support cases. Each cron run re-sends at
+// most SUPPORT_RETRY_BATCH rows, oldest first. After a failed attempt n the
+// next try waits SUPPORT_RETRY_BASE_MS * 2^(n-1), capped at
+// SUPPORT_RETRY_MAX_DELAY_MS; after SUPPORT_RETRY_MAX_ATTEMPTS failures the
+// row is left for investigation. A 409 means Cloud holds a different payload
+// under this caseId, which retrying cannot fix, so it is never retried. Rows
+// younger than SUPPORT_RETRY_MIN_AGE_MS are skipped so the cron never races
+// the request that is still forwarding them. Rows without a case number or
+// creation proof predate the Cloud contract and are never touched.
+export const SUPPORT_RETRY_BATCH = 5;
+export const SUPPORT_RETRY_MAX_ATTEMPTS = 10;
+export const SUPPORT_RETRY_BASE_MS = 15 * 60 * 1000;
+export const SUPPORT_RETRY_MAX_DELAY_MS = 24 * 60 * 60 * 1000;
+export const SUPPORT_RETRY_MIN_AGE_MS = 2 * 60 * 1000;
+
+export function supportRetryDelayMs(attempts) {
+  const n = Math.max(1, attempts);
+  return Math.min(SUPPORT_RETRY_BASE_MS * 2 ** (n - 1), SUPPORT_RETRY_MAX_DELAY_MS);
+}
+
+async function recordFailure(db, row, status, nowMs) {
+  const attempts = (row.forward_attempts || 0) + 1;
+  await db.recordSupportForwardFailure(row.id, status, new Date(nowMs + supportRetryDelayMs(attempts)).toISOString());
+}
+
+export async function retryUnforwardedSupport(db, forward, nowMs) {
+  const summary = { selected: 0, forwarded: 0, failed: 0 };
+  if (!forward || !forward.url || !forward.clientKey) return summary;
+  const rows = await db.listSupportRetries({
+    now: new Date(nowMs).toISOString(),
+    createdBefore: new Date(nowMs - SUPPORT_RETRY_MIN_AGE_MS).toISOString(),
+    maxAttempts: SUPPORT_RETRY_MAX_ATTEMPTS,
+    limit: SUPPORT_RETRY_BATCH,
+  });
+  summary.selected = rows.length;
+  for (const row of rows) {
+    try {
+      const result = await forwardSupport(forward, row);
+      if (result.ok) {
+        await db.markSupportForwarded(row.id, new Date(nowMs).toISOString());
+        summary.forwarded += 1;
+      } else {
+        await recordFailure(db, row, result.status, nowMs);
+        summary.failed += 1;
+      }
+    } catch {
+      // A D1 write failed; the next run picks the row up again.
+      summary.failed += 1;
+    }
+  }
+  return summary;
 }
 
 // SUPPORT_CASES_URL in wrangler.json [vars] is the Cloud support-cases
@@ -562,12 +645,23 @@ export function createHandler(db, options = {}) {
       } catch {
         return fail(request, 500, 'Something went wrong.', validSupport.sourcePage);
       }
-      const forwarded = await forwardSupport(forward, validSupport, creationProof);
-      if (forwarded.attempted && forwarded.ok && supportId !== null) {
+      const forwarded = await forwardSupport(forward, {
+        case_number: validSupport.caseNumber,
+        reason: validSupport.reason,
+        contact_preference: validSupport.contactPreference,
+        message: validSupport.message,
+        details: validSupport.details,
+        diagnostics_reference: validSupport.diagnosticsReference,
+        email: validSupport.email,
+        name: validSupport.name,
+        creation_proof: creationProof,
+      });
+      if (forwarded.attempted && supportId !== null) {
         try {
-          await db.markSupportForwarded(supportId);
+          if (forwarded.ok) await db.markSupportForwarded(supportId);
+          else await recordFailure(db, { id: supportId, forward_attempts: 0 }, forwarded.status, Date.now());
         } catch {
-          // The row stands either way; only the replay marker is lost.
+          // The row stands either way; only the replay bookkeeping is lost.
         }
       }
       if (isFormPost(request)) return Response.redirect(SUPPORT_THANKS_URL, 303);
@@ -616,13 +710,27 @@ export function createHandler(db, options = {}) {
   };
 }
 
-export function createScheduledHandler(db, clock = () => Date.now()) {
+export function createScheduledHandler(db, clock = () => Date.now(), options = {}) {
+  const forward = options.forward || null;
   return async function handleScheduled(event) {
     const timestamp = typeof event?.scheduledTime === 'number' && event.scheduledTime > 0
       ? event.scheduledTime
       : clock();
     const currentWindow = Math.floor(timestamp / 60000);
-    await db.pruneRateLimits(currentWindow);
+    let pruneError = null;
+    try {
+      await db.pruneRateLimits(currentWindow);
+    } catch (err) {
+      pruneError = err;
+    }
+    // The retry runs even when pruning failed, and a retry failure never
+    // hides a prune failure.
+    try {
+      await retryUnforwardedSupport(db, forward, timestamp);
+    } catch (err) {
+      console.error('support retry failed', err && err.message);
+    }
+    if (pruneError) throw pruneError;
   };
 }
 
@@ -631,6 +739,6 @@ export default {
     return createHandler(d1Db(env.SIGNUPS_DB), { forward: supportForwardFromEnv(env) })(request);
   },
   scheduled(event, env) {
-    return createScheduledHandler(d1Db(env.SIGNUPS_DB))(event);
+    return createScheduledHandler(d1Db(env.SIGNUPS_DB), undefined, { forward: supportForwardFromEnv(env) })(event);
   },
 };
