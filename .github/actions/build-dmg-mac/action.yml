@@ -38,8 +38,9 @@ runs:
           echo "build-dmg: $XCODE_APP is not on this runner image. Choose an installed Xcode that compiles the app icon (26.0.1 to 26.3, or 27) for XCODE_APP in .github/actions/build-dmg-mac/action.yml."
           exit 1
         fi
+        version="$(DEVELOPER_DIR="$developer_dir" xcodebuild -version)"
         echo "DEVELOPER_DIR=$developer_dir" >> "$GITHUB_ENV"
-        echo "build-dmg: $(DEVELOPER_DIR="$developer_dir" xcodebuild -version | head -1) selected"
+        echo "build-dmg: ${version%%$'\n'*} selected"
 
     - name: Set up Python 3.14
       uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5

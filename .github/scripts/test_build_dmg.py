@@ -423,7 +423,7 @@ class PublicLogAuditTest(unittest.TestCase):
             bin_dir = tmp_path / "bin"
             bin_dir.mkdir()
             fake = bin_dir / "xcodebuild"
-            fake.write_text('#!/bin/sh\necho "Xcode 26.3 from $DEVELOPER_DIR"\n')
+            fake.write_text('#!/bin/sh\necho "Xcode 26.3 from $DEVELOPER_DIR"\necho "Build version 17C529"\n')
             fake.chmod(0o755)
             github_env = tmp_path / "github_env"
             github_env.write_text("")
@@ -431,12 +431,17 @@ class PublicLogAuditTest(unittest.TestCase):
             ok = subprocess.run(["bash", "-c", step["run"]], env={**base, "XCODE_APP": str(app)}, capture_output=True, text=True, timeout=30)
             self.assertEqual(ok.returncode, 0, ok.stderr)
             self.assertEqual(github_env.read_text(), f"DEVELOPER_DIR={app}/Contents/Developer\n")
-            self.assertIn(f"Xcode 26.3 from {app}/Contents/Developer", ok.stdout)
+            self.assertEqual(ok.stdout, f"build-dmg: Xcode 26.3 from {app}/Contents/Developer selected\n")
             github_env.write_text("")
             missing = subprocess.run(["bash", "-c", step["run"]], env={**base, "XCODE_APP": str(tmp_path / "Xcode_9.9.app")}, capture_output=True, text=True, timeout=30)
             self.assertEqual(missing.returncode, 1)
             self.assertIn("Xcode_9.9.app is not on this runner image", missing.stdout)
             self.assertIn("XCODE_APP in .github/actions/build-dmg-mac/action.yml", missing.stdout)
+            self.assertEqual(github_env.read_text(), "")
+            fake.write_text("#!/bin/sh\nexit 69\n")
+            unusable = subprocess.run(["bash", "-c", step["run"]], env={**base, "XCODE_APP": str(app)}, capture_output=True, text=True, timeout=30)
+            self.assertEqual(unusable.returncode, 69)
+            self.assertNotIn("selected", unusable.stdout)
             self.assertEqual(github_env.read_text(), "")
 
     def test_progress_line_lets_through_only_fixed_vocabulary(self):
