@@ -65,8 +65,9 @@ Xcodes under a release. `.github/actions/build-dmg-mac` sets `DEVELOPER_DIR`
 to `/Applications/Xcode_26.3.app`: actool compiles the app's Icon Composer icon
 during packaging, and the image's default Xcode 26.6 (like 26.4.1 and 26.5)
 fails on it with "Could not open Icon.icon", while 26.0.1 through 26.3 and
-27.x compile it. If an image update drops Xcode 26.3, the step fails naming
-the setting to change; move it to another Xcode from that list.
+27.0 through 27.2 compile it (27 so far runs only on the preview `xcode-27`
+image). If an image update drops Xcode 26.3, the step fails naming the setting
+to change; move it to another Xcode from that list.
 
 **Preferred entry:** publish a public GitHub release on this repository whose
 tag is `vX.Y.Z` (optional prerelease suffix, schema:
