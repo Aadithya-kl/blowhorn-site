@@ -140,6 +140,18 @@ runs:
           fi
           # shellcheck disable=SC1091
           source "$RUNNER_TEMP/blowhorn-signing/env.sh"
+          keyfile="$RUNNER_TEMP/blowhorn-diagnostics/key"
+          if [[ ! -s "$keyfile" ]]; then
+            echo "BLOWHORN_DIAGNOSTICS_KEY is not staged; a signed release cannot send support cases."
+            exit 1
+          fi
+          # Load from the staging file; do not print. set +x is already on.
+          BLOWHORN_DIAGNOSTICS_KEY="$(python3 -c 'import pathlib, os, sys; sys.stdout.write(pathlib.Path(os.environ["RUNNER_TEMP"], "blowhorn-diagnostics", "key").read_text().strip())')"
+          export BLOWHORN_DIAGNOSTICS_KEY
+          if [[ -z "$BLOWHORN_DIAGNOSTICS_KEY" ]]; then
+            echo "BLOWHORN_DIAGNOSTICS_KEY is empty; a signed release cannot send support cases."
+            exit 1
+          fi
         fi
         # 100 minutes leaves the 120-minute job room for setup, staging and
         # keychain teardown, so a hung build reports its last phase instead of
@@ -225,6 +237,9 @@ runs:
         fi
         if [[ -n "${RUNNER_TEMP:-}" && -d "$RUNNER_TEMP/blowhorn-signing" ]]; then
           rm -rf "$RUNNER_TEMP/blowhorn-signing" || status=1
+        fi
+        if [[ -n "${RUNNER_TEMP:-}" && -d "$RUNNER_TEMP/blowhorn-diagnostics" ]]; then
+          rm -rf "$RUNNER_TEMP/blowhorn-diagnostics" || status=1
         fi
         if [[ "$status" -ne 0 ]]; then
           echo "signing teardown reported a failure; the temporary directory has been removed"

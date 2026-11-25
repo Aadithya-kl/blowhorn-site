@@ -32,6 +32,11 @@ name: Build DMG
 # require_signed_ref step for developer-id), never as an input to
 # build-dmg-mac, so rustup, setup-node, pnpm and the upload step do not
 # inherit INPUT_PRODUCT_TOKEN.
+# BLOWHORN_DIAGNOSTICS_KEY is a blowhorn-site repository secret. It is
+# passed only to the signed job's staging step (not as job-level env, not
+# as an input to build-dmg-mac, and never on the adhoc job or on pull
+# requests), then loaded from a RUNNER_TEMP file in the packaging step so
+# rustup, setup-node and pnpm do not inherit it.
 # A developer-id ref must be the commit named by product tag desktop-vVERSION
 # or refs/releases/desktop-vVERSION (the refs make release pushes first).
 #
@@ -88,6 +93,8 @@ on:
       APPLE_API_KEY_ID:
         required: false
       APPLE_API_ISSUER:
+        required: false
+      BLOWHORN_DIAGNOSTICS_KEY:
         required: false
 
 run-name: Build DMG ${{ inputs.version || github.event.client_payload.version }} ${{ inputs.ref || github.event.client_payload.ref }}
@@ -195,6 +202,11 @@ jobs:
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
         run: .github/scripts/build-dmg/materialize_signing.sh
+
+      - name: Stage the diagnostics client key
+        env:
+          BLOWHORN_DIAGNOSTICS_KEY: ${{ secrets.BLOWHORN_DIAGNOSTICS_KEY }}
+        run: .github/scripts/build-dmg/stage_diagnostics_key.sh
 
       - uses: ./.github/actions/checkout-product
         with:

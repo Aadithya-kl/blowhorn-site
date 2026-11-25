@@ -14,7 +14,8 @@ name: Cut desktop release
 # BLOWHORN_RELEASE_TOKEN (blowhorn-ai org secret, selected for blowhorn and
 # blowhorn-site) is passed only to the prepare checkout/push and the
 # attach-to-private-release steps. Signing secrets stay inside build-dmg.yml's
-# materialize step.
+# materialize step. BLOWHORN_DIAGNOSTICS_KEY is passed through only so that
+# workflow can stage it for the signed packaging step.
 
 on:
   workflow_dispatch:
@@ -147,6 +148,7 @@ jobs:
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
       APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+      BLOWHORN_DIAGNOSTICS_KEY: ${{ secrets.BLOWHORN_DIAGNOSTICS_KEY }}
 
   publish:
     name: Attach the DMG to both releases
