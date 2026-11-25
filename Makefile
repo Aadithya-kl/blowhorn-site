@@ -131,10 +131,12 @@ include .github/build/Makefile.show-help.mk
 override BUILD_DIR := public
 HTML_VALIDATE_VERSION ?= 9.5.5
 AJV_CLI_VERSION ?= 5.0.0
-ACTIONLINT_VERSION ?= 1.7.7
+ACTIONLINT_VERSION ?= 1.7.12
 BIN_DIR ?= .bin
-# actionlint from PATH when installed; otherwise a pinned copy is downloaded into $(BIN_DIR).
+# actionlint from PATH when installed; otherwise a pinned copy is downloaded into $(BIN_DIR),
+# in a directory named for its version so a version bump never reuses the old binary.
 ACTIONLINT ?= $(shell command -v actionlint 2>/dev/null)
+ACTIONLINT_DIR = $(BIN_DIR)/actionlint-$(ACTIONLINT_VERSION)
 # Every workflow file in this repo. A glob, so adding or deleting a workflow cannot make workflow-check fail with "no such file".
 WORKFLOWS ?= $(sort $(wildcard .github/workflows/*.yml) $(wildcard .github/workflows/*.yaml))
 # A blowhorn checkout for `make docs-sync` (the sync-docs.yml
@@ -473,10 +475,10 @@ copilot-pr-handle:
 ## Lint this repo's GitHub Actions workflows with actionlint.
 workflow-check:
 ifeq ($(ACTIONLINT),)
-	@test -x $(BIN_DIR)/actionlint || (mkdir -p $(BIN_DIR) && cd $(BIN_DIR) && \
+	@test -x $(ACTIONLINT_DIR)/actionlint || (mkdir -p $(ACTIONLINT_DIR) && cd $(ACTIONLINT_DIR) && \
 		curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/v$(ACTIONLINT_VERSION)/scripts/download-actionlint.bash | \
 		TAR_OPTIONS="--no-same-owner" bash -s -- $(ACTIONLINT_VERSION) .)
-	$(BIN_DIR)/actionlint -color $(WORKFLOWS)
+	$(ACTIONLINT_DIR)/actionlint -color $(WORKFLOWS)
 else
 	$(ACTIONLINT) -color $(WORKFLOWS)
 endif
