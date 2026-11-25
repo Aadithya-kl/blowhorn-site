@@ -667,18 +667,40 @@ class EncryptLogsTest(unittest.TestCase):
         self.assertEqual([p.name for p in _every_file(self.logs)], ["build.log"])
         self.assertFalse((self.bin / "age-argv.json").exists())
 
-    def test_every_file_the_staging_scripts_write_is_matched_or_named_as_unmatched(self):
+    def test_what_the_staging_scripts_really_write_is_classified_and_redacted(self):
+        # Run the real staging scripts with fake secrets, then plant every
+        # secret value in a log: each line holding one must be removed.
         scripts = ROOT / ".github" / "scripts" / "build-dmg"
-        written = set()
-        for script, folder in (("materialize_signing.sh", "blowhorn-signing"),
-                               ("stage_diagnostics_key.sh", "blowhorn-diagnostics")):
-            source = (scripts / script).read_text()
-            written.update(f"{folder}/{name}" for name in re.findall(r"\$dir/([\w.-]+)", source))
-            written.update(f"{a}/{b}" for a, b in re.findall(r'"(blowhorn-[a-z]+)", "([\w.-]+)"\)', source))
+        secrets = {
+            "DEVELOPER_ID_P12": base64.b64encode(P12_BYTES).decode(),
+            "DEVELOPER_ID_P12_PASSPHRASE": PASSPHRASE,
+            "APPLE_API_KEY": "\n".join(P8_LINES),
+            "APPLE_TEAM_ID": "TEAM123456",
+            "APPLE_API_KEY_ID": "KEYID12345",
+            "APPLE_API_ISSUER": "issuer-uuid",
+            "BLOWHORN_DIAGNOSTICS_KEY": DIAG_KEY,
+        }
+        env = {"RUNNER_TEMP": str(self.root), "PATH": os.environ.get("PATH", "/usr/bin:/bin"), **secrets}
+        for script in ("materialize_signing.sh", "stage_diagnostics_key.sh"):
+            done = subprocess.run(["bash", str(scripts / script)], env=env, capture_output=True, text=True, timeout=60)
+            self.assertEqual(done.returncode, 0, done.stderr)
+        written = {p.relative_to(self.root).as_posix() for p in _every_file(self.root)
+                   if p.parent.name in ("blowhorn-signing", "blowhorn-diagnostics")}
         self.assertIn("blowhorn-signing/developer-id.p12", written)
         self.assertIn("blowhorn-diagnostics/key", written)
         classified = set(encrypt_logs.SECRET_FILES) | set(encrypt_logs.BINARY_SECRET_FILES) | set(encrypt_logs.UNMATCHED_FILES)
         self.assertEqual(written - classified, set())
+        _fake_age(self.bin, "encrypt")
+        key_material = ("DEVELOPER_ID_P12", "DEVELOPER_ID_P12_PASSPHRASE", "BLOWHORN_DIAGNOSTICS_KEY")
+        planted = [f"value {secrets[name]} here" for name in key_material] + P8_LINES[1:4]
+        (self.logs / "build.log").write_text("\n".join(["==> package", *planted]) + "\n")
+        ok, _out = self._encrypt(job="signed")
+        self.assertTrue(ok)
+        plain = self._age_stdin()
+        for value in [secrets[name] for name in key_material] + P8_LINES[1:4]:
+            self.assertNotIn(value.encode(), plain)
+        self.assertEqual(plain.count(encrypt_logs.REMOVED), len(planted))
+        self.assertIn(b"==> package", plain)
 
     def test_make_writes_the_ciphertext_where_the_upload_step_looks(self):
         _fake_age(self.bin, "encrypt")
