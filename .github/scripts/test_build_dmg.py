@@ -7,6 +7,8 @@ import json
 import os
 import re
 import shlex
+import stat
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -370,6 +372,84 @@ class PublicLogAuditTest(unittest.TestCase):
         self.assertNotIn('>>"$GITHUB_ENV"', script)
         self.assertNotIn("${GITHUB_ENV", script)
 
+    def test_child_env_keeps_the_diagnostics_key(self):
+        env = run_build.child_env({
+            "PATH": "/bin",
+            "BLOWHORN_DIAGNOSTICS_KEY": "cdk_example.secret",
+            "DEVELOPER_ID_P12": "p12",
+        })
+        self.assertEqual(env["BLOWHORN_DIAGNOSTICS_KEY"], "cdk_example.secret")
+        self.assertNotIn("DEVELOPER_ID_P12", env)
+
+    def test_only_the_signed_job_stages_the_diagnostics_key(self):
+        workflow = yaml.safe_load((ROOT / ".github" / "workflows" / "build-dmg.yml").read_text())
+        adhoc = workflow["jobs"]["build-mac-adhoc"]
+        signed = workflow["jobs"]["build-mac-signed"]
+        self.assertNotIn("BLOWHORN_DIAGNOSTICS_KEY", yaml.dump(adhoc))
+        self.assertNotIn("env", adhoc)
+        self.assertNotIn("env", signed)
+        stage = next(step for step in signed["steps"] if step.get("name") == "Stage the diagnostics client key")
+        self.assertEqual(stage["env"], {"BLOWHORN_DIAGNOSTICS_KEY": "${{ secrets.BLOWHORN_DIAGNOSTICS_KEY }}"})
+        self.assertEqual(stage["run"], ".github/scripts/build-dmg/stage_diagnostics_key.sh")
+        mac = next(step for step in signed["steps"] if str(step.get("uses", "")).startswith("./.github/actions/build-dmg-mac"))
+        self.assertNotIn("env", mac)
+        self.assertNotIn("diagnostics_key", mac.get("with") or {})
+
+    def test_build_dmg_mac_does_not_take_a_diagnostics_key_input(self):
+        # A composite-action input would set INPUT_DIAGNOSTICS_KEY on every
+        # step, including rustup, setup-node and pnpm install.
+        action = yaml.safe_load((ROOT / ".github" / "actions" / "build-dmg-mac" / "action.yml").read_text())
+        self.assertNotIn("diagnostics_key", action.get("inputs") or {})
+        raw = (ROOT / ".github" / "actions" / "build-dmg-mac" / "action.yml").read_text()
+        self.assertNotIn("INPUT_DIAGNOSTICS_KEY", raw)
+        build = next(step for step in action["runs"]["steps"] if step.get("name") == "Build, sign, notarize and verify (output withheld)")
+        self.assertNotIn("BLOWHORN_DIAGNOSTICS_KEY", (build.get("env") or {}))
+        self.assertIn("blowhorn-diagnostics/key", build["run"])
+        self.assertIn('export BLOWHORN_DIAGNOSTICS_KEY', build["run"])
+        teardown = next(step for step in action["runs"]["steps"] if step.get("name") == "Delete the temporary signing keychain")
+        self.assertIn("$RUNNER_TEMP/blowhorn-diagnostics", teardown["run"])
+
+    def test_stage_diagnostics_key_writes_a_private_file_and_not_github_env(self):
+        script = ROOT / ".github" / "scripts" / "build-dmg" / "stage_diagnostics_key.sh"
+        source = script.read_text()
+        self.assertNotIn('>>"$GITHUB_ENV"', source)
+        self.assertNotIn("${GITHUB_ENV", source)
+        with tempfile.TemporaryDirectory() as tmp:
+            env = {
+                "RUNNER_TEMP": tmp,
+                "BLOWHORN_DIAGNOSTICS_KEY": "cdk_example.secret\n",
+                "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
+            }
+            result = subprocess.run(["bash", str(script)], env=env, capture_output=True, text=True, check=False)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertNotIn("cdk_example.secret", result.stdout)
+            self.assertNotIn("cdk_example.secret", result.stderr)
+            path = Path(tmp) / "blowhorn-diagnostics" / "key"
+            self.assertEqual(path.read_text(), "cdk_example.secret")
+            self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600)
+            missing = subprocess.run(
+                ["bash", str(script)],
+                env={"RUNNER_TEMP": tmp, "PATH": env["PATH"]},
+                capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(missing.returncode, 2)
+
+    def test_cut_desktop_release_passes_the_diagnostics_key_only_to_build_dmg(self):
+        # PyYAML treats the workflow key `on` as boolean True, so read the
+        # reusable-workflow secrets from the source text.
+        called = (ROOT / ".github" / "workflows" / "build-dmg.yml").read_text()
+        block = called.split("workflow_call:", 1)[1].split("run-name:", 1)[0]
+        self.assertRegex(block, r"BLOWHORN_DIAGNOSTICS_KEY:\s*\n\s+required: false")
+        cut = yaml.safe_load((ROOT / ".github" / "workflows" / "cut-desktop-release.yml").read_text())
+        build = cut["jobs"]["build"]
+        self.assertEqual(build["uses"], "./.github/workflows/build-dmg.yml")
+        self.assertEqual(build["with"]["mode"], "developer-id")
+        self.assertEqual(
+            build["secrets"]["BLOWHORN_DIAGNOSTICS_KEY"],
+            "${{ secrets.BLOWHORN_DIAGNOSTICS_KEY }}",
+        )
+        for name in ("guard", "prepare", "publish"):
+            self.assertNotIn("BLOWHORN_DIAGNOSTICS_KEY", yaml.dump(cut["jobs"][name]))
 
 if __name__ == "__main__":
     unittest.main()

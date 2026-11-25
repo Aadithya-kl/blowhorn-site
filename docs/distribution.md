@@ -111,6 +111,13 @@ the `blowhorn` and `blowhorn-site` repositories: `DEVELOPER_ID_P12`,
 environment-scoped secrets. The workflow does not load keys from the
 private product repository. The #2759 rotation was canceled; the existing
 keys were moved unrotated to those org secrets.
+`BLOWHORN_DIAGNOSTICS_KEY` is a `blowhorn-site` repository secret. The
+signed job passes it only to the staging step (not as job-level env, not
+as an input to `build-dmg-mac`, and never on the adhoc job or on pull
+requests). That step writes the key under `RUNNER_TEMP`; the packaging
+step loads the file so rustup, setup-node and pnpm do not inherit it.
+A signed release fails if the key is missing, because the app could not
+send support cases or failure reports.
 
 **Artifacts:** the only uploads are the DMG and its sha256 manifest, retained for
 1 day, and, when a Linux gate fails, that suite's log as `age` ciphertext
