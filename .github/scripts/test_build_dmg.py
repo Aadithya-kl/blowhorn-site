@@ -142,6 +142,8 @@ class RunBuildTest(unittest.TestCase):
         desktop = self.product / "desktop" / "scripts"
         desktop.mkdir(parents=True)
         (desktop / "release-mac.mjs").write_text("// stub\n")
+        (self.product / "desktop" / "tests").mkdir()
+        (self.product / "desktop" / "tests" / "child-teardown.test.ts").write_text("// stub\n")
         self.log = Path(self.tmp.name) / "private" / "build.log"
 
     def tearDown(self):
@@ -187,6 +189,33 @@ class RunBuildTest(unittest.TestCase):
             self.assertIn(expected, out)
         self.assertNotIn("private.dmg", out)
         self.assertNotIn("hunter2", out)
+
+    def test_a_failure_names_the_sub_step_its_exit_and_failing_test_files_only(self):
+        script = (
+            "print('==> build');"
+            "print('    --- pnpm test ---');"
+            "print('\\x1b[41m FAIL \\x1b[49m tests/child-teardown.test.ts > childTeardown > a SIGINT stops every child');"
+            "print(' FAIL  tests/child-teardown.test.ts > childTeardown > another');"
+            "print(' FAIL  tests/../../etc/passwd.ts > x');"
+            "print(' FAIL  tests/ghp_secretvalue.test.ts > x');"
+            "print('AssertionError: /Users/runner/work/product/desktop/x.ts token=abc');"
+            "print('    --- end of pnpm test (failed) ---');"
+            "print('    --- end of build the checkout' + chr(39) + 's Rust binaries (passed) ---');"
+            "print(\"    $ /Users/runner/setup-pnpm/pnpm exec electron-builder --mac -c.directories.output=/Users/runner/private\");"
+            "print('release-mac: pnpm test failed (exit 1)');"
+            f"print({SECRET!r}); raise SystemExit(1)"
+        )
+
+        def popen(cmd, cwd, env, stdout, stderr, start_new_session):
+            return real_popen([sys.executable, "-c", script], stdout=stdout, stderr=stderr, start_new_session=start_new_session)
+
+        status, out = self._main(popen)
+        self.assertEqual(status, 1)
+        self.assertIn("build: step failed: pnpm test", out)
+        self.assertIn("build: failed step: pnpm test (exit 1)", out)
+        self.assertEqual(out.count("failing test file: tests/child-teardown.test.ts"), 1)
+        for private in ("passwd", "ghp_", "/Users/runner", "token=abc", "hunter2", "SIGINT", "electron-builder", "passed"):
+            self.assertNotIn(private, out)
 
     def test_a_hung_build_is_killed_at_its_limit_with_a_clear_message(self):
         def popen(cmd, cwd, env, stdout, stderr, start_new_session):
@@ -366,6 +395,41 @@ class PublicLogAuditTest(unittest.TestCase):
         self.assertEqual(timed_run.progress_line("  status: Invalid"), "notarization: status Invalid")
         for private in ("  path: /tmp/x.dmg", "==> " + "x" * 60, "  id: not-a-uuid", "status: Accepted token=abc", SECRET):
             self.assertIsNone(timed_run.progress_line(private))
+
+    def test_progress_line_names_each_failed_sub_step_and_nothing_of_its_output(self):
+        cases = {
+            "    --- end of pnpm typecheck (failed) ---": "step failed: typecheck",
+            "    --- end of pnpm lint (stopped) ---": "step stopped: lint",
+            "    --- end of build the checkout's Rust binaries (failed) ---": "step failed: checkout rust build",
+            "    --- end of verify reconcile (fixture) (failed) ---": "step failed: fixture check reconcile",
+            "release-mac: building the bundled engine failed (exit 1)": "failed step: bundled engine build (exit 1)",
+            "release-mac: /Users/runner/pnpm exec electron-builder --mac dir -c.directories.output=/private failed (exit 1)": "failed step: electron-builder (exit 1)",
+            "release-mac: signing the DMG failed (exit 1)": "failed step: codesign (exit 1)",
+            "release-mac: xcrun notarytool submit /private/x.dmg --key /private/key.p8 --wait failed (exit 69)": "failed step: notarytool (exit 69)",
+            "release-mac: /Users/runner/pnpm build failed (exit 2)": "failed step: pnpm build (exit 2)",
+            "release-mac: '/Users/runner/pnpm' 'build' failed (exit 2)": "failed step: pnpm build (exit 2)",
+            "release-mac: 'pnpm' 'test' failed (exit 1)": "failed step: pnpm test (exit 1)",
+            "release-mac: pnpm typecheck failed (exit 2)": "failed step: typecheck (exit 2)",
+            "release-mac: something new failed (spawn ENOENT)": "failed step: unrecognized step (no exit code)",
+            " FAIL  tests/a/b.test.ts > suite > name": "failing test file: tests/a/b.test.ts",
+        }
+        known = frozenset({"tests/a/b.test.ts"})
+        for line, public in cases.items():
+            self.assertEqual(timed_run.progress_line(line, known), public, line)
+        for private in ("    --- end of pnpm test (passed) ---", " FAIL  /abs/x.test.ts", " FAIL  tests/../x.test.ts", " FAIL  tests/ghp_secret.test.ts > x", "release-mac: the build produced no /private/x.dmg."):
+            self.assertIsNone(timed_run.progress_line(private, known), private)
+        # Without the product's inventory no test file name is ever echoed.
+        self.assertIsNone(timed_run.progress_line(" FAIL  tests/a/b.test.ts > suite > name"))
+
+    def test_test_files_lists_only_the_products_own_test_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            desktop = Path(tmp)
+            (desktop / "tests" / "sub").mkdir(parents=True)
+            (desktop / "tests" / "a.test.ts").write_text("")
+            (desktop / "tests" / "sub" / "b.test.tsx").write_text("")
+            (desktop / "tests" / "fixture.json").write_text("")
+            self.assertEqual(timed_run.test_files(desktop), frozenset({"tests/a.test.ts", "tests/sub/b.test.tsx"}))
+            self.assertEqual(timed_run.test_files(desktop / "missing"), frozenset())
 
     def test_materialize_does_not_write_github_env(self):
         script = (ROOT / ".github" / "scripts" / "build-dmg" / "materialize_signing.sh").read_text()
