@@ -394,6 +394,51 @@ class PublicLogAuditTest(unittest.TestCase):
         # The statement ends "...; then", so compare the command words only.
         self.assertEqual(argv[argv.index("--") + 1:][:4], ["pnpm", "install", "--frozen-lockfile", "--ignore-scripts;"])
 
+    def test_both_mac_jobs_run_on_the_pinned_macos_26_image(self):
+        # Oracle: macos-latest migrates between images, and with it the Xcodes
+        # the select step below can name; a pinned label keeps them still.
+        workflow = yaml.safe_load((ROOT / ".github" / "workflows" / "build-dmg.yml").read_text())
+        for job_id in ("build-mac-adhoc", "build-mac-signed"):
+            with self.subTest(job=job_id):
+                self.assertEqual(workflow["jobs"][job_id]["runs-on"], "macos-26")
+
+    def test_the_icon_compiling_xcode_is_selected_before_anything_builds(self):
+        # Oracle: run 45577422514 failed in actool on the image's default Xcode
+        # 26.6; the build must run with DEVELOPER_DIR on an exact Xcode path.
+        action = yaml.safe_load((ROOT / ".github" / "actions" / "build-dmg-mac" / "action.yml").read_text())
+        steps = action["runs"]["steps"]
+        names = [step.get("name") for step in steps]
+        select = names.index("Select the Xcode that compiles the app icon")
+        for later in ("Install the product's pinned Rust toolchain and both macOS targets", "Install the desktop package", "Build, sign, notarize and verify (output withheld)"):
+            self.assertLess(select, names.index(later))
+        self.assertRegex(steps[select]["env"]["XCODE_APP"], r"^/Applications/Xcode_\d+\.\d+(\.\d+)?\.app$")
+
+    def test_the_xcode_select_step_exports_developer_dir_or_refuses_by_name(self):
+        action = yaml.safe_load((ROOT / ".github" / "actions" / "build-dmg-mac" / "action.yml").read_text())
+        step = next(s for s in action["runs"]["steps"] if s.get("name") == "Select the Xcode that compiles the app icon")
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            app = tmp_path / "Xcode_26.3.app"
+            (app / "Contents" / "Developer").mkdir(parents=True)
+            bin_dir = tmp_path / "bin"
+            bin_dir.mkdir()
+            fake = bin_dir / "xcodebuild"
+            fake.write_text('#!/bin/sh\necho "Xcode 26.3 from $DEVELOPER_DIR"\n')
+            fake.chmod(0o755)
+            github_env = tmp_path / "github_env"
+            github_env.write_text("")
+            base = {"PATH": f"{bin_dir}:/usr/bin:/bin", "GITHUB_ENV": str(github_env)}
+            ok = subprocess.run(["bash", "-c", step["run"]], env={**base, "XCODE_APP": str(app)}, capture_output=True, text=True, timeout=30)
+            self.assertEqual(ok.returncode, 0, ok.stderr)
+            self.assertEqual(github_env.read_text(), f"DEVELOPER_DIR={app}/Contents/Developer\n")
+            self.assertIn(f"Xcode 26.3 from {app}/Contents/Developer", ok.stdout)
+            github_env.write_text("")
+            missing = subprocess.run(["bash", "-c", step["run"]], env={**base, "XCODE_APP": str(tmp_path / "Xcode_9.9.app")}, capture_output=True, text=True, timeout=30)
+            self.assertEqual(missing.returncode, 1)
+            self.assertIn("Xcode_9.9.app is not on this runner image", missing.stdout)
+            self.assertIn("XCODE_APP in .github/actions/build-dmg-mac/action.yml", missing.stdout)
+            self.assertEqual(github_env.read_text(), "")
+
     def test_progress_line_lets_through_only_fixed_vocabulary(self):
         self.assertEqual(timed_run.progress_line("==> remote-dmg"), "phase remote-dmg")
         self.assertEqual(timed_run.progress_line("  status: Invalid"), "notarization: status Invalid")
