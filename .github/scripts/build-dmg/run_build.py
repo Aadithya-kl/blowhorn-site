@@ -1,7 +1,8 @@
 """Run the product's --build-dmg-only entry and print only a public summary.
 
-Build and tool output goes to a log under RUNNER_TEMP that is never printed,
-uploaded or cached. The only stdout is fixed labels, the exit status, the
+Build and tool output goes to a log under RUNNER_TEMP that is never printed or
+cached; when the build fails it leaves the runner only as age ciphertext with
+staged secrets removed (encrypt_logs.py). The only stdout is fixed labels, the exit status, the
 duration, phase and notarization progress lines that timed_run.progress_line
 allows, on a failure the sub-step that failed with its exit code and the
 failing test file names, and (on success) the manifest sha256 and size. Commands run without

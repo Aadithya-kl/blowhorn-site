@@ -1,7 +1,8 @@
 """Run one build-dmg phase with a hard time limit and a private log.
 
-The child's output goes only to the log, which is never printed, uploaded or
-cached. Stdout gets fixed labels: the phase start and end with UTC timestamps
+The child's output goes only to the log, which is never printed or cached; a
+failed job uploads it only as age ciphertext with staged secrets removed
+(encrypt_logs.py). Stdout gets fixed labels: the phase start and end with UTC timestamps
 and the elapsed time, and the few progress lines that `progress_line` lets
 through (release phase headers, notarization submission id and status, and on
 a failure which build sub-step failed, its exit code and the failing test file
@@ -189,6 +190,7 @@ def run_logged(
             status = proc.wait()
         finally:
             timer.cancel()
+            proc.stdout.close()
     elapsed = int(time.monotonic() - started)
     if timed_out.is_set():
         say(label, f"timed out after {elapsed}s (limit {timeout_s / 60:g} min); the process group was killed. The private log has the output.")
