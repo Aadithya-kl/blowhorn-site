@@ -20,11 +20,13 @@ the row token.
   (5,000 characters), `diagnostics_reference` (single line, 500 characters).
   References are unverified text, never fetched. Files are not accepted.
 
-The D1 table `support_messages` is the local record (migrations 0003, 0004
-and 0005). Apply migrations 0004 and 0005 before deploying the Worker. 0004
-adds reason, response preference, diagnostic reference and a unique case
+The D1 table `support_messages` is the local record (migrations 0003 to
+0006). The deploy workflow applies migrations before deploying the Worker.
+0004 adds reason, response preference, diagnostic reference and a unique case
 number; old rows default to feedback/reply. 0005 adds the per-case creation
-proof. Empty identity stays empty, never a placeholder email.
+proof. 0006 adds the retry bookkeeping (`forward_attempts`,
+`forward_last_status`, `next_forward_at`). Empty identity stays empty,
+never a placeholder email.
 
 Every submission becomes a durable Cloud support case: the Worker POSTs to
 `SUPPORT_CASES_URL` (the cases route) with the website client key in
@@ -33,8 +35,8 @@ Every submission becomes a durable Cloud support case: the Worker POSTs to
 `caseId`; the creation proof authenticates an idempotent replay, so a
 retried forward never duplicates the case or its private GitHub issue. A
 201 (created) or 200 (identical replay) marks the row forwarded; a 409
-payload conflict or any other failure leaves `forwarded_at` NULL for
-investigation and replay. Anonymous submissions send no email or name.
+payload conflict or any other failure leaves `forwarded_at` NULL.
+Anonymous submissions send no email or name.
 Reason, preference and reference ride in the case payload. The case
 contract: `docs/reference/support-cases.md` in meshery-cloud.
 
@@ -46,9 +48,27 @@ response is requested, not a notification subscription. The team still
 needs an owned response workflow and a verified notification path before
 promising automated fix emails.
 
-Forwarding is best-effort: a failure leaves `forwarded_at` NULL in D1 for
-replay. This change does not add a replay worker. Test forwarding and inspect
-the destination before claiming end-to-end delivery. A missing URL or client
+Forwarding is best-effort: a failure leaves `forwarded_at` NULL in D1, and
+the cron trigger (every 15 minutes) retries it:
+
+- It re-sends only rows with a stored case number and creation proof, and
+  rebuilds the same payload from the row, so Cloud answers an already
+  created case with 200 instead of opening a second case or issue. It never
+  mints a new case number. Rows from before migrations 0004 and 0005 have
+  neither and are never touched.
+- Each run sends at most 5 rows, oldest first, and skips rows younger than
+  two minutes so it never races the request still forwarding them.
+- After failed attempt n (the request path's own try counts as the first)
+  the next try waits 15 minutes times 2^(n-1), capped at 24 hours. After 10
+  failures the row is left for investigation. A 409 means Cloud holds a
+  different payload under the case number, so it is never retried.
+- `forwarded_at` is set only on a 201 or 200. The only call it makes is to
+  `SUPPORT_CASES_URL`: no email to the submitter, nothing public.
+
+To retry a capped or 409 row by hand after fixing the cause, reset its
+`forward_attempts`, `forward_last_status` and `next_forward_at`.
+
+Test forwarding and inspect the destination before claiming end-to-end delivery. A missing URL or client
 key stores only. Honeypot, per-IP rate limit and CORS are unchanged. Form
 posts redirect to `/support/thanks/`. Anonymous does not mean network
 anonymity: the Worker receives an IP for rate limiting, and free text can
