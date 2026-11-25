@@ -1103,3 +1103,43 @@ test('case numbers are server generated, unique, and subjects ignore client over
     assert.doesNotMatch(JSON.stringify(calls[i]), /User-supplied|attacker-selected/);
   }
 });
+
+test('the deployed entry point forwards a support message with the runtime fetch', async () => {
+  // Workers throws "Illegal invocation" when fetch is called with any `this`
+  // other than the global scope, e.g. as `forward.fetchImpl(...)`. Node does
+  // not, so the stub enforces the runtime's rule.
+  const sqlite = new DatabaseSync(':memory:');
+  const here = dirname(fileURLToPath(import.meta.url));
+  for (const m of ['0001_init.sql', '0002_rate_limits_window_idx.sql', '0003_support_messages.sql',
+    '0004_support_preferences.sql', '0005_support_case_proof.sql']) {
+    sqlite.exec(readFileSync(join(here, 'migrations', m), 'utf8'));
+  }
+  const SIGNUPS_DB = { prepare(sql) { const stmt = sqlite.prepare(sql); return { bind(...params) { return {
+    first() { return stmt.get(...params) || null; },
+    all() { return { results: stmt.all(...params) }; },
+    run() { const r = stmt.run(...params); return { success: true, meta: { last_row_id: Number(r.lastInsertRowid) } }; },
+  }; } }; } };
+  const calls = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = function fetch(url, init) {
+    if (this !== undefined && this !== globalThis) {
+      throw new TypeError('Illegal invocation: function called with incorrect `this` reference.');
+    }
+    calls.push({ url, headers: init.headers, body: JSON.parse(init.body) });
+    return Promise.resolve(new Response('{}', { status: 201 }));
+  };
+  try {
+    const env = { SIGNUPS_DB, SUPPORT_CASES_URL: 'https://cloud.example.test/api/support/cases', SUPPORT_CASES_CLIENT_KEY: 'website-key' };
+    const res = await worker.fetch(post('/api/support', supportBody()), env);
+    assert.equal(res.status, 200);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, 'https://cloud.example.test/api/support/cases');
+  assert.equal(calls[0].headers['x-client-key'], 'website-key');
+  const row = sqlite.prepare('SELECT case_number, forwarded_at FROM support_messages').get();
+  assert.equal(calls[0].body.caseId, row.case_number);
+  assert.ok(row.forwarded_at, 'a 201 from Cloud marks the row forwarded');
+  sqlite.close();
+});
